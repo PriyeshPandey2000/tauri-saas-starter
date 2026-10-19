@@ -1,8 +1,8 @@
-import { memoryAdapter } from "better-auth/adapters/memory";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../../app";
 import { createChallengeStore, pkceChallenge } from "../desktop-flow";
+import { createTestDb } from "../../db/test-db";
 import type { ApiEnv } from "../../env";
 import {
   clampSessionExpiry,
@@ -24,15 +24,10 @@ const env: ApiEnv = {
   AUTH_REQUIRE_EMAIL_VERIFICATION: false,
 };
 
-function setup() {
+async function setup() {
+  const { db } = await createTestDb();
   const auth = createAuth({
-    database: memoryAdapter({
-      user: [],
-      session: [],
-      account: [],
-      verification: [],
-      jwks: [],
-    }),
+    db,
     env,
     mailer: { send: vi.fn(async () => undefined) },
   });
@@ -53,7 +48,7 @@ async function signUp(auth: ReturnType<typeof createAuth>) {
 
 describe("auth API", () => {
   it("signs up and signs in with email and password", async () => {
-    const { auth } = setup();
+    const { auth } = await setup();
     const created = await signUp(auth);
     expect(created.user.email).toBe("ada@example.com");
 
@@ -65,7 +60,7 @@ describe("auth API", () => {
   });
 
   it("rate limits repeated sign-in attempts", async () => {
-    const { app } = setup();
+    const { app } = await setup();
     let lastStatus = 0;
     for (let attempt = 0; attempt < 12; attempt += 1) {
       const response = await app.fetch(
@@ -87,7 +82,7 @@ describe("auth API", () => {
   });
 
   it("rejects a wrong PKCE verifier and consumes the challenge", async () => {
-    const { auth, app, challenges } = setup();
+    const { auth, app, challenges } = await setup();
     const created = await signUp(auth);
     const ott = await auth.api.generateOneTimeToken({
       headers: new Headers({ authorization: `Bearer ${created.token}` }),
@@ -118,7 +113,7 @@ describe("auth API", () => {
   });
 
   it("rejects an expired challenge", async () => {
-    const { app, challenges } = setup();
+    const { app, challenges } = await setup();
     challenges.set("expired-ott", pkceChallenge("c".repeat(43)), -1);
     const response = await app.fetch(
       new Request("http://localhost:8787/auth/desktop/exchange", {

@@ -14,6 +14,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.5",
     "better-auth": "^1.7.11",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@config/eslint-config": "workspace:*",
+    "@electric-sql/pglite": "^0.5.10",
     "@types/node": "^26.6.5",
     "drizzle-kit": "^0.31.11",
     "eslint": "10.13.0",

@@ -1,7 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
+import type { PgliteDatabase } from "drizzle-orm/pglite";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import type { ApiEnv } from "../env";
+import * as schema from "./schema";
 
 /**
  * The only place that builds a Postgres client for the running API.
@@ -15,8 +18,9 @@ export function createDb(
     max: env.DATABASE_POOL_MAX,
     idle_timeout: 20,
   });
-  const db = drizzle(client);
+  const db = drizzle(client, { schema });
   return { db, client };
 }
 
-export type Database = ReturnType<typeof createDb>["db"];
+export type Database =
+  PostgresJsDatabase<typeof schema> | PgliteDatabase<typeof schema>;

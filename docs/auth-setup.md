@@ -10,7 +10,32 @@ Provide two connection strings:
 Any Postgres host works; the code contains no host-specific APIs. For local
 development a plain `postgres://user:password@localhost:5432/app` is enough for both.
 
-## 2. Environment
+## 2. Local database (Docker)
+
+```bash
+pnpm db:up      # postgres:17 with a named volume on :5432
+pnpm db:down    # stop, keep data
+pnpm db:reset   # drop the volume and recreate
+```
+
+Defaults are `app` / `app` / `app` on `localhost:5432`:
+
+```env
+DATABASE_URL=postgres://app:app@localhost:5432/app
+DATABASE_URL_DIRECT=postgres://app:app@localhost:5432/app
+```
+
+Start Docker Desktop (or OrbStack) first; `docker info` must succeed.
+
+API tests do not need Docker: they run against PGlite with the same committed
+migrations and the real Drizzle adapter.
+
+### Hosted Postgres
+
+Only `DATABASE_URL` (pooled) and `DATABASE_URL_DIRECT` (unpooled) change. Neon,
+Supabase, RDS, and local Postgres are interchangeable; no host-specific code exists.
+
+## 3. Environment
 
 Copy `apps/api/.env.example` to `apps/api/.env` and fill in:
 
@@ -32,7 +57,7 @@ Desktop: `apps/desktop/.env.development` already sets
 `VITE_API_URL=http://localhost:8787`. Production builds need `VITE_API_URL` set in
 the build environment (it also feeds the generated CSP connect-src).
 
-## 3. Google Cloud OAuth
+## 4. Google Cloud OAuth
 
 1. Create or pick a project in <https://console.cloud.google.com>.
 2. Configure the OAuth consent screen (External, testing mode is fine for dev).
@@ -44,7 +69,7 @@ the build environment (it also feeds the generated CSP connect-src).
 
 No secret belongs in the repo; `apps/api/.env` is gitignored.
 
-## 4. Migrations
+## 5. Migrations
 
 ```bash
 pnpm --filter api db:generate   # after schema changes
@@ -54,7 +79,7 @@ pnpm --filter api db:migrate    # uses DATABASE_URL_DIRECT
 The committed migration creates `user`, `session`, `account`, `verification`, and
 `jwks`.
 
-## 5. Run
+## 6. Run
 
 ```bash
 pnpm --filter api dev
@@ -64,7 +89,7 @@ pnpm --filter desktop tauri dev
 Email verification and password-reset links are sent through the logging
 `MailerPort` stub, so they appear in the API console in dev.
 
-## 6. Testing Google OAuth
+## 7. Testing Google OAuth
 
 - **macOS:** deep links only work for a bundled app installed under
   `/Applications`. Run `pnpm --filter desktop tauri build`, copy the `.app` there,
@@ -76,7 +101,7 @@ Email verification and password-reset links are sent through the logging
 - The app validates `state` and the PKCE verifier before exchanging the one-time
   token. A mismatch shows an error and the flow must be restarted.
 
-## 7. Manual checks
+## 8. Manual checks
 
 - Sign up, verify (check the API console link if verification is enabled), sign in.
 - Google round-trip through the browser and deep link.

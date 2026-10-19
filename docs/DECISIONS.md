@@ -10,6 +10,8 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @commitlint/config-conventional  | 21.2.4            | 2026-10-19 | latest stable                                                                  |
 | @eslint/js                       | 10.0.1            | 2026-10-19 | latest stable                                                                  |
 | @hookform/resolvers              | 6.0.0             | 2026-10-19 | latest stable; zod resolver for RHF                                            |
+| @electric-sql/pglite             | 0.5.10            | 2026-10-19 | latest stable; in-memory Postgres for API tests                                |
+| @hono/node-server                | 2.1.5             | 2026-10-19 | latest stable; API server, preserves multiple Set-Cookie headers               |
 | @radix-ui/react-slot             | 1.5.0             | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-query            | 5.104.4           | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-router           | 1.170.45          | 2026-10-19 | latest stable                                                                  |
@@ -91,6 +93,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 
 - **Vendor import check knows the API auth folder (M3.1/M3.2)**: `scripts/check-vendor-imports.mjs` also allows `apps/api/src/auth/`, because that folder is the API's Better Auth adapter/composition (the desktop-oriented boundary rules and `src/ports/adapters` layout do not apply to the Hono server). The desktop app still imports `better-auth` nowhere.
 - **CSP is generated at build/dev time (M3.2)**: `apps/desktop/scripts/tauri.mjs` reads `VITE_API_URL` and passes a merged `--config` so `connect-src` includes the real API origin; the committed `tauri.conf.json` CSP is only a fallback for direct CLI use.
+
+- **Rate limiting is per API instance (M3.2)**: Better Auth's limiter uses memory storage; `storage: "database"` would add a `rateLimit` table and is deferred until the API scales beyond one instance. The desktop routes use a small in-memory limiter for the same reason.
+- **Desktop PKCE challenges live in `verification` (M3 review item 7)**: rows are keyed by `desktop-pkce:<sha256(ott)>` and deleted on use; they expire with the OTT (3 minutes).
 
 ## Backlog (ideas out of current scope)
 

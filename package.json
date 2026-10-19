@@ -16,7 +16,10 @@
     "check-vendor-imports": "node scripts/check-vendor-imports.mjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d db"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

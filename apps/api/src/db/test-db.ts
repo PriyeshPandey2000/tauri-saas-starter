@@ -1,0 +1,31 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+
+import * as schema from "./schema";
+
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL("../../drizzle/", import.meta.url),
+);
+
+/** In-memory Postgres (PGlite) with the committed migrations applied. */
+export async function createTestDb() {
+  const client = new PGlite();
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
+
+  for (const file of files) {
+    const sql = readFileSync(`${MIGRATIONS_DIR}${file}`, "utf8");
+    for (const statement of sql.split("--> statement-breakpoint")) {
+      if (statement.trim()) {
+        await client.exec(statement);
+      }
+    }
+  }
+
+  const db = drizzle(client, { schema });
+  return { client, db };
+}
