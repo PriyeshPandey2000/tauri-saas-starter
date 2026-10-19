@@ -73,3 +73,42 @@ pub async fn secure_delete(app: tauri::AppHandle, key: String) -> Result<(), App
 fn keychain_error(error: KeyringError) -> AppError {
     AppError::Keychain(error.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn throwaway_service() -> String {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock before unix epoch")
+            .as_nanos();
+        format!(
+            "com.example.tauri-saas-starter.test.{}.{}",
+            std::process::id(),
+            nanos
+        )
+    }
+
+    /// Manual check against the real OS keychain:
+    /// `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml -- --ignored keychain_roundtrip`
+    #[test]
+    #[ignore = "writes to the real OS keychain; run manually"]
+    fn keychain_roundtrip() {
+        let service = throwaway_service();
+        let entry = Entry::new(&service, "roundtrip").expect("Entry::new");
+        let value = "throwaway-secret-value";
+
+        let outcome = (|| -> keyring::Result<()> {
+            entry.set_password(value)?;
+            assert_eq!(entry.get_password()?, value);
+            entry.delete_credential()?;
+            assert!(matches!(entry.get_password(), Err(KeyringError::NoEntry)));
+            entry.delete_credential()?;
+            Ok(())
+        })();
+
+        let _ = entry.delete_credential();
+        outcome.expect("keychain roundtrip");
+    }
+}
