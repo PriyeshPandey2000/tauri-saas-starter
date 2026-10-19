@@ -3,10 +3,21 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@app/shared": ["../../packages/shared/src"]
-    }
+      "@/*": [
+        "src/*"
+      ],
+      "@app/shared": [
+        "../../packages/shared/src"
+      ]
+    },
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

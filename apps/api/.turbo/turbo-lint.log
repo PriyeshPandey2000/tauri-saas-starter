@@ -2,40 +2,21 @@
 > api@0.0.0 lint /Users/priyesh/Desktop/desktop-app-boilerplate/apps/api
 > eslint .
 
-[boundaries][warning]: The 'mode' option in element descriptors is deprecated and will be removed in a future major version.
-  Use 'partialMatch: false' instead of 'mode: "full"'. Remove 'mode: "folder"' (it is the default). More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#deprecated-mode-in-element-descriptors
 
-[boundaries][warning]: Rule name "boundaries/element-types" is deprecated. Use "boundaries/dependencies" instead.
-  More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#rule-element-types-renamed-to-dependencies
+Oops! Something went wrong! :(
 
-[boundaries][warning]: [boundaries/element-types] The 'rules' option is deprecated.
-  Please use 'policies' instead. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#rules-option-renamed-to-policies
+ESLint: 10.13.0
 
-[boundaries][warning]: [boundaries/element-types] Detected legacy string element selectors in 7 policies at indices: 0, 1, 2, 3, 4, 5, 6.
-  Replace "your-type" with an entity selector, e.g. { element: { type: "your-type" } }. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#object-based-elements-selector-syntax
-
-[boundaries][warning]: [boundaries/element-types] Detected "allow"/"disallow" entries without a "from"/"to" wrapper in 7 policies at indices: 0, 1, 2, 3, 4, 5, 6.
-  Use allow: [{ to: { element: { type: "your-type" } } }] or [{ from: ... }] instead of a bare element selector. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#to-property-in-allowdisallow-rules-is-now-required
-
-[boundaries][warning]: Rule "boundaries/entry-point" is deprecated and will be removed in future versions.
-  Please migrate to the "boundaries/dependencies" rule with appropriate selectors. More info: https://www.jsboundaries.dev/docs/rules/entry-point/#migration-to-boundariesdependencies
-
-[boundaries][warning]: [boundaries/entry-point] The 'rules' option is deprecated.
-  Please use 'policies' instead. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#rules-option-renamed-to-policies
-
-[boundaries][warning]: [boundaries/entry-point] Detected legacy string element selectors in 1 policy at indices: 0.
-  Replace "your-type" with an entity selector, e.g. { element: { type: "your-type" } }. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#object-based-elements-selector-syntax
-
-[boundaries][warning]: Rule name "boundaries/no-unknown" is deprecated. Use "boundaries/no-unknown-dependencies" instead.
-  More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#no-unknown-renamed-to-no-unknown-dependencies
-
-
-/Users/priyesh/Desktop/desktop-app-boilerplate/apps/api/src/index.ts
-  2:17  error  Dependencies to unknown elements and files are not allowed  boundaries/no-unknown
-  4:14  error  'process' is not defined                                    no-undef
-  4:40  error  'process' is not defined                                    no-undef
-  7:3   error  'console' is not defined                                    no-undef
-
-✖ 4 problems (4 errors, 0 warnings)
-
- ELIFECYCLE  Command failed with exit code 1.
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@typescript-eslint/parser' imported from /Users/priyesh/Desktop/desktop-app-boilerplate/packages/config/eslint.config.js
+Did you mean to import "@typescript-eslint/parser/dist/index.js"?
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:859:18)
+    at defaultResolve (node:internal/modules/esm/resolve:992:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:759:56)
+    at #resolve (node:internal/modules/esm/loader:683:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:603:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:163:33)
+ ELIFECYCLE  Command failed with exit code 2.

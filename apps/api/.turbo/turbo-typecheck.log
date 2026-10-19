@@ -1,0 +1,4 @@
+
+> api@0.0.0 typecheck /Users/priyesh/Desktop/desktop-app-boilerplate/apps/api
+> tsc --noEmit
+
