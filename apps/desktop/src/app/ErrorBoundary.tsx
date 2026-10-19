@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/shared/ui/button";
+import { ports } from "@/ports";
 
 type ErrorFallbackProps = {
   error: Error;
@@ -53,7 +54,13 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error("Uncaught error in component tree", error, info);
+    void ports.errorReporter.captureException(error, {
+      extra: { componentStack: info.componentStack },
+    });
+    ports.logger.error("Uncaught error in component tree", {
+      error,
+      componentStack: info.componentStack,
+    });
   }
 
   render(): ReactNode {

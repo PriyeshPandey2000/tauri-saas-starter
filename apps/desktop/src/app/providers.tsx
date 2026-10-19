@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { useSettingsStore } from "@/features/settings";
+import { PortsProvider, ports } from "@/ports";
 import { Toaster } from "@/shared/ui/sonner";
 
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -19,14 +20,16 @@ export function AppProviders({ router, queryClient }: AppProvidersProps) {
   const theme = useSettingsStore((state) => state.theme);
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <WindowThemeSync />
-          <RouterProvider router={router} />
-          <Toaster theme={theme} />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <PortsProvider ports={ports}>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <WindowThemeSync />
+            <RouterProvider router={router} />
+            <Toaster theme={theme} />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </PortsProvider>
   );
 }
