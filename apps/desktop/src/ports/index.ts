@@ -11,11 +11,12 @@ import { noopAnalytics } from "./adapters/noop/noop-analytics";
 import { noopAuth } from "./adapters/noop/noop-auth";
 import { noopBilling } from "./adapters/noop/noop-billing";
 import { noopErrorReporter } from "./adapters/noop/noop-error-reporter";
+import { createBetterAuthAdapter } from "./adapters/better-auth/adapter";
 import { noopFeatureFlags } from "./adapters/noop/noop-feature-flags";
 import { createMemoryStorage } from "./adapters/noop/memory-storage";
 import { consoleLogger } from "./adapters/console-logger";
 import { fileLogger } from "./adapters/file-logger";
-import { resolveLogTarget } from "../shared/lib/config";
+import { resolveLogTarget, getConfig } from "../shared/lib/config";
 
 export type { AuthPort, AuthSession, AuthUser } from "./AuthPort";
 export type { BillingPort, BillingPlanId, Entitlements } from "./BillingPort";
@@ -47,8 +48,11 @@ export interface Ports {
 export function createPorts(): Ports {
   const target = resolveLogTarget(import.meta.env, import.meta.env.DEV);
   const logger = target === "file" && isTauri() ? fileLogger : consoleLogger;
+  const auth = isTauri()
+    ? createBetterAuthAdapter({ getApiUrl: () => getConfig().VITE_API_URL })
+    : noopAuth;
   return {
-    auth: noopAuth,
+    auth,
     billing: noopBilling,
     featureFlags: noopFeatureFlags,
     analytics: noopAnalytics,
