@@ -11,13 +11,16 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
-    "lint:arch": "node node_modules/.pnpm/eslint@10.13.0_jiti@2.7.0/node_modules/eslint/bin/eslint.js --config packages/config/eslint.config.js apps/desktop/src packages/shared/src apps/api/src",
+    "lint": "turbo run lint && pnpm run lint:arch && pnpm run check-vendor-imports",
+    "lint:arch": "eslint --config packages/config/eslint.config.js apps/desktop/src packages/shared/src apps/api/src",
+    "check-vendor-imports": "node scripts/check-vendor-imports.mjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@config/eslint-config": "workspace:*",
     "eslint": "10.13.0",
     "husky": "^9.1.7",
