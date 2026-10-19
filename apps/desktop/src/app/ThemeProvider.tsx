@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
-import { applyTheme, watchSystemTheme } from "@/shared/lib/theme";
+import { applyTheme, subscribeToSystemTheme } from "@/shared/lib/theme";
 import { useSettingsStore } from "@/features/settings";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -11,7 +11,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (theme !== "system") {
       return;
     }
-    return watchSystemTheme(() => applyTheme("system"));
+    return subscribeToSystemTheme(() => applyTheme("system"));
   }, [theme]);
 
   return <>{children}</>;

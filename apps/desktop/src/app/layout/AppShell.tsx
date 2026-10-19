@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, Moon, PanelLeftClose, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useSettingsStore } from "@/features/settings";
 import { getNavItems } from "@/shared/lib/nav";
+import { getSystemTheme, subscribeToSystemTheme } from "@/shared/lib/theme";
 import { Button } from "@/shared/ui/button";
 import { CommandPalette } from "@/shared/ui/command-palette";
 import { cn } from "@/shared/lib/utils";
@@ -17,9 +18,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const setTheme = useSettingsStore((state) => state.setTheme);
   const items = getNavItems();
 
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const resolved =
-    theme === "system" ? (prefersDark ? "dark" : "light") : theme;
+  const systemTheme = useSyncExternalStore(
+    subscribeToSystemTheme,
+    getSystemTheme,
+    () => "light" as const,
+  );
+  const resolved = theme === "system" ? systemTheme : theme;
+
   const toggleTheme = () => setTheme(resolved === "dark" ? "light" : "dark");
 
   return (
