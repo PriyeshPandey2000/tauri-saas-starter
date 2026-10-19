@@ -21,6 +21,14 @@ function registerGlobalErrorHandlers(): void {
   });
 }
 
+async function loadSettings(): Promise<void> {
+  try {
+    await useSettingsStore.persist.rehydrate();
+  } catch (error) {
+    console.warn("Failed to load saved settings; using defaults", error);
+  }
+}
+
 async function bootstrap(): Promise<void> {
   const container = document.getElementById("root");
   if (!container) {
@@ -34,11 +42,11 @@ async function bootstrap(): Promise<void> {
     </StrictMode>,
   );
 
-  const showFallback = window.setTimeout(() => {
+  const showTimer = window.setTimeout(() => {
     void showMainWindow();
   }, 4000);
 
-  await useSettingsStore.persist.rehydrate();
+  await loadSettings();
   applyTheme(useSettingsStore.getState().theme);
   registerGlobalErrorHandlers();
 
@@ -51,7 +59,7 @@ async function bootstrap(): Promise<void> {
     </StrictMode>,
   );
 
-  window.clearTimeout(showFallback);
+  window.clearTimeout(showTimer);
   await showMainWindow();
 }
 
