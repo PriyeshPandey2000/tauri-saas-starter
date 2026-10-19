@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AppProviders } from "@/app/providers";
+import { onSignOut } from "@/features/auth";
 import { ConfigErrorScreen } from "@/app/ConfigErrorScreen";
 import { createAppQueryClient } from "@/app/query-client";
 import { createAppRouter } from "@/app/router";
@@ -70,6 +71,7 @@ async function bootstrap(): Promise<void> {
   registerGlobalErrorHandlers();
 
   const queryClient = createAppQueryClient();
+  onSignOut(() => queryClient.clear());
   const router = createAppRouter(queryClient);
 
   root.render(

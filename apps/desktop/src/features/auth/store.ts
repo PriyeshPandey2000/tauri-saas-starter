@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { ports } from "@/ports";
+import { runSignOutHandlers } from "./sign-out-registry";
 import type { AuthSession } from "@/ports";
 import type { SignInInput, SignUpInput } from "@app/shared";
 
@@ -87,12 +88,14 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       await ports.auth.signOut();
     } finally {
+      await runSignOutHandlers();
       set({ session: null, status: "unauthenticated", error: null });
     }
   },
 
   async deleteAccount() {
     await ports.auth.deleteAccount();
+    await runSignOutHandlers();
     set({ session: null, status: "unauthenticated", error: null });
   },
 }));
