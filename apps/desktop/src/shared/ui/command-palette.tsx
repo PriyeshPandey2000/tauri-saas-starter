@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import { useTranslation } from "react-i18next";
 
-import { getCommands } from "@/shared/lib/commands";
+import { getCommandGroups } from "@/shared/lib/commands";
 import { getNavItems } from "@/shared/lib/nav";
 
 export function CommandPalette() {
@@ -28,7 +28,7 @@ export function CommandPalette() {
   if (!open) return null;
 
   const navItems = getNavItems();
-  const commands = getCommands();
+  const commandGroups = getCommandGroups();
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[15vh]">
@@ -38,7 +38,7 @@ export function CommandPalette() {
         onClick={() => setOpen(false)}
       />
       <Command
-        label="Command palette"
+        label={t("commands.paletteLabel")}
         className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg"
       >
         <Command.Input
@@ -69,24 +69,27 @@ export function CommandPalette() {
               </Command.Item>
             ))}
           </Command.Group>
-          <Command.Group
-            heading={t("commands.groupTheme")}
-            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground"
-          >
-            {commands.map((command) => (
-              <Command.Item
-                key={command.id}
-                value={`command ${command.id} ${command.keywords?.join(" ") ?? ""}`}
-                onSelect={() => {
-                  command.perform();
-                  setOpen(false);
-                }}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
-              >
-                {t(command.labelKey)}
-              </Command.Item>
-            ))}
-          </Command.Group>
+          {commandGroups.map((group) => (
+            <Command.Group
+              key={group.groupKey}
+              heading={t(group.groupKey)}
+              className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground"
+            >
+              {group.commands.map((command) => (
+                <Command.Item
+                  key={command.id}
+                  value={`command ${command.id} ${command.keywords?.join(" ") ?? ""}`}
+                  onSelect={() => {
+                    command.perform();
+                    setOpen(false);
+                  }}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
+                >
+                  {t(command.labelKey)}
+                </Command.Item>
+              ))}
+            </Command.Group>
+          ))}
         </Command.List>
       </Command>
     </div>

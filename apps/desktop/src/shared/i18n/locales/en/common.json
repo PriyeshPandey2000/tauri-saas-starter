@@ -28,6 +28,7 @@
   },
   "commands": {
     "placeholder": "Type a command or search…",
+    "paletteLabel": "Command palette",
     "empty": "No results found.",
     "groupNavigation": "Navigation",
     "groupTheme": "Theme",
