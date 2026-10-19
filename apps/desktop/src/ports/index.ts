@@ -17,6 +17,12 @@ import { createMemoryStorage } from "./adapters/noop/memory-storage";
 import { consoleLogger } from "./adapters/console-logger";
 import { fileLogger } from "./adapters/file-logger";
 import { resolveLogTarget, getConfig } from "../shared/lib/config";
+import {
+  setAuthRefreshHandler,
+  setAuthTokenProvider,
+} from "../shared/lib/apiClient";
+import { getSecureValue } from "../shared/lib/secureStorage";
+import { AUTH_KEYS } from "./adapters/better-auth/adapter";
 
 export type { AuthPort, AuthSession, AuthUser } from "./AuthPort";
 export type { BillingPort, BillingPlanId, Entitlements } from "./BillingPort";
@@ -64,3 +70,6 @@ export function createPorts(): Ports {
 
 export const ports: Ports = createPorts();
 export const logger: LoggerPort = ports.logger;
+
+setAuthTokenProvider(() => getSecureValue(AUTH_KEYS.accessToken));
+setAuthRefreshHandler(() => ports.auth.refresh());

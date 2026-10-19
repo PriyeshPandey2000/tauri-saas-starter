@@ -49,6 +49,7 @@ export interface RequestOptions<T> {
 export interface ApiClient {
   request<T>(path: string, options: RequestOptions<T>): Promise<T>;
   setTokenProvider(provider: TokenProvider | null): void;
+  setRefreshHandler(handler: (() => Promise<void>) | null): void;
 }
 
 function joinUrl(baseUrl: string, path: string): string {
@@ -70,10 +71,14 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
   let tokenProvider = options.tokenProvider ?? null;
+  let refreshHandler: (() => Promise<void>) | null = null;
 
   return {
     setTokenProvider(provider) {
       tokenProvider = provider;
+    },
+    setRefreshHandler(handler) {
+      refreshHandler = handler;
     },
 
     async request<T>(path: string, request: RequestOptions<T>): Promise<T> {
@@ -87,26 +92,41 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       request.signal?.addEventListener("abort", onCallerAbort, { once: true });
 
       try {
-        const headers: Record<string, string> = { ...request.headers };
-        if (request.body !== undefined) {
-          headers["content-type"] = "application/json";
-        }
-        if (tokenProvider) {
-          const token = await tokenProvider();
-          if (token) {
-            headers.authorization = `Bearer ${token}`;
+        const send = async (): Promise<Response> => {
+          const headers: Record<string, string> = { ...request.headers };
+          if (request.body !== undefined) {
+            headers["content-type"] = "application/json";
           }
-        }
+          if (tokenProvider) {
+            const token = await tokenProvider();
+            if (token) {
+              headers.authorization = `Bearer ${token}`;
+            }
+          }
+          return fetchImpl(joinUrl(options.baseUrl, path), {
+            method: request.method ?? "GET",
+            headers,
+            body:
+              request.body === undefined
+                ? undefined
+                : JSON.stringify(request.body),
+            signal: controller.signal,
+          });
+        };
 
-        const response = await fetchImpl(joinUrl(options.baseUrl, path), {
-          method: request.method ?? "GET",
-          headers,
-          body:
-            request.body === undefined
-              ? undefined
-              : JSON.stringify(request.body),
-          signal: controller.signal,
-        });
+        let response = await send();
+        if (response.status === 401 && refreshHandler) {
+          try {
+            await refreshHandler();
+          } catch (error) {
+            throw new ApiError("Session expired", {
+              code: "http",
+              status: 401,
+              cause: error,
+            });
+          }
+          response = await send();
+        }
 
         if (!response.ok) {
           const details = await response
@@ -167,16 +187,31 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 }
 
 let client: ApiClient | null = null;
+let authTokenProvider: TokenProvider | null = null;
+let authRefreshHandler: (() => Promise<void>) | null = null;
 
 /** Lazily built client for the configured API base URL. */
 export function getApiClient(): ApiClient {
   if (!client) {
-    client = createApiClient({ baseUrl: getConfig().VITE_API_URL });
+    client = createApiClient({
+      baseUrl: getConfig().VITE_API_URL,
+      tokenProvider: authTokenProvider ?? undefined,
+    });
+    client.setRefreshHandler(authRefreshHandler);
   }
   return client;
 }
 
-/** Installed by the auth feature in M3. */
+/** Installed by the auth composition root. Safe before config is validated. */
 export function setAuthTokenProvider(provider: TokenProvider | null): void {
-  getApiClient().setTokenProvider(provider);
+  authTokenProvider = provider;
+  client?.setTokenProvider(provider);
+}
+
+/** Called once on a 401 before retrying; the adapter dedupes refreshes. */
+export function setAuthRefreshHandler(
+  handler: (() => Promise<void>) | null,
+): void {
+  authRefreshHandler = handler;
+  client?.setRefreshHandler(handler);
 }
