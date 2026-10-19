@@ -1,11 +1,13 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+
+import { getConnInfo } from "@hono/node-server/conninfo";
 
 import type { Auth } from "./auth/auth";
 import { createChallengeStore, type ChallengeStore } from "./auth/desktop-flow";
 import { desktopAuthRoutes } from "./auth/desktop-routes";
-import { createRateLimiter } from "./auth/rate-limit";
+import { createRateLimiter, resolveClientKey } from "./auth/rate-limit";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
 import type { ApiEnv } from "./env";
 
@@ -33,6 +35,15 @@ export function resolveCorsOrigins(
     .filter(Boolean);
   const dev = env.NODE_ENV === "production" ? [] : DEV_ORIGINS;
   return [...TAURI_ORIGINS, ...dev, ...extra];
+}
+
+function socketAddress(context: Context): string | undefined {
+  try {
+    const info = getConnInfo(context);
+    return info.remote.address ?? info.remote.addressType;
+  } catch {
+    return undefined;
+  }
 }
 
 export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
@@ -77,10 +88,11 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
   });
 
   app.use("/auth/desktop/*", async (c, next) => {
-    const key =
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
-      c.req.header("x-real-ip") ??
-      "local";
+    const key = resolveClientKey({
+      headers: c.req.raw.headers,
+      trustedProxyHeader: env.TRUSTED_PROXY_HEADER,
+      socketAddress: socketAddress(c),
+    });
     if (!desktopLimiter.check(key)) {
       return c.json({ error: "rate_limited" }, 429);
     }

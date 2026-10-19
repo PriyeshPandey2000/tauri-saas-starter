@@ -28,3 +28,19 @@ export function createRateLimiter(options: {
     },
   };
 }
+
+/**
+ * Rate-limit bucket key. Only a header named in `TRUSTED_PROXY_HEADER` is
+ * honoured; `x-forwarded-for` is ignored because any client can set it.
+ */
+export function resolveClientKey(options: {
+  headers: Headers;
+  trustedProxyHeader?: string | undefined;
+  socketAddress?: string | undefined;
+}): string {
+  const trusted = options.trustedProxyHeader;
+  if (trusted) {
+    return options.headers.get(trusted)?.trim() || "unknown";
+  }
+  return options.socketAddress ?? "local";
+}

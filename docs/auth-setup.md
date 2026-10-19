@@ -109,6 +109,11 @@ requests per minute per client). Running more than one API instance requires mov
 both to shared storage (`rateLimit.storage: "database"` plus a `rateLimit` table, or
 Redis).
 
+The desktop limiter keys each bucket on the socket address by default. It ignores
+`x-forwarded-for`, since a client can set that header freely. Behind a proxy, set
+`TRUSTED_PROXY_HEADER` to the header the proxy appends (for example `fly-client-ip`
+on Fly.io) so the real client IP is used instead.
+
 ## 9. Manual checks
 
 - Sign up, verify (check the API console link if verification is enabled), sign in.

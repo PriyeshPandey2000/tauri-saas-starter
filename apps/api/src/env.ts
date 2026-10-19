@@ -23,6 +23,8 @@ export const ApiEnvSchema = z.object({
     .default("tauri-saas-starter"),
   AUTH_REQUIRE_EMAIL_VERIFICATION: BooleanStringSchema,
   CORS_ORIGINS: z.string().optional(),
+  // Header set by the trusted proxy in front of the API (e.g. fly-client-ip).
+  TRUSTED_PROXY_HEADER: z.string().min(1).optional(),
 });
 
 export type ApiEnv = z.infer<typeof ApiEnvSchema>;
