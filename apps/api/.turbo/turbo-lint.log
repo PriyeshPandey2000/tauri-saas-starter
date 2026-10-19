@@ -1,0 +1,41 @@
+
+> api@0.0.0 lint /Users/priyesh/Desktop/desktop-app-boilerplate/apps/api
+> eslint .
+
+[boundaries][warning]: The 'mode' option in element descriptors is deprecated and will be removed in a future major version.
+  Use 'partialMatch: false' instead of 'mode: "full"'. Remove 'mode: "folder"' (it is the default). More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#deprecated-mode-in-element-descriptors
+
+[boundaries][warning]: Rule name "boundaries/element-types" is deprecated. Use "boundaries/dependencies" instead.
+  More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#rule-element-types-renamed-to-dependencies
+
+[boundaries][warning]: [boundaries/element-types] The 'rules' option is deprecated.
+  Please use 'policies' instead. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#rules-option-renamed-to-policies
+
+[boundaries][warning]: [boundaries/element-types] Detected legacy string element selectors in 7 policies at indices: 0, 1, 2, 3, 4, 5, 6.
+  Replace "your-type" with an entity selector, e.g. { element: { type: "your-type" } }. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#object-based-elements-selector-syntax
+
+[boundaries][warning]: [boundaries/element-types] Detected "allow"/"disallow" entries without a "from"/"to" wrapper in 7 policies at indices: 0, 1, 2, 3, 4, 5, 6.
+  Use allow: [{ to: { element: { type: "your-type" } } }] or [{ from: ... }] instead of a bare element selector. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#to-property-in-allowdisallow-rules-is-now-required
+
+[boundaries][warning]: Rule "boundaries/entry-point" is deprecated and will be removed in future versions.
+  Please migrate to the "boundaries/dependencies" rule with appropriate selectors. More info: https://www.jsboundaries.dev/docs/rules/entry-point/#migration-to-boundariesdependencies
+
+[boundaries][warning]: [boundaries/entry-point] The 'rules' option is deprecated.
+  Please use 'policies' instead. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#rules-option-renamed-to-policies
+
+[boundaries][warning]: [boundaries/entry-point] Detected legacy string element selectors in 1 policy at indices: 0.
+  Replace "your-type" with an entity selector, e.g. { element: { type: "your-type" } }. More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v5-to-v6/#object-based-elements-selector-syntax
+
+[boundaries][warning]: Rule name "boundaries/no-unknown" is deprecated. Use "boundaries/no-unknown-dependencies" instead.
+  More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#no-unknown-renamed-to-no-unknown-dependencies
+
+
+/Users/priyesh/Desktop/desktop-app-boilerplate/apps/api/src/index.ts
+  2:17  error  Dependencies to unknown elements and files are not allowed  boundaries/no-unknown
+  4:14  error  'process' is not defined                                    no-undef
+  4:40  error  'process' is not defined                                    no-undef
+  7:3   error  'console' is not defined                                    no-undef
+
+✖ 4 problems (4 errors, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.
