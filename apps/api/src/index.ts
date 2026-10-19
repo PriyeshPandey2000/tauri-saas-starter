@@ -1,9 +1,18 @@
 import { createServer } from "node:http";
-import app from "./app";
 
-const port = process.env.PORT ? Number(process.env.PORT) : 8787;
+import { createApp } from "./app";
+import { createAuth } from "./auth/auth";
+import { createDb } from "./db/client";
+import { loadEnv } from "./env";
+import { loggingMailer } from "./ports/MailerPort";
+
+const env = loadEnv();
+const { db } = createDb(env);
+const auth = createAuth({ db, env, mailer: loggingMailer });
+const app = createApp({ auth, env });
 
 const server = createServer(async (req, res) => {
+  const port = env.PORT;
   const url = `http://localhost:${port}${req.url || ""}`;
   const method = req.method || "GET";
   const headers = new Headers();
@@ -35,6 +44,6 @@ const server = createServer(async (req, res) => {
   res.end(buf);
 });
 
-server.listen(port, () => {
-  console.log(`api listening on :${port}`);
+server.listen(env.PORT, () => {
+  console.log(`api listening on :${env.PORT}`);
 });

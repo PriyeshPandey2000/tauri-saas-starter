@@ -1,9 +1,23 @@
 import { Hono } from "hono";
 
-const app = new Hono();
+import type { Auth } from "./auth/auth";
+import type { ApiEnv } from "./env";
 
-app.get("/health", (c) => {
-  return c.json({ ok: true });
-});
+export interface AppDeps {
+  auth: Auth;
+  env: ApiEnv;
+}
 
-export default app;
+export function createApp({ auth }: AppDeps) {
+  const app = new Hono();
+
+  app.get("/health", (c) => {
+    return c.json({ ok: true });
+  });
+
+  app.on(["GET", "POST"], "/api/auth/*", (c) => {
+    return auth.handler(c.req.raw);
+  });
+
+  return app;
+}
