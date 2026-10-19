@@ -1,27 +1,21 @@
 import { isTauri } from "@tauri-apps/api/core";
+import type { Store } from "@tauri-apps/plugin-store";
 import type { StateStorage } from "zustand/middleware";
-
-type TauriStore = {
-  get: (key: string) => Promise<unknown>;
-  set: (key: string, value: unknown) => Promise<void>;
-  delete: (key: string) => Promise<boolean>;
-};
 
 const SETTINGS_FILE = "settings.json";
 const memory = new Map<string, string>();
-let storePromise: Promise<TauriStore | null> | null = null;
+let storePromise: Promise<Store | null> | null = null;
 
-function loadTauriStore(): Promise<TauriStore | null> {
+function loadTauriStore(): Promise<Store | null> {
   if (!storePromise) {
     storePromise = import("@tauri-apps/plugin-store")
       .then((mod) => mod.load(SETTINGS_FILE, { autoSave: true }))
-      .then((store) => store as unknown as TauriStore)
       .catch(() => null);
   }
   return storePromise;
 }
 
-async function resolveStore(): Promise<TauriStore | null> {
+async function resolveStore(): Promise<Store | null> {
   if (!isTauri()) {
     return null;
   }
