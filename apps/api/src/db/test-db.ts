@@ -10,6 +10,8 @@ const MIGRATIONS_DIR = fileURLToPath(
   new URL("../../drizzle/", import.meta.url),
 );
 
+const TABLES = ["session", "account", "verification", "jwks", "user"] as const;
+
 /** In-memory Postgres (PGlite) with the committed migrations applied. */
 export async function createTestDb() {
   const client = new PGlite();
@@ -28,4 +30,11 @@ export async function createTestDb() {
 
   const db = drizzle(client, { schema });
   return { client, db };
+}
+
+/** Remove every row so one PGlite instance can serve the whole file. */
+export async function resetTestDb(client: PGlite): Promise<void> {
+  await client.exec(
+    `TRUNCATE TABLE ${TABLES.map((table) => `"${table}"`).join(", ")} CASCADE;`,
+  );
 }

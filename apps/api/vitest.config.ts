@@ -16,5 +16,8 @@ export default defineConfig({
   test: {
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // PGlite startup and password hashing are slow under CPU contention.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
 });

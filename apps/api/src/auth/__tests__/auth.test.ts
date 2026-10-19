@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../../app";
 import { createChallengeStore, pkceChallenge } from "../desktop-flow";
-import { createTestDb } from "../../db/test-db";
+import { createTestDb, resetTestDb } from "../../db/test-db";
 import type { ApiEnv } from "../../env";
 import {
   clampSessionExpiry,
@@ -25,8 +25,15 @@ const env: ApiEnv = {
   AUTH_REQUIRE_EMAIL_VERIFICATION: false,
 };
 
+const shared = await createTestDb();
+
+beforeEach(() => resetTestDb(shared.client));
+afterAll(async () => {
+  await shared.client.close();
+});
+
 async function setup() {
-  const { db, client } = await createTestDb();
+  const { db, client } = shared;
   const auth = createAuth({
     db,
     env,
