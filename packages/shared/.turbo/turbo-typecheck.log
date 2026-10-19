@@ -1,4 +1,0 @@
-
-> @app/shared@0.0.0 typecheck /Users/priyesh/Desktop/desktop-app-boilerplate/packages/shared
-> tsc -p tsconfig.json --noEmit
-
