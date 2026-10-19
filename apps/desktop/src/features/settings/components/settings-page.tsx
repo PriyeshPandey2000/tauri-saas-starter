@@ -1,15 +1,8 @@
 import { useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
-import {
-  AppSettingsSchema,
-  type AppSettings,
-  type AppSettingsInput,
-} from "@app/shared";
-import { Button } from "@/shared/ui/button";
+import { AppSettingsSchema, type AppSettings } from "@app/shared";
 import { applyTheme } from "@/shared/lib/theme";
 
 import { useSettingsStore } from "../settings-store";
@@ -21,27 +14,45 @@ export function SettingsPage() {
   const sidebarCollapsed = useSettingsStore((state) => state.sidebarCollapsed);
   const telemetryConsent = useSettingsStore((state) => state.telemetryConsent);
 
-  const form = useForm<AppSettingsInput, unknown, AppSettings>({
-    resolver: zodResolver(AppSettingsSchema),
+  const form = useForm<AppSettings>({
     defaultValues: { theme, language, sidebarCollapsed, telemetryConsent },
   });
 
   const watchedTheme = useWatch({ control: form.control, name: "theme" });
+  const watchedLanguage = useWatch({ control: form.control, name: "language" });
+  const watchedSidebarCollapsed = useWatch({
+    control: form.control,
+    name: "sidebarCollapsed",
+  });
+  const watchedTelemetryConsent = useWatch({
+    control: form.control,
+    name: "telemetryConsent",
+  });
 
   useEffect(() => {
-    if (watchedTheme) {
-      applyTheme(watchedTheme);
+    const parsed = AppSettingsSchema.safeParse({
+      theme: watchedTheme,
+      language: watchedLanguage,
+      sidebarCollapsed: watchedSidebarCollapsed,
+      telemetryConsent: watchedTelemetryConsent,
+    });
+    if (!parsed.success) {
+      return;
     }
-  }, [watchedTheme]);
 
-  const onSubmit = form.handleSubmit((values) => {
+    const settings = parsed.data;
     const state = useSettingsStore.getState();
-    state.setTheme(values.theme);
-    state.setLanguage(values.language);
-    state.setSidebarCollapsed(values.sidebarCollapsed);
-    state.setTelemetryConsent(values.telemetryConsent);
-    toast.success(t("settings.saved"));
-  });
+    state.setTheme(settings.theme);
+    state.setLanguage(settings.language);
+    state.setSidebarCollapsed(settings.sidebarCollapsed);
+    state.setTelemetryConsent(settings.telemetryConsent);
+    applyTheme(settings.theme);
+  }, [
+    watchedTheme,
+    watchedLanguage,
+    watchedSidebarCollapsed,
+    watchedTelemetryConsent,
+  ]);
 
   return (
     <section className="mx-auto flex max-w-2xl flex-col gap-8 p-8">
@@ -52,7 +63,7 @@ export function SettingsPage() {
         </p>
       </header>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <fieldset className="flex flex-col gap-2">
           <legend className="text-sm font-medium">{t("theme.label")}</legend>
           <div className="flex gap-2">
@@ -94,11 +105,7 @@ export function SettingsPage() {
           />
           {t("settings.sidebarCollapsed")}
         </label>
-
-        <div>
-          <Button type="submit">{t("settings.title")}</Button>
-        </div>
-      </form>
+      </div>
     </section>
   );
 }
