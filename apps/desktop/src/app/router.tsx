@@ -14,7 +14,7 @@ export function createAppRouter(queryClient: QueryClient) {
     context: { queryClient } satisfies RouterContext,
     defaultPreload: "intent",
     scrollRestoration: true,
-    Wrap: ({ children }) => <AppShell>{children}</AppShell>,
+    InnerWrap: ({ children }) => <AppShell>{children}</AppShell>,
     defaultNotFoundComponent: NotFound,
     defaultErrorComponent: ({ error, reset }) => (
       <ErrorFallback
