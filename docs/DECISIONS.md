@@ -94,6 +94,8 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Vendor import check knows the API auth folder (M3.1/M3.2)**: `scripts/check-vendor-imports.mjs` also allows `apps/api/src/auth/`, because that folder is the API's Better Auth adapter/composition (the desktop-oriented boundary rules and `src/ports/adapters` layout do not apply to the Hono server). The desktop app still imports `better-auth` nowhere.
 - **CSP is generated at build/dev time (M3.2)**: `apps/desktop/scripts/tauri.mjs` reads `VITE_API_URL` and passes a merged `--config` so `connect-src` includes the real API origin; the committed `tauri.conf.json` CSP is only a fallback for direct CLI use.
 
+- **Boundary check ignores the auth contract test (M3.12)**: `apps/api/src/__tests__/contract.test.ts` imports the real desktop adapter on purpose, which crosses the desktop-oriented element rules. It is test-only and excluded from the API tsconfig build; production code keeps the boundaries.
+
 - **Rate limiting is per API instance (M3.2)**: Better Auth's limiter uses memory storage; `storage: "database"` would add a `rateLimit` table and is deferred until the API scales beyond one instance. The desktop routes use a small in-memory limiter for the same reason.
 - **Desktop PKCE challenges live in `verification` (M3 review item 7)**: rows are keyed by `desktop-pkce:<sha256(ott)>` and deleted on use; they expire with the OTT (3 minutes).
 

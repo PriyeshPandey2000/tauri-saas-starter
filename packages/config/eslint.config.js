@@ -58,7 +58,7 @@ export default [
         },
         node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
       },
-      'boundaries/ignore': ['**/*.d.ts', '**/packages/shared/**'],
+      'boundaries/ignore': ['**/*.d.ts', '**/packages/shared/**', '**/__tests__/contract.test.ts'],
       'boundaries/files': [{ pattern: '**/ports/index.ts', category: 'composition-root' }],
       'boundaries/elements': [
         { type: 'adapter', pattern: 'ports/adapters/*', capture: ['adapterName'] },

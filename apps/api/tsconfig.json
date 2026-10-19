@@ -8,5 +8,6 @@
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/__tests__/contract.test.ts"]
 }
