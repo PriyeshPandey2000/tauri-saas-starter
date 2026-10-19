@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { DEV_ORIGINS, TAURI_ORIGINS, resolveCorsOrigins } from "../app";
+import { DEV_ORIGINS, TAURI_ORIGINS, resolveTrustedOrigins } from "../app";
 
 describe("cors origins", () => {
   it("allows the dev origin outside production", () => {
-    const origins = resolveCorsOrigins({
+    const origins = resolveTrustedOrigins({
       NODE_ENV: "development",
       CORS_ORIGINS: undefined,
     });
@@ -12,7 +12,7 @@ describe("cors origins", () => {
   });
 
   it("drops the dev origin in production but keeps Tauri origins", () => {
-    const origins = resolveCorsOrigins({
+    const origins = resolveTrustedOrigins({
       NODE_ENV: "production",
       CORS_ORIGINS: undefined,
     });

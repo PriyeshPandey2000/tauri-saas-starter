@@ -67,6 +67,48 @@ describe("auth API", () => {
     expect(signedIn.token).toBeTruthy();
   });
 
+  it("rejects an untrusted origin on sign-in with a cookie", async () => {
+    const { app } = await setup();
+    const response = await app.fetch(
+      new Request("http://localhost:8787/api/auth/sign-in/email", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: "better-auth.session_token=stale",
+          origin: "https://evil.example",
+        },
+        body: JSON.stringify({
+          email: "nobody@example.com",
+          password: "wrong-password",
+        }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "INVALID_ORIGIN",
+    });
+  });
+
+  it("accepts the webview origin on sign-in with a cookie", async () => {
+    const { auth, app } = await setup();
+    await signUp(auth);
+    const response = await app.fetch(
+      new Request("http://localhost:8787/api/auth/sign-in/email", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: "better-auth.session_token=stale",
+          origin: "tauri://localhost",
+        },
+        body: JSON.stringify({
+          email: "ada@example.com",
+          password: "correct-horse-battery",
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+  });
+
   it("rate limits repeated sign-in attempts", async () => {
     const { app } = await setup();
     let lastStatus = 0;

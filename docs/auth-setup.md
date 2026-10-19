@@ -101,7 +101,17 @@ Email verification and password-reset links are sent through the logging
 - The app validates `state` and the PKCE verifier before exchanging the one-time
   token. A mismatch shows an error and the flow must be restarted.
 
-## 8. Rate limiting
+## 8. Origins
+
+The webviews and Better Auth must agree on where requests come from, so one helper
+(`resolveTrustedOrigins`, `apps/api/src/auth/origins.ts`) feeds both Hono CORS and
+Better Auth `trustedOrigins`. The built-in list is `tauri://localhost`,
+`http://tauri.localhost`, `https://tauri.localhost`, plus `http://localhost:1420`
+outside production, plus any `CORS_ORIGINS` extras. `BETTER_AUTH_URL` stays in
+`trustedOrigins`. The origin check is pinned on (`advanced.disableOriginCheck:
+false`) because Better Auth otherwise skips it when `NODE_ENV=test`.
+
+## 9. Rate limiting
 
 Better Auth's built-in limiter (sign-in/sign-up/OTT rules) uses per-instance memory
 storage, and the desktop OAuth routes `/auth/desktop/*` use the same model (30
@@ -114,7 +124,7 @@ The desktop limiter keys each bucket on the socket address by default. It ignore
 `TRUSTED_PROXY_HEADER` to the header the proxy appends (for example `fly-client-ip`
 on Fly.io) so the real client IP is used instead.
 
-## 9. Manual checks
+## 10. Manual checks
 
 - Sign up, verify (check the API console link if verification is enabled), sign in.
 - Google round-trip through the browser and deep link.

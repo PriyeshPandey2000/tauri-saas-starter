@@ -8,6 +8,7 @@ import { bearer, jwt, oneTimeToken } from "better-auth/plugins";
 import type { Database } from "../db/client";
 import * as schema from "../db/schema";
 import type { ApiEnv } from "../env";
+import { resolveTrustedOrigins } from "./origins";
 import type { MailerPort } from "../ports/MailerPort";
 
 export const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -52,7 +53,11 @@ export function createAuth({ db, database, env, mailer }: AuthDeps) {
   return betterAuth({
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
-    trustedOrigins: [env.BETTER_AUTH_URL],
+    trustedOrigins: [...resolveTrustedOrigins(env), env.BETTER_AUTH_URL],
+    advanced: {
+      // Better Auth skips the origin check when NODE_ENV=test; keep it on always.
+      disableOriginCheck: false,
+    },
     database: resolvedDatabase,
     emailAndPassword: {
       enabled: true,

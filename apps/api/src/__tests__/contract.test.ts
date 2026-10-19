@@ -76,9 +76,15 @@ describe("auth contract (real adapter + real Hono app + Postgres)", () => {
     close = () => server.close();
     await once(server, "listening");
     store = memoryStore();
+    const webviewFetch: typeof fetch = (input, init) => {
+      const headers = new Headers(init?.headers);
+      headers.set("origin", "tauri://localhost");
+      return fetch(input, { ...init, headers });
+    };
     adapter = createBetterAuthAdapter({
       getApiUrl: () => baseUrl,
       store,
+      fetchImpl: webviewFetch,
     });
   });
 
@@ -107,7 +113,10 @@ describe("auth contract (real adapter + real Hono app + Postgres)", () => {
     expect(accessToken).toBeTruthy();
 
     const me = await fetch(`${baseUrl}/api/me`, {
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        origin: "tauri://localhost",
+      },
     });
     expect(me.status).toBe(200);
     await expect(me.json()).resolves.toEqual({

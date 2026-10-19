@@ -8,33 +8,21 @@ import type { Auth } from "./auth/auth";
 import { createChallengeStore, type ChallengeStore } from "./auth/desktop-flow";
 import { desktopAuthRoutes } from "./auth/desktop-routes";
 import { createRateLimiter, resolveClientKey } from "./auth/rate-limit";
+import { resolveTrustedOrigins } from "./auth/origins";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
 import type { ApiEnv } from "./env";
+
+export {
+  DEV_ORIGINS,
+  TAURI_ORIGINS,
+  resolveTrustedOrigins,
+} from "./auth/origins";
 
 export interface AppDeps {
   auth: Auth;
   env: ApiEnv;
   db?: import("./db/client").Database;
   challenges?: ChallengeStore;
-}
-
-/** Exact webview origins: macOS/Linux use `tauri://`, Windows uses `http(s)://tauri.localhost`. */
-export const TAURI_ORIGINS = [
-  "tauri://localhost",
-  "http://tauri.localhost",
-  "https://tauri.localhost",
-];
-export const DEV_ORIGINS = ["http://localhost:1420"];
-
-export function resolveCorsOrigins(
-  env: Pick<ApiEnv, "CORS_ORIGINS" | "NODE_ENV">,
-): string[] {
-  const extra = (env.CORS_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  const dev = env.NODE_ENV === "production" ? [] : DEV_ORIGINS;
-  return [...TAURI_ORIGINS, ...dev, ...extra];
 }
 
 function socketAddress(context: Context): string | undefined {
@@ -70,7 +58,7 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
   app.use(
     "*",
     cors({
-      origin: resolveCorsOrigins(env),
+      origin: resolveTrustedOrigins(env),
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
       exposeHeaders: ["set-auth-token"],
