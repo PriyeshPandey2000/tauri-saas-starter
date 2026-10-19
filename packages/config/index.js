@@ -1,1 +1,3 @@
-export { default as eslintConfig } from './eslint.config.js';
+import config from "./eslint.config.js";
+
+export default config;

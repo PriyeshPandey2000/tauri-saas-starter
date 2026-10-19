@@ -25,6 +25,12 @@ No further tasks or commits until answered.
   (`8.71.3-alpha.*`, pre-release, forbidden by rule 14) or the "TS 6 side-by-side
   API" workaround — neither of which is a stable, PRD-clean choice.
 
+## Resolution: Option 1 selected (DECISION)
+- TypeScript pinned to 6.0.3 (use ~6.0.3) in root and all workspaces.
+- eslint 10.13.0 + typescript-eslint 8.71.2 kept.
+- Logged deviation in docs/DECISIONS.md with reason (typescript-eslint peer <6.1.0, TS 7 unsupported) and revisit (when typescript-eslint ships stable TS 7 support).
+- pnpm install re-run; eslint load to be confirmed.
+
 ### Options (pick one; agent will not guess)
 
 1. **Pin TypeScript to 6.0.3** (latest stable 6.x) for all workspaces and keep

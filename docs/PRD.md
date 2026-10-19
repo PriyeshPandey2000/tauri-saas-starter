@@ -73,7 +73,7 @@ Open assumptions: app is online-first with local cache (not full offline sync). 
 7. **Rust commands are async** and never block the main thread; CPU work uses `spawn_blocking`.
 8. **Security.** Strict CSP, Tauri capabilities deny-by-default, only allow what a feature uses. No `eval`, no remote scripts.
 9. **Perf budgets** (checked in CI from M9): cold start to interactive < 1.5s on reference machine, idle RAM < 150MB, JS initial bundle < 300KB gzip, installer < 15MB.
-10. **Small PRs per task.** One commit per task, message format `M<n>.<task>: <what>`.
+10. **Small commits per task, Conventional Commits format.** One commit per task. Format: `<type>(<scope>): <subject>` with an optional body and footer. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Scope is the area touched (`desktop`, `api`, `shared`, `config`, `ci`, `docs`, or a feature name like `auth`). Subject: imperative mood, lowercase, no trailing period, max 72 chars (e.g. `feat(auth): add oauth deep link callback`). Put the milestone task reference in the footer, e.g. `Refs: M3.5`. Breaking changes use `!` after the scope and a `BREAKING CHANGE:` footer. Commit messages are enforced by commitlint (M0.17). Do not rewrite history already committed before this rule existed.
 11. **No scope creep.** If something is not in the milestone, don't build it. Log ideas in `docs/DECISIONS.md` under "Backlog".
 12. **Ask, don't guess.** If a task is ambiguous or a locked decision blocks you, STOP and write the question in `docs/milestones/M<n>-questions.md`. Do not invent a workaround.
 13. **Match existing style.** Read neighboring files first. Reuse existing helpers.

@@ -25,12 +25,13 @@ export default [
     },
     settings: {
       "boundaries/elements": [
-        { type: "app", pattern: "apps/desktop/src/app/**" },
-        { type: "routes", pattern: "apps/desktop/src/routes/**" },
-        { type: "feature", pattern: "apps/desktop/src/features/**" },
-        { type: "shared", pattern: "apps/desktop/src/shared/**" },
-        { type: "port", pattern: "apps/desktop/src/ports/**" },
-        { type: "adapter", pattern: "apps/desktop/src/ports/adapters/**" },
+        { type: "adapter", pattern: "**/src/ports/adapters/**", mode: "full" },
+        { type: "port", pattern: "**/src/ports/**", mode: "full" },
+        { type: "app", pattern: "**/src/app/**", mode: "full" },
+        { type: "routes", pattern: "**/src/routes/**", mode: "full" },
+        { type: "feature", pattern: "**/src/features/**", mode: "full" },
+        { type: "shared", pattern: "**/src/shared/**", mode: "full" },
+        { type: "entry", pattern: "**/src/*.{ts,tsx}", mode: "full" },
       ],
       "boundaries/ignore": ["**/*.d.ts"],
     },
@@ -42,6 +43,7 @@ export default [
         {
           default: "disallow",
           rules: [
+            { from: "entry", allow: ["app", "routes", "feature", "shared", "port", "adapter"] },
             { from: "app", allow: ["routes", "shared", "port", "feature"] },
             { from: "routes", allow: ["shared", "port", "feature"] },
             { from: "feature", allow: ["shared", "port"] },
@@ -55,9 +57,7 @@ export default [
         "error",
         {
           default: "disallow",
-          rules: [
-            { target: ["feature", "shared"], allow: ["index.ts", "**/index.ts"] },
-          ],
+          rules: [{ target: ["feature"], allow: ["index.ts", "**/index.ts"] }],
         },
       ],
       "boundaries/no-unknown": ["error"],

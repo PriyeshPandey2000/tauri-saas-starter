@@ -5,19 +5,23 @@
   "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
+    "pnpm": ">=9.0.0",
+    "typescript": ">=6.0.3 <6.1.0"
   },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "lint:arch": "pnpm --filter @config/eslint-config run lint:arch --if-present || (eslint --config packages/config/eslint.config.js --no-ignore apps/* packages/* || true) && pnpm --filter @config/eslint-config run lint:arch",
+    "lint:arch": "eslint --config packages/config/eslint.config.js apps/desktop packages --ext .ts,.tsx",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "turbo": "^2.5.6"
+    "@config/eslint-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.9"
   }
 }

@@ -14,12 +14,13 @@
 - [ ] 0.8 `apps/api`: Hono hello-world with `GET /health` returning `{ ok: true }`. Runs with `pnpm --filter api dev`.
 - [ ] 0.9 Tauri release profile in `src-tauri/Cargo.toml`: `lto = true`, `codegen-units = 1`, `opt-level = "s"`, `strip = true`, `panic = "abort"`.
 - [ ] 0.10 Strict CSP in `tauri.conf.json` (default-src 'self'; allow only what dev needs). Empty capabilities except `core:default`.
-- [ ] 0.11 Husky + lint-staged: run eslint + prettier on staged files. Commitlint not required.
+- [ ] 0.11 Husky + lint-staged: run eslint + prettier on staged files. Commit message linting is added in 0.17.
 - [ ] 0.12 Root scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `format`.
 - [ ] 0.13 Vitest set up in `apps/desktop` with one trivial passing test.
 
 - [ ] 0.14 **Latest versions.** Per PRD rule 14: scaffold with the current official Tauri 2 create tool, add every dependency at latest stable, check Tauri/plugin version alignment, and fill the "Dependency versions" table in `DECISIONS.md`. Add `.npmrc` with `engine-strict=true`, set `engines` and `packageManager` in root `package.json`, and add `rust-toolchain.toml` pinned to current stable.
 - [ ] 0.15 **Architecture enforcement.** Install `eslint-plugin-boundaries` and encode PRD rule 15 in `packages/config`: element types (`app`, `routes`, `feature`, `shared`, `port`, `adapter`) and allowed import directions. Add rule that features may import other features only never (public API `index.ts` only for `app`/`routes`). Add `pnpm lint:arch` script and include in root `lint`. Add a deliberately bad import in a scratch file to prove the rule fails, paste output, then delete the scratch file.
+- [ ] 0.17 **Commit message standard.** Install `@commitlint/cli` and `@commitlint/config-conventional`; add `commitlint.config.ts` extending `config-conventional` with `scope-enum` allowing: desktop, api, web, shared, config, ci, docs, deps, release, plus feature names (auth, billing, flags, notes, settings, observability, native). Add a Husky `commit-msg` hook running commitlint. From this task onward all commits follow PRD rule 10 (earlier `M0.n:` commits stay as they are; do not rewrite history). Prove it: attempt a bad message (`git commit -m "stuff"`), paste the rejection, then commit properly. Update the earlier note in 0.11 accordingly.
 - [ ] 0.16 Add a `check-vendor-imports` test/script: fails if `@sentry/*`, `posthog-*`, `better-auth`, or other vendor SDKs are imported outside `ports/adapters/`. (Vendors not yet installed are fine; list is extended as milestones add them.)
 
 ## Acceptance criteria
