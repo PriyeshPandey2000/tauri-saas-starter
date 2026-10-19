@@ -172,6 +172,7 @@ export function createBetterAuthAdapter(
   const listeners = new Set<AuthStateListener>();
   let pendingOAuth: PendingOAuth | null = null;
   let refreshPromise: Promise<void> | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   const authBase = () => `${options.getApiUrl()}/api/auth`;
 
@@ -204,6 +205,22 @@ export function createBetterAuthAdapter(
       return null;
     }
     return toSession(parsed.data.user, parsed.data.session.expiresAt);
+  }
+
+  async function cachedSession(): Promise<AuthSession | null> {
+    const [rawUser, expiresAt] = await Promise.all([
+      store.get(AUTH_KEYS.user),
+      store.get(AUTH_KEYS.sessionExpiresAt),
+    ]);
+    if (!rawUser || !expiresAt) {
+      return null;
+    }
+    try {
+      const user = UserSchema.parse(JSON.parse(rawUser));
+      return toSession(user, expiresAt);
+    } catch {
+      return null;
+    }
   }
 
   async function clearLocal(): Promise<void> {
@@ -264,6 +281,44 @@ export function createBetterAuthAdapter(
     await refresh();
   }
 
+  async function offlineSession(): Promise<AuthSession | null> {
+    const cached = await cachedSession();
+    if (cached) {
+      emit(cached);
+      scheduleRetry();
+    }
+    return cached;
+  }
+
+  function scheduleRetry(): void {
+    if (retryTimer !== null) {
+      return;
+    }
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      void (async () => {
+        try {
+          await useStoreSession();
+        } catch {
+          // Next request tries again.
+        }
+      })();
+    }, 30_000);
+  }
+
+  async function useStoreSession(): Promise<void> {
+    const sessionToken = await store.get(AUTH_KEYS.sessionToken);
+    if (!sessionToken) {
+      return;
+    }
+    const response = await fetchImpl(`${authBase()}/get-session`, {
+      headers: { authorization: `Bearer ${sessionToken}` },
+    });
+    if (response.status === 401) {
+      await clearLocal();
+    }
+  }
+
   async function refresh(): Promise<void> {
     if (refreshPromise) {
       return refreshPromise;
@@ -286,20 +341,32 @@ export function createBetterAuthAdapter(
       if (!sessionToken) {
         return null;
       }
-      const response = await fetchImpl(`${authBase()}/get-session`, {
-        headers: { authorization: `Bearer ${sessionToken}` },
-      });
-      const body = await readJson(response);
-      const parsed = SessionEnvelopeSchema.safeParse(body);
-      if (!response.ok || !parsed.success) {
+
+      let response: Response;
+      try {
+        response = await fetchImpl(`${authBase()}/get-session`, {
+          headers: { authorization: `Bearer ${sessionToken}` },
+        });
+      } catch {
+        return offlineSession();
+      }
+
+      if (response.status === 401) {
         await clearLocal();
         return null;
+      }
+      if (!response.ok) {
+        return offlineSession();
+      }
+      const parsed = SessionEnvelopeSchema.safeParse(await readJson(response));
+      if (!parsed.success) {
+        return offlineSession();
       }
       const session = toSession(
         parsed.data.user,
         parsed.data.session.expiresAt,
       );
-      await store.set(AUTH_KEYS.user, JSON.stringify(session.user));
+      await persistSession(sessionToken, session);
       await ensureAccessToken();
       emit(session);
       return session;

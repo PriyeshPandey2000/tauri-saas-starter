@@ -64,3 +64,57 @@ describe("better auth adapter", () => {
     ).rejects.toMatchObject({ code: "state_mismatch" });
   });
 });
+
+describe("getSession failures", () => {
+  const user = JSON.stringify({
+    id: "u1",
+    email: "ada@example.com",
+    name: "Ada",
+    emailVerified: true,
+  });
+  const seeded = () =>
+    memoryStore({
+      [AUTH_KEYS.sessionToken]: "session-token",
+      [AUTH_KEYS.user]: user,
+      [AUTH_KEYS.sessionExpiresAt]: "2026-11-01T00:00:00.000Z",
+    });
+
+  it("keeps the session on a 5xx and returns the cached user", async () => {
+    const adapter = createBetterAuthAdapter({
+      getApiUrl: () => "http://localhost:8787",
+      store: seeded(),
+      fetchImpl: (async () =>
+        new Response(null, { status: 503 })) as unknown as typeof fetch,
+    });
+    const session = await adapter.getSession();
+    expect(session?.user.email).toBe("ada@example.com");
+  });
+
+  it("keeps the session when the network fails", async () => {
+    const store = seeded();
+    const adapter = createBetterAuthAdapter({
+      getApiUrl: () => "http://localhost:8787",
+      store,
+      fetchImpl: (async () => {
+        throw new TypeError("offline");
+      }) as unknown as typeof fetch,
+    });
+    const session = await adapter.getSession();
+    expect(session?.user.email).toBe("ada@example.com");
+    await expect(store.get(AUTH_KEYS.sessionToken)).resolves.toBe(
+      "session-token",
+    );
+  });
+
+  it("clears the session only on 401", async () => {
+    const store = seeded();
+    const adapter = createBetterAuthAdapter({
+      getApiUrl: () => "http://localhost:8787",
+      store,
+      fetchImpl: (async () =>
+        new Response(null, { status: 401 })) as unknown as typeof fetch,
+    });
+    await expect(adapter.getSession()).resolves.toBeNull();
+    await expect(store.get(AUTH_KEYS.sessionToken)).resolves.toBeNull();
+  });
+});
