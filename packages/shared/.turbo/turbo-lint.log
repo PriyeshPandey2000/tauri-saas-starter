@@ -1,7 +1,0 @@
-
-> @app/shared@0.0.0 lint /Users/priyesh/Desktop/desktop-app-boilerplate/packages/shared
-> eslint .
-
-[boundaries][warning]: The 'mode' option in element descriptors is deprecated and will be removed in a future major version.
-  Use 'partialMatch: false' instead of 'mode: "full"'. Remove 'mode: "folder"' (it is the default). More info: https://www.jsboundaries.dev/docs/releases/migration-guides/v6-to-v7/#deprecated-mode-in-element-descriptors
-
