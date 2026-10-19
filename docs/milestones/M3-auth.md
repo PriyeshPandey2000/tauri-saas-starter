@@ -260,3 +260,12 @@ Follow-ups (first commits, small):
 3. **Challenge store hygiene.** `take` selects then deletes, so two concurrent exchanges can both read the row. Use `DELETE ... RETURNING` (atomic). Also delete expired `desktop-pkce:*` rows opportunistically (on `set`).
 
 Gate (user): start Docker (Docker Desktop or OrbStack), run `pnpm db:up` then `pnpm --filter api db:migrate`; the migration has only ever run on PGlite. Google OAuth round-trip and Windows origin checks remain later user checks.
+
+### Round 3 (2026-10-19): PASS (final)
+
+Reviewer re-verified on fresh Postgres 17 (port 5434) with the pushed code: migrations apply (5 tables); sign-up/sign-in/token mint/sign-out succeed with `Origin: tauri://localhost` and `http://tauri.localhost`; dev origin `http://localhost:1420` accepted outside production and rejected with 403 in production; `https://evil.example` rejected with 403; rotating `X-Forwarded-For` no longer bypasses the desktop-route limiter (429 after 30); forced `turbo run lint typecheck test build` 12/12 (api 22 tests, desktop 63).
+
+Small follow-ups (first commits of M4):
+
+1. Better Auth's own rate limiter logs "could not determine a client IP ... single shared per-path bucket" and by default trusts `x-forwarded-for`. Set `advanced.ipAddress.ipAddressHeaders` from `TRUSTED_PROXY_HEADER` when set. When no client IP can be determined, a shared per-path bucket lets any client exhaust `/sign-in` (10/min) for everyone; document this and the required proxy header in docs/auth-setup.md.
+2. Compose published port clashes with a native Postgres on 5432 (the agent had to use socat). Publish `${DB_PORT:-5433}:5432`, update `.env.example`, root `db:*` docs, and `docs/deferred-checks.md`.
