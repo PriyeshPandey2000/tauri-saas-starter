@@ -20,6 +20,7 @@ export default [
       '**/node_modules/**',
       '**/src-tauri/**',
       '**/routeTree.gen.ts',
+      '**/src/shared/ipc/bindings.ts',
     ],
   },
   {

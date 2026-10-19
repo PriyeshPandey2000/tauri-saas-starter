@@ -6,11 +6,24 @@ use tauri_specta::{Builder, collect_commands};
 
 const BINDINGS_PATH: &str = "../src/shared/ipc/bindings.ts";
 
+const TYPED_ERROR_IMPL: &str = r#"async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {
+    try {
+        return { status: "ok", data: await result };
+    } catch (e) {
+        if (e instanceof Error) throw e;
+        return { status: "error", error: e as E };
+    }
+}"#;
+
 pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .typ::<error::AppError>()
+        .typed_error_impl(TYPED_ERROR_IMPL)
         .commands(collect_commands![
-            commands::app_info::get_app_info
+            commands::app_info::get_app_info,
+            commands::secure_storage::secure_set,
+            commands::secure_storage::secure_get,
+            commands::secure_storage::secure_delete
         ])
 }
 
