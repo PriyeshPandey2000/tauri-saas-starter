@@ -173,6 +173,65 @@ db:up`, then `pnpm --filter api db:migrate`.
 - Google OAuth round-trip (credentials + bundled macOS app required).
 - Real keychain round-trip; Windows deep link/CORS behaviour; installer build.
 
+### Round 3 fixes (2026-10-19)
+
+- `1240c4c` M3.22 webview origins. One helper (`resolveTrustedOrigins`) now feeds
+  both Hono CORS and Better Auth `trustedOrigins` (`tauri://localhost`,
+  `http(s)://tauri.localhost`, dev origin outside production, `CORS_ORIGINS`
+  extras, plus `BETTER_AUTH_URL`). The origin check is pinned on
+  (`advanced.disableOriginCheck: false`) because Better Auth skips it when
+  `NODE_ENV=test`. Tests send `Origin` on sign-up/sign-in/token/get-session/sign-out
+  and reject `https://evil.example` with `403 INVALID_ORIGIN`.
+- `d68813b` M3.23 flaky test. `apps/api/vitest.config.ts` sets `testTimeout` and
+  `hookTimeout` to 30s; `auth.test.ts` reuses one PGlite per file and truncates
+  between tests. Full suite ran green 3/3 with `pnpm turbo run test --force`.
+- `b0ab23d` M3.24 rate-limiter key. `TRUSTED_PROXY_HEADER` added to the env schema
+  and `.env.example`; the desktop limiter keys on that header when set, else on the
+  socket address from `getConnInfo`, and never on `x-forwarded-for`. Tests cover a
+  spoofed header and the trusted-proxy path.
+- `4494799` M3.25 atomic challenge store. `take()` uses `DELETE ... RETURNING`; a
+  test shows two concurrent takes yield exactly one success. `set()` prunes expired
+  `desktop-pkce:*` rows.
+
+### Verification output (2026-10-19, after round 3)
+
+```
+pnpm lint        -> OK; check-vendor-imports: OK
+pnpm typecheck   -> 3 successful, 3 total
+pnpm test        -> desktop 17 files / 63 tests; api 7 files / 22 tests
+pnpm --filter desktop build -> built in 720ms; main 598.99 kB (gzip 188.23 kB)
+cargo test       -> 3 passed; 1 ignored (keychain_roundtrip)
+pnpm turbo run test --force -> green 3/3 (desktop 63, api 22)
+```
+
+### Real-Postgres migration (2026-10-19)
+
+The Docker daemon was started for this run. A local Postgres already owns
+`127.0.0.1:5432`, so `docker compose up`'s published 5432 is shadowed on the host;
+running the migration straight at `localhost:5432` reached the native server, not
+the container. A throwaway `alpine/socat` forwarder published the container on
+5433, and the migration ran against real Postgres there.
+
+```
+$ pnpm db:up
+ Container desktop-app-boilerplate-db-1  Started
+$ DATABASE_URL_DIRECT="postgres://app:app@127.0.0.1:5433/app" pnpm --filter api db:migrate
+Using 'postgres' driver for database querying
+[✓] migrations applied successfully!
+$ docker compose exec -T db psql -U app -d app -c "\dt"
+ public | account      | table | app
+ public | jwks         | table | app
+ public | session      | table | app
+ public | user         | table | app
+ public | verification | table | app
+$ docker compose exec -T db psql -U app -d app -c "select id, hash from drizzle.__drizzle_migrations;"
+ id | hash
+  1 | bf44924f2b22e90a671572c794b5334c9086f7b52e8cf6c10ec5f733cf2eef3c
+```
+
+Note for future runs: either free 5432 or map the compose service to 5433 in the
+host port mapping; see `docs/deferred-checks.md`.
+
 ## Review
 
 **Verdict: CHANGES REQUIRED** (2026-10-19). The design (token split, app<->API PKCE, state, OTT, requireAuth) is implemented faithfully and the unit tests pass, but they ran on Better Auth's in-memory adapter with mocked response shapes, so four defects that only show up end to end were missed. Two are security controls that silently do nothing.
