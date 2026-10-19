@@ -124,6 +124,55 @@ mismatch, and the Zod schemas.
 - Main JS gzip is 187.98 kB after auth pages + RHF, approaching the 300 kB M9 budget;
   noted for M9.
 
+### Round 2 fixes (review items 1-10)
+
+- `a91c226` M3.12 real response shapes: sign-in/sign-up parse `{token,user}` with the
+  shared `UserSchema`, then read expiry from `get-session`. Added a contract test
+  driving the real adapter against the live Hono app + Postgres (PGlite): sign-up,
+  sign-in, restore, token mint, `/api/me`, sign-out, no response mocks.
+- `7994d48` M3.13 30-day cap: a `hooks.before` on `/token` and `/get-session` looks
+  up the bearer/cookie session and rejects it past 30 days. Test ages a real
+  session row by 31 days and asserts both endpoints return 401.
+- `4444cc5` M3.14 API serves through `@hono/node-server`; test shows two
+  `Set-Cookie` values survive on the live server.
+- `457c50e` M3.15 `docker-compose.yml` (postgres:17, volume, healthcheck) plus
+  `db:up`/`db:down`/`db:reset`; API tests moved to PGlite with the committed
+  migrations and the real Drizzle adapter. Local/hosted DB docs updated.
+- `a8e2f44` M3.16 `getSession` only clears on 401; 5xx/429/network fall back to the
+  cached user + expiry and retry later. Tests cover 503, network failure, 401.
+- `5408300` M3.17 `/auth/desktop/*` rate limited (30/min); the per-instance memory
+  limit is documented for Better Auth and this limiter.
+- `1db594e` M3.18 `{ott -> challenge}` moved to `verification`, keyed by
+  `sha256(ott)`, single use, TTL 3 minutes.
+- `631eca6` M3.19 dev CORS origin only outside production, `set-auth-token` exposed,
+  `jwtVerify` pinned to EdDSA; CORS tests added.
+- `32f4c84` M3.20 bogus deep links no longer consume the pending OAuth flow; test
+  proves a mismatched state leaves the flow usable.
+- `77e15d4` M3.21 API `typescript` pinned to `~6.0.3`.
+
+### Verification output (2026-10-19, after round 2)
+
+```
+pnpm lint        -> OK; check-vendor-imports: OK
+pnpm typecheck   -> 3 successful, 3 total
+pnpm test        -> desktop 17 files / 63 tests; api 1 file / 1 test
+pnpm --filter api test -> 7 files / 17 tests
+pnpm --filter desktop build -> built in 807ms; main 598.99 kB (gzip 188.23 kB)
+cargo test       -> 3 passed; 1 ignored (keychain_roundtrip)
+```
+
+The API suite now runs on PGlite with the committed migrations and the real Drizzle
+adapter, including the contract test, the 30-day cap, the linking policy, rate
+limiting, PKCE rejection, and multi-cookie handling.
+
+### Not run
+
+- `pnpm --filter api db:migrate` against the compose database: the Docker daemon is
+  not running (`docker info` exits 1). Start Docker Desktop/OrbStack, run `pnpm
+db:up`, then `pnpm --filter api db:migrate`.
+- Google OAuth round-trip (credentials + bundled macOS app required).
+- Real keychain round-trip; Windows deep link/CORS behaviour; installer build.
+
 ## Review
 
 **Verdict: CHANGES REQUIRED** (2026-10-19). The design (token split, app<->API PKCE, state, OTT, requireAuth) is implemented faithfully and the unit tests pass, but they ran on Better Auth's in-memory adapter with mocked response shapes, so four defects that only show up end to end were missed. Two are security controls that silently do nothing.
