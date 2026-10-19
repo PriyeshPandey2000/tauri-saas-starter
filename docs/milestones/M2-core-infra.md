@@ -76,26 +76,50 @@ Commits (one per task, `Refs: M2.n`):
 - M2.10 tests live in their task commits: config (5), redaction (5), apiClient (6),
   ports context/noops (3), Rust `AppError` (2).
 
-### Verification output (2026-10-19)
+### Round 2 fixes (review items 1-6)
+
+- `1ad07e0` M2.11 ignored `keychain_roundtrip` test: unique throwaway service,
+  set/get/delete/delete-again, cleanup on every path. `keyring` 4's `v1` feature
+  initializes the native store lazily on first `Entry::new`, so no explicit default
+  store is needed. Not run by the agent (user runs it).
+- `c767c2e` M2.12 file adapter catches every plugin rejection and falls back to a
+  raw `console` call; tested for the success and rejection paths (no loop).
+- `834bb21` M2.13 optional `VITE_LOG_TARGET` (`console`|`file`) in the config schema
+  and `.env.example`; explicit value wins, else console in dev and file elsewhere.
+- `f4b8a4c` M2.14 bindings path built from `env!("CARGO_MANIFEST_DIR")`; a failed
+  debug export warns instead of panicking.
+- `9c96048` M2.15 a 2xx body that is not JSON maps to `invalid_response`; tested.
+- `d6c9a1d` M2.16 secure-storage wrapper tests: ok, missing key, AppError kind,
+  delete.
+
+### Verification output (2026-10-19, after round 2)
 
 `pnpm lint && pnpm typecheck && pnpm test`:
 
 ```
 check-vendor-imports: OK (no vendor SDK imports outside ports/adapters)
 typecheck: 3 successful, 3 total
-desktop:test: Test Files 11 passed (11)
-desktop:test:      Tests 35 passed (35)
+desktop:test: Test Files 13 passed (13)
+desktop:test:      Tests 47 passed (47)
 api:test:     Test Files 1 passed (1)
 api:test:          Tests 1 passed (1)
+```
+
+`pnpm --filter desktop build`:
+
+```
+dist/assets/index-*.js  533.92 kB (gzip 167.70 kB)
+✓ built in 602ms
 ```
 
 `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`:
 
 ```
+test commands::secure_storage::tests::keychain_roundtrip ... ignored, writes to the real OS keychain; run manually
 test error::tests::serializes_every_variant_with_the_same_shape ... ok
 test error::tests::serializes_with_kind_and_message ... ok
 test tests::export_bindings ... ok
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
 ```
 
 `grep -rn "invoke(" apps/desktop/src | grep -v bindings.ts`:
@@ -114,18 +138,21 @@ Running target/debug/appsdesktop
 
 - The debug startup export rewrote `bindings.ts` with no git diff, so the
   committed bindings match a fresh export.
+- `VITE_LOG_TARGET=file pnpm --filter desktop tauri dev` selected the file adapter.
+  The log then contained the frontend lines, e.g.
+  `[INFO] theme.changed {"theme":"dark"}` from
+  `src/ports/adapters/file-logger.ts`, with no secret material.
 - `~/Library/Logs/com.example.tauri-saas-starter/app.log` was created and received
   the Rust plugin's trace lines (plugin-log UTC timestamps).
-- A keychain round-trip and a 2MB rotation were not run. Both need a real display
-  session / a lot of log volume; the redaction path is covered by unit tests and
-  the file adapter is only selected outside dev builds.
+- A keychain round-trip and a 2MB rotation were not run.
 
 ### Not run
 
-- Secure set/get/delete round-trip through the macOS keychain (manual check; the
-  agent did not write to the user's keychain).
-- Log rotation and a redacted token appearing in the log file (no display; rotation
-  needs 2MB of entries).
+- Keychain round-trip (user): `cargo test --manifest-path
+apps/desktop/src-tauri/Cargo.toml -- --ignored keychain_roundtrip`.
+- Log rotation (needs 2MB of entries).
+- Interactive theme change in the window (no display); the mount-time
+  `theme.changed` line above proves the file path.
 - Installer build (`tauri build`).
 
 ### Notes for review
