@@ -13,6 +13,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @radix-ui/react-slot             | 1.5.0             | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-query            | 5.104.4           | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-router           | 1.170.45          | 2026-10-19 | latest stable                                                                  |
+| @tanstack/router-cli             | 1.167.45          | 2026-10-19 | latest stable; `tsr generate` route tree                                       |
 | @tanstack/router-plugin          | 1.168.47          | 2026-10-19 | latest stable; Vite file-based route generation                                |
 | @tailwindcss/vite                | 4.3.3             | 2026-10-19 | latest stable                                                                  |
 | @tauri-apps/api                  | 2.12.4            | 2026-10-19 | latest stable                                                                  |
@@ -76,3 +77,4 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - Session replay, perf tracing
 - Store distribution (MSIX / Mac App Store)
 - Move dev-only CSP origins (`http://localhost:1420`, `ws://localhost:1420`) out of the production CSP in `tauri.conf.json` into a dev-only override (scheduled M2/M9)
+- Lazy-load the command palette (`cmdk`) and re-check the bundle with a visualizer. The main chunk is 176.95 kB gzip, already ~59% of the 300 kB initial-JS budget with no features, and the palette ships in it (scheduled M2/M9)

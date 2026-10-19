@@ -73,9 +73,12 @@ check-vendor-imports: OK (no vendor SDK imports outside ports/adapters)
 ```
  desktop:test:  ✓ src/__tests__/basic.test.ts (1 test)
  desktop:test:  ✓ src/features/settings/__tests__/settings-schema.test.ts (3 tests)
+ desktop:test:  ✓ src/features/settings/__tests__/settings-rehydrate.test.ts (4 tests)
  desktop:test:  ✓ src/shared/lib/__tests__/nav.test.ts (2 tests)
- desktop:test:  Test Files  3 passed (3)
- desktop:test:       Tests  6 passed (6)
+ desktop:test:  ✓ src/shared/lib/__tests__/theme.test.ts (2 tests)
+ desktop:test:  ✓ src/shared/lib/__tests__/commands.test.ts (3 tests)
+ desktop:test:  Test Files  6 passed (6)
+ desktop:test:       Tests  15 passed (15)
  api:test:      Test Files  1 passed (1)  Tests  1 passed (1)
 ```
 
@@ -112,11 +115,72 @@ dist/assets/index-*.js                    563.27 kB (gzip 177.39 kB)
 
 ### Not run
 
-- Runtime acceptance checks that need the live window: theme persistence and no-flash on
-  relaunch, window size/position restore, hand-corrupted settings file fallback, route
-  throw -> error UI, Cmd/Ctrl+K palette. These need `pnpm --filter desktop tauri dev`.
+- Screenshot of the running window: `screencapture` returns "could not create image
+  from display" in this session, so the visual no-flash moment could not be captured.
 - Full `tauri build` (installer) not run in this session.
+
+### Runtime evidence (2026-10-19, `pnpm --filter desktop tauri dev`)
+
+The dev server previously never bound: Vite served on 5173 while `devUrl` is 1420, so
+`tauri dev` waited forever. Fixed by pinning the dev server to 1420 (commit under M1.1).
+
+With that fix `tauri dev` builds and runs. Runtime checks observed:
+
+- Window is revealed after load. `visible: false` in `tauri.conf.json`, and after
+  rehydrate + applyTheme the app calls `getCurrentWindow().show()`. Confirmed with
+  `osascript` querying the process windows: `Tauri SaaS Starter`.
+- OS interface style is light (`AppleInterfaceStyle` unset) while the stored theme is
+  dark, i.e. the exact acceptance case. The stored file was
+  `{"state":{"theme":"dark",...}}`; the window still appeared, so the hidden-until-ready
+  path ran. The no-flash frame itself is not capturable here (see Not run above).
+- Corrupt settings: wrote `{ this is not valid json` to
+  `~/Library/Application Support/com.example.tauri-saas-starter/settings.json`, relaunched,
+  and the window still appeared (app did not hang on the splash). The bad file was then
+  restored.
+
+Not verified at runtime (still owed by a human with a visible display): window size
+restore, route throw -> error UI, Cmd/Ctrl+K palette, 404 route, and the settings
+autosave round-trip.
+
+### Review fixes
+
+All nine review items are addressed, one commit each with a `Refs: M1.n` footer:
+`193ec1b`/`d22dfdf` (1), `66673b6` (2), `734f0ba`/`a196898` (3), `0bffcbf` (4),
+`9f9a7ab` (5), `2869cd1` (6), `6000713` (7), `83d420b` (8), `bc2c772` (9). Two extra
+bugs found while making item 1 provable: Vite served the wrong port for `devUrl`, and
+`AppShell` was mounted through router `Wrap`, which wraps the context provider, so
+`Link`/`useNavigate` threw `router.isServer`; it now uses `InnerWrap` (inside the
+provider). The reviewer note about the main chunk is logged in `docs/DECISIONS.md`.
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: CHANGES REQUIRED** (2026-10-19). Structure is good; findings are behavioral.
+
+Verified by reviewer: forced `turbo run lint typecheck test` 9/9 pass; no `localStorage`/`sessionStorage`, no `any`, no raw `invoke(`; schema lives in `packages/shared`; persistence uses plugin-store; nav + command registries are real and the settings feature self-registers (no core edit needed); strings go through `t()` (one exception below).
+
+Must fix:
+
+1. **Theme flash (acceptance: no light flash when dark chosen).** The pre-paint script in `index.html` only reads the OS preference. The stored theme loads async after the Splash is already painted, so "dark" chosen on a light OS flashes light on every launch. Fix: create the window hidden (`visible: false`) and show it only after `rehydrate()` + `applyTheme()` (set `backgroundColor` on the window too), or equivalent. Must be provable by the manual check below.
+2. **Startup can hang on a bad settings file.** `bootstrap()` awaits `rehydrate()` with no try/catch; if the store throws or `plugin-store` `load` fails (it silently returns `null` and falls back to in-memory), the user sees the Splash forever or loses saved settings silently. Wrap in try/catch, fall back to defaults, log a warning (console for now), and always render the app.
+3. **Corrupt-file fallback is unproven.** Tests cover `parseSettings` only. Add tests for the real path: `settingsStorage`/store `rehydrate()` with invalid JSON, a non-string value, and a missing key must all end in `DEFAULT_SETTINGS` without throwing.
+4. **Settings page theme preview leaks.** `applyTheme(watchedTheme)` runs on every radio change but is only persisted on submit; leaving without saving keeps the previewed theme until restart, and store and DOM disagree. Fix: either autosave on change (preferred, no submit button) or revert on unmount if unsaved.
+5. **Command palette groups.** Every command is rendered under the "Theme" heading; `groupKey` is ignored. Group by `groupKey`. Also `label="Command palette"` is a hardcoded string; use `t()`.
+6. **Copy bugs.** The settings submit button says "Settings" (use a "Save" key, moot if autosave). `ErrorFallback` shows two buttons both labelled "Reload app"; the reset action should read "Try again". Remove unused locale keys (`common.reload`, `common.cancel`) or use them.
+
+Should fix (small): 7. `AppShell` re-implements theme resolution with its own `matchMedia` call and does not follow OS changes for the icon; use `resolveTheme` from `shared/lib/theme` and re-render on change. 8. `settings-storage.ts` casts `as unknown as TauriStore`; use the plugin's exported `Store` type. 9. Add small unit tests: `resolveTheme`, `getCommands` ordering, command grouping.
+
+Note (not blocking): main chunk is 177 KB gzip, already ~59% of the 300 KB initial-JS budget with no features. `settings-*.js` is only 1.3 KB because react-hook-form + zod resolver sit in the main chunk. Lazy-load the command palette (cmdk) and check with the bundle visualizer in M9; log in DECISIONS.md backlog.
+
+Manual runtime checks (agent ran `tauri dev`; see Runtime evidence above):
+
+- [x] Dark chosen on a light OS: window created hidden, shown after store load; verified
+      the window appears with a dark stored theme on a light OS. The no-flash frame
+      itself is not capturable headlessly.
+- [ ] Resize/move window, quit, relaunch: restored.
+- [x] Hand-corrupt `settings.json`: app still starts (window appeared, no hang).
+- [ ] Throw inside a route component: error UI, not blank.
+- [ ] Cmd/Ctrl+K opens palette, groups correct, Escape closes.
+- [ ] Unknown route shows 404.
+- [ ] Settings page: change theme, no inconsistent state (autosave replaces submit).
+
+After fixes: re-run verification, update Agent report, stop. Do not push until PASS.
