@@ -1,15 +1,19 @@
 # TOML is used here (not JSON) so this capability can carry comments.
-# `core:window:allow-set-theme` is not part of `core:window:default`. It lets the
-# app set the native window (title bar) theme to match the in-app theme.
+# `keyring` is a crate used by app commands, not a Tauri plugin, so the
+# `secure_*` commands need no capability entry.
 "$schema" = "../gen/schemas/desktop-schema.json"
 identifier = "default"
 description = "Capability for the main window"
 windows = ["main"]
 permissions = [
+  # Core window/webview commands used by the app shell.
   "core:default",
+  # Settings persistence through plugin-store (settings.json).
   "store:default",
+  # Restore window size and position across launches.
   "window-state:default",
+  # Set the native title bar theme; not part of core:window:default.
   "core:window:allow-set-theme",
-  # Frontend writes through the LoggerPort file adapter; reads/level control stay denied.
+  # Frontend writes through the LoggerPort file adapter; reads stay denied.
   "log:allow-log",
 ]
