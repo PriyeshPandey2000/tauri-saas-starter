@@ -1,0 +1,30 @@
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
+
+import { useSettingsStore } from "@/features/settings";
+import { Toaster } from "@/shared/ui/sonner";
+
+import { ErrorBoundary } from "./ErrorBoundary";
+import type { AppRouter } from "./router";
+import { ThemeProvider } from "./ThemeProvider";
+
+type AppProvidersProps = {
+  router: AppRouter;
+  queryClient: QueryClient;
+};
+
+export function AppProviders({ router, queryClient }: AppProvidersProps) {
+  const theme = useSettingsStore((state) => state.theme);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <RouterProvider router={router} />
+          <Toaster theme={theme} />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
