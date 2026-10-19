@@ -138,4 +138,20 @@ HTTP/1.1 200 OK
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: PASS** (2026-10-19), with follow-ups below that do not block M1.
+
+Independently verified by reviewer (not from agent report):
+
+- `turbo run lint typecheck test --force` (no cache): 9/9 tasks pass.
+- Fresh clone + `pnpm install --frozen-lockfile` + lint/typecheck/test: all pass.
+- `pnpm --filter desktop tauri build`: succeeds (mac aarch64). Installer .dmg 1.5 MiB, .app 3.1 MiB (budget 15 MB).
+- App launches; window shows shadcn Button (screenshot).
+- Boundary rule fails on: feature -> other feature import; shared -> feature import. No `any`, `@ts-ignore`, or `eslint-disable` in source. No secrets or `.env` tracked. Release profile, minimal capabilities (`core:default`), and CSP present.
+
+Follow-ups (fix at the start of M1, one commit each):
+
+1. `apps/desktop/src-tauri/Cargo.lock` is untracked. Commit it (apps must track their lockfile).
+2. Placeholder naming: `productName`/window title `appsdesktop`, identifier `com.priyesh.appsdesktop`, and the heading text `desktop-app-boilerplate`. Rename `productName` to `Tauri SaaS Starter` and the identifier to `com.example.tauri-saas-starter` (final values set by M10 init script). Replace the heading with a real placeholder.
+3. CSP `connect-src` includes `localhost:1420` and `ws://localhost:1420` in the production config. Move dev-only origins to a dev-only override (`devCsp`) in M2/M9; track in DECISIONS.md backlog.
+4. Not independently re-proven: `check-vendor-imports` rejecting a violation, and app/routes deep imports into `features/x/internal`. Add a unit test for the guard script and a boundaries test fixture in M9.11.
+5. Lint passes while pnpm warns that `eslint-plugin-import` has an eslint 10 peer mismatch. Accepted for now; revisit if it breaks.
