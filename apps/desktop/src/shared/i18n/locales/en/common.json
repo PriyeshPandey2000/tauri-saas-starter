@@ -1,0 +1,46 @@
+{
+  "app": {
+    "name": "Tauri SaaS Starter",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "toggleSidebar": "Toggle sidebar"
+  },
+  "common": {
+    "reload": "Reload",
+    "cancel": "Cancel"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage appearance and application preferences.",
+    "language": "Language",
+    "languageEnglish": "English",
+    "sidebarCollapsed": "Collapse sidebar by default",
+    "saved": "Settings saved"
+  },
+  "commands": {
+    "placeholder": "Type a command or search…",
+    "empty": "No results found.",
+    "groupNavigation": "Navigation",
+    "groupTheme": "Theme",
+    "toggleTheme": "Toggle theme"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Reload the app to continue.",
+    "reload": "Reload app"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist.",
+    "backHome": "Back to home"
+  }
+}
