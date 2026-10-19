@@ -10,7 +10,11 @@ const VENDOR_PATTERNS = [
 ];
 
 const WORKSPACE_ROOTS = ["apps", "packages"];
-const ALLOWED_SEGMENT = `${sep}ports${sep}adapters${sep}`;
+const ALLOWED_SEGMENTS = [
+  `${sep}ports${sep}adapters${sep}`,
+  // Server composition: Better Auth is the auth adapter for the API itself.
+  `${sep}api${sep}src${sep}auth${sep}`,
+];
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const SPECIFIER_PATTERNS = [
   /\bfrom\s+["']([^"']+)["']/g,
@@ -23,7 +27,7 @@ function isVendor(specifier) {
 }
 
 function isAdapterPath(filePath) {
-  return filePath.includes(ALLOWED_SEGMENT);
+  return ALLOWED_SEGMENTS.some((segment) => filePath.includes(segment));
 }
 
 function walk(dir) {
@@ -80,7 +84,7 @@ function extractSpecifiers(content) {
 const violations = [];
 for (const dir of collectSourceDirs()) {
   for (const file of walk(dir)) {
-    if (file.includes(ALLOWED_SEGMENT)) continue;
+    if (isAdapterPath(file)) continue;
     const content = readFileSync(file, "utf8");
     for (const specifier of extractSpecifiers(content)) {
       if (VENDOR_PATTERNS.some((pattern) => pattern.test(specifier))) {

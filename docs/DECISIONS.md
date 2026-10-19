@@ -20,7 +20,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @testing-library/dom             | 10.4.2            | 2026-10-19 | latest stable; peer of @testing-library/react                                  |
 | @tauri-apps/api                  | 2.12.4            | 2026-10-19 | latest stable                                                                  |
 | @tauri-apps/cli                  | 2.12.3            | 2026-10-19 | latest stable                                                                  |
+| @tauri-apps/plugin-deep-link     | 2.6.2             | 2026-10-19 | latest stable; OAuth callback deep links                                       |
 | @tauri-apps/plugin-log           | 2.10.1            | 2026-10-19 | latest stable; file logger adapter                                             |
+| @tauri-apps/plugin-opener        | 2.7.2             | 2026-10-19 | latest stable; opens the system browser                                        |
 | @tauri-apps/plugin-store         | 2.5.0             | 2026-10-19 | latest stable; settings persistence                                            |
 | @tauri-apps/plugin-window-state  | 2.5.0             | 2026-10-19 | latest stable; window size/position                                            |
 | @types/node                      | 26.6.5            | 2026-10-19 | latest stable                                                                  |
@@ -59,7 +61,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | specta-typescript                | 0.0.12            | 2026-10-19 | latest stable; used by the pre-release IPC stack (see Deviations)              |
 | tailwind-merge                   | 3.7.0             | 2026-10-19 | latest stable                                                                  |
 | tailwindcss                      | 4.3.3             | 2026-10-19 | latest stable                                                                  |
+| tauri-plugin-deep-link           | 2.6.2             | 2026-10-19 | latest stable; scheme registration                                             |
 | tauri-plugin-log                 | 2.10.1            | 2026-10-19 | latest stable; rotating log file (5 x 2MB)                                     |
+| tauri-plugin-opener              | 2.7.2             | 2026-10-19 | latest stable; system browser                                                  |
 | tauri-plugin-store               | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); settings file in app data dir                    |
 | tauri-plugin-window-state        | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); window size/position                             |
 | tauri-specta                     | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
@@ -84,6 +88,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Rust toolchain bump (M1)**: updated the local `stable` toolchain from rustc 1.89.0 to 1.99.1. Reason: the latest `tauri-plugin-store` 2.5.0 and `tauri-plugin-window-state` 2.5.0 crates require rustc >= 1.90 (rule 14: install latest stable deps). `rust-toolchain.toml` still pins `channel = "stable"`, so CI resolves the same latest stable. Alternative was pinning older crates; rejected to stay on latest stable.
 - **Shared package excluded from boundaries classification**: added `**/packages/shared/**` to `boundaries/ignore`. Reason: `@app/shared` resolves outside `apps/desktop/src`, so the plugin classified it as an `entry` element and rejected `feature -> @app/shared` imports. Shared is importable by every layer anyway, so ignoring it preserves the rule 15 intent.
 - **Capability file converted to TOML (M1 title bar)**: renamed `apps/desktop/src-tauri/capabilities/default.json` to `default.toml` so the new `core:window:allow-set-theme` grant can carry an inline comment. Reason: Tauri's capability loader supports `toml` unconditionally (`tauri-utils` ACL reader), while JSON has no comments and JSON5 support is behind the `config-json5` feature flag. `cargo check` and `tauri dev` parse the file; the directory scan glob is `{}/**/*`.
+
+- **Vendor import check knows the API auth folder (M3.1/M3.2)**: `scripts/check-vendor-imports.mjs` also allows `apps/api/src/auth/`, because that folder is the API's Better Auth adapter/composition (the desktop-oriented boundary rules and `src/ports/adapters` layout do not apply to the Hono server). The desktop app still imports `better-auth` nowhere.
+- **CSP is generated at build/dev time (M3.2)**: `apps/desktop/scripts/tauri.mjs` reads `VITE_API_URL` and passes a merged `--config` so `connect-src` includes the real API origin; the committed `tauri.conf.json` CSP is only a fallback for direct CLI use.
 
 ## Backlog (ideas out of current scope)
 
