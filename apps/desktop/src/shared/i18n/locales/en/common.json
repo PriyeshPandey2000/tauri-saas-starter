@@ -18,7 +18,8 @@
     "description": "Manage appearance and application preferences.",
     "language": "Language",
     "languageEnglish": "English",
-    "sidebarCollapsed": "Collapse sidebar by default"
+    "sidebarCollapsed": "Collapse sidebar by default",
+    "appInfo": "Version {{version}} · {{os}} · {{arch}}"
   },
   "commands": {
     "placeholder": "Type a command or search…",

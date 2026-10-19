@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+import { AppInfoFooter } from "./app-info-footer";
 import { useSettingsStore } from "../settings-store";
 
 export function SettingsPage() {
@@ -69,6 +70,8 @@ export function SettingsPage() {
           {t("settings.sidebarCollapsed")}
         </label>
       </div>
+
+      <AppInfoFooter />
     </section>
   );
 }
