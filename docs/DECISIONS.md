@@ -16,6 +16,8 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @tanstack/router-cli             | 1.167.45          | 2026-10-19 | latest stable; `tsr generate` route tree                                       |
 | @tanstack/router-plugin          | 1.168.47          | 2026-10-19 | latest stable; Vite file-based route generation                                |
 | @tailwindcss/vite                | 4.3.3             | 2026-10-19 | latest stable                                                                  |
+| @testing-library/react           | 16.3.3            | 2026-10-19 | latest stable; renders the settings page in tests                              |
+| @testing-library/dom             | 10.4.2            | 2026-10-19 | latest stable; peer of @testing-library/react                                  |
 | @tauri-apps/api                  | 2.12.4            | 2026-10-19 | latest stable                                                                  |
 | @tauri-apps/cli                  | 2.12.3            | 2026-10-19 | latest stable                                                                  |
 | @tauri-apps/plugin-store         | 2.5.0             | 2026-10-19 | latest stable; settings persistence                                            |
@@ -65,6 +67,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Module resolution for boundaries**: use `eslint-import-resolver-alias` (map `@` -> `apps/desktop/src`, `@app/shared` -> `packages/shared/src`) instead of `eslint-import-resolver-typescript`. Reason: `eslint-import-resolver-typescript@4.4.5` fails to resolve `@/*` path mappings when the tsconfig uses a relative `baseUrl` under TypeScript 6 (returns `found: false`), which would make `eslint-plugin-boundaries` classify local imports as external and silently skip the rule 15 checks. Revisit: when the TypeScript resolver supports TS 6 relative `baseUrl`.
 - **Rust toolchain bump (M1)**: updated the local `stable` toolchain from rustc 1.89.0 to 1.99.1. Reason: the latest `tauri-plugin-store` 2.5.0 and `tauri-plugin-window-state` 2.5.0 crates require rustc >= 1.90 (rule 14: install latest stable deps). `rust-toolchain.toml` still pins `channel = "stable"`, so CI resolves the same latest stable. Alternative was pinning older crates; rejected to stay on latest stable.
 - **Shared package excluded from boundaries classification**: added `**/packages/shared/**` to `boundaries/ignore`. Reason: `@app/shared` resolves outside `apps/desktop/src`, so the plugin classified it as an `entry` element and rejected `feature -> @app/shared` imports. Shared is importable by every layer anyway, so ignoring it preserves the rule 15 intent.
+- **Capability file converted to TOML (M1 title bar)**: renamed `apps/desktop/src-tauri/capabilities/default.json` to `default.toml` so the new `core:window:allow-set-theme` grant can carry an inline comment. Reason: Tauri's capability loader supports `toml` unconditionally (`tauri-utils` ACL reader), while JSON has no comments and JSON5 support is behind the `config-json5` feature flag. `cargo check` and `tauri dev` parse the file; the directory scan glob is `{}/**/*`.
 
 ## Backlog (ideas out of current scope)
 

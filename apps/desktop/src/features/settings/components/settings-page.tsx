@@ -1,9 +1,4 @@
-import { useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-
-import { AppSettingsSchema, type AppSettings } from "@app/shared";
-import { applyTheme } from "@/shared/lib/theme";
 
 import { useSettingsStore } from "../settings-store";
 
@@ -12,47 +7,11 @@ export function SettingsPage() {
   const theme = useSettingsStore((state) => state.theme);
   const language = useSettingsStore((state) => state.language);
   const sidebarCollapsed = useSettingsStore((state) => state.sidebarCollapsed);
-  const telemetryConsent = useSettingsStore((state) => state.telemetryConsent);
-
-  const form = useForm<AppSettings>({
-    defaultValues: { theme, language, sidebarCollapsed, telemetryConsent },
-  });
-
-  const watchedTheme = useWatch({ control: form.control, name: "theme" });
-  const watchedLanguage = useWatch({ control: form.control, name: "language" });
-  const watchedSidebarCollapsed = useWatch({
-    control: form.control,
-    name: "sidebarCollapsed",
-  });
-  const watchedTelemetryConsent = useWatch({
-    control: form.control,
-    name: "telemetryConsent",
-  });
-
-  useEffect(() => {
-    const parsed = AppSettingsSchema.safeParse({
-      theme: watchedTheme,
-      language: watchedLanguage,
-      sidebarCollapsed: watchedSidebarCollapsed,
-      telemetryConsent: watchedTelemetryConsent,
-    });
-    if (!parsed.success) {
-      return;
-    }
-
-    const settings = parsed.data;
-    const state = useSettingsStore.getState();
-    state.setTheme(settings.theme);
-    state.setLanguage(settings.language);
-    state.setSidebarCollapsed(settings.sidebarCollapsed);
-    state.setTelemetryConsent(settings.telemetryConsent);
-    applyTheme(settings.theme);
-  }, [
-    watchedTheme,
-    watchedLanguage,
-    watchedSidebarCollapsed,
-    watchedTelemetryConsent,
-  ]);
+  const setTheme = useSettingsStore((state) => state.setTheme);
+  const setLanguage = useSettingsStore((state) => state.setLanguage);
+  const setSidebarCollapsed = useSettingsStore(
+    (state) => state.setSidebarCollapsed,
+  );
 
   return (
     <section className="mx-auto flex max-w-2xl flex-col gap-8 p-8">
@@ -74,9 +33,11 @@ export function SettingsPage() {
               >
                 <input
                   type="radio"
+                  name="theme"
                   value={value}
+                  checked={theme === value}
+                  onChange={() => setTheme(value)}
                   className="accent-primary"
-                  {...form.register("theme")}
                 />
                 {t(`theme.${value}`)}
               </label>
@@ -90,8 +51,9 @@ export function SettingsPage() {
           </label>
           <select
             id="language"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
             className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
-            {...form.register("language")}
           >
             <option value="en">{t("settings.languageEnglish")}</option>
           </select>
@@ -100,8 +62,9 @@ export function SettingsPage() {
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
+            checked={sidebarCollapsed}
+            onChange={(event) => setSidebarCollapsed(event.target.checked)}
             className="accent-primary"
-            {...form.register("sidebarCollapsed")}
           />
           {t("settings.sidebarCollapsed")}
         </label>
