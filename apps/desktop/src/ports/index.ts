@@ -15,6 +15,7 @@ import { noopFeatureFlags } from "./adapters/noop/noop-feature-flags";
 import { createMemoryStorage } from "./adapters/noop/memory-storage";
 import { consoleLogger } from "./adapters/console-logger";
 import { fileLogger } from "./adapters/file-logger";
+import { resolveLogTarget } from "../shared/lib/config";
 
 export type { AuthPort, AuthSession, AuthUser } from "./AuthPort";
 export type { BillingPort, BillingPlanId, Entitlements } from "./BillingPort";
@@ -44,7 +45,8 @@ export interface Ports {
  * wired to its no-op/in-memory implementation.
  */
 export function createPorts(): Ports {
-  const logger = import.meta.env.DEV || !isTauri() ? consoleLogger : fileLogger;
+  const target = resolveLogTarget(import.meta.env, import.meta.env.DEV);
+  const logger = target === "file" && isTauri() ? fileLogger : consoleLogger;
   return {
     auth: noopAuth,
     billing: noopBilling,

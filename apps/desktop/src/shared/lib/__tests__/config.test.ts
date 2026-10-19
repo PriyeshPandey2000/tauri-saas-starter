@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ConfigError, parseConfig } from "../config";
+import { ConfigError, parseConfig, resolveLogTarget } from "../config";
 
 const validEnv = {
   VITE_API_URL: "https://api.example.com",
@@ -49,5 +49,32 @@ describe("parseConfig", () => {
       expect(error).toBeInstanceOf(ConfigError);
       expect((error as ConfigError).issues[0]).toMatch(/^VITE_API_URL: /);
     }
+  });
+});
+
+describe("resolveLogTarget", () => {
+  it("defaults to console in dev and file otherwise", () => {
+    expect(resolveLogTarget({}, true)).toBe("console");
+    expect(resolveLogTarget({}, false)).toBe("file");
+  });
+
+  it("honours an explicit target over the default", () => {
+    expect(resolveLogTarget({ VITE_LOG_TARGET: "file" }, true)).toBe("file");
+    expect(resolveLogTarget({ VITE_LOG_TARGET: "console" }, false)).toBe(
+      "console",
+    );
+  });
+
+  it("ignores an invalid target and falls back", () => {
+    expect(resolveLogTarget({ VITE_LOG_TARGET: "syslog" }, false)).toBe("file");
+  });
+
+  it("is validated by parseConfig", () => {
+    expect(
+      parseConfig({ ...validEnv, VITE_LOG_TARGET: "console" }),
+    ).toMatchObject({ VITE_LOG_TARGET: "console" });
+    expect(() =>
+      parseConfig({ ...validEnv, VITE_LOG_TARGET: "syslog" }),
+    ).toThrow(ConfigError);
   });
 });
