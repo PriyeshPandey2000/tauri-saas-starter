@@ -235,4 +235,10 @@ Manual runtime checks (agent ran `tauri dev`; see Runtime evidence above):
 - [ ] Settings page: change theme, no inconsistent state (autosave replaces submit).
 
 After fixes: re-run verification, update Agent report, stop. Do not push until PASS.
+
+### Round 2 (2026-10-19): PASS
+
+Reviewer verified: forced `turbo run lint typecheck test build` 12/12 pass; `cargo check` OK; desktop 7 files / 16 tests, api 1 test. Settings inputs bind straight to the store (RHF mirror removed) with a regression test (theme unchanged when another field changes); native title bar follows the app theme via `setTheme` (light/dark, `null` for system) and was confirmed working by the user on a real display; plugin-store load failure now warns; capability file is TOML so the permission carries a comment (accepted deviation, logged).
+
+Remaining manual checks (user, non-blocking, run when convenient): window size/position restore; route throw shows error UI; Cmd/Ctrl+K palette grouping and Escape; unknown route shows 404; settings autosave persists across relaunch; no white flash on relaunch with Dark selected on a light OS. Any failure becomes a fix item in M2's first commits.
 ```
