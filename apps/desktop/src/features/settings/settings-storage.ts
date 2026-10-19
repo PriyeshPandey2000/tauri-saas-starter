@@ -56,6 +56,9 @@ export const settingsStorage: StateStorage = {
 };
 
 const jsonStorage = createJSONStorage<AppSettings>(() => settingsStorage);
+if (!jsonStorage) {
+  throw new Error("Failed to create settings JSON storage");
+}
 
 export const settingsPersistStorage: PersistStorage<AppSettings> = {
   getItem: async (name) => {
