@@ -82,22 +82,24 @@ check-vendor-imports: OK (no vendor SDK imports outside ports/adapters)
 ### `pnpm --filter desktop build`
 
 ```
-dist/assets/index-*.css         ~? KB
-settings-<hash>.js   <<< settings route is its own chunk
-routes-*.js
-useTranslation-*.js
-index-*.js
-✓ built in 309ms
+dist/index.html                            0.46 kB
+dist/assets/settings-<hash>.js              1.3 kB   <- settings route, own chunk
+dist/assets/routes-<hash>.js                0.36 kB
+dist/assets/useTranslation-*.js           ~57.35 kB │ gzip: 18.90 kB
+dist/assets/index-<hash>.js              ~563.27 kB │ gzip: 177.39 kB
+✓ built
 ```
 
-Full chunk list (2026-10-19):
+Exact Vite output (2026-10-19):
 
 ```
-dist/index.html                                 0.37 kB │ gzip:  0.25 kB
-dist/assets/index-*.css                        24.43 kB │ gzip:  5.30 kB
-dist/assets/settings-DpQ3f1a2.js                1.50 kB │ gzip:  0.72 kB
-dist/assets/routes-*.js                         ~1 kB
-desktop main chunk (index-*.js)                563.27 kB │ gzip: 177.39 kB
+dist/index.html                            0.46 kB
+dist/assets/settings-*.js                   1.38 kB   <- separate route chunk
+dist/assets/routes-*.js                     0.36 kB
+dist/assets/rolldown-runtime-*.js           0.59 kB
+dist/assets/dist-js-*.js                    2.45 kB
+dist/assets/useTranslation-*.js            57.35 kB
+dist/assets/index-*.js                    563.27 kB (gzip 177.39 kB)
 ```
 
 ### `cargo check` (native plugins compile)
