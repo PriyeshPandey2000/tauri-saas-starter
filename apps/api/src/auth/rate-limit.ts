@@ -32,6 +32,12 @@ export function createRateLimiter(options: {
 /**
  * Rate-limit bucket key. Only a header named in `TRUSTED_PROXY_HEADER` is
  * honoured; `x-forwarded-for` is ignored because any client can set it.
+ *
+ * When `TRUSTED_PROXY_HEADER` is unset, the socket address is used. When the
+ * runtime cannot deterministically identify a client IP at all, Better Auth falls
+ * back to one shared per-path bucket; configure `advanced.ipAddress.ipAddressHeaders`
+ * (and/or `trustedProxies`) in front of production proxies so each client keeps its
+ * own bucket.
  */
 export function resolveClientKey(options: {
   headers: Headers;

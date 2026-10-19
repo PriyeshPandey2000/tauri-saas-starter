@@ -57,6 +57,9 @@ export function createAuth({ db, database, env, mailer }: AuthDeps) {
     advanced: {
       // Better Auth skips the origin check when NODE_ENV=test; keep it on always.
       disableOriginCheck: false,
+      ipAddress: env.TRUSTED_PROXY_HEADER
+        ? { ipAddressHeaders: [env.TRUSTED_PROXY_HEADER] }
+        : undefined,
     },
     database: resolvedDatabase,
     emailAndPassword: {

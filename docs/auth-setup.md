@@ -122,7 +122,10 @@ Redis).
 The desktop limiter keys each bucket on the socket address by default. It ignores
 `x-forwarded-for`, since a client can set that header freely. Behind a proxy, set
 `TRUSTED_PROXY_HEADER` to the header the proxy appends (for example `fly-client-ip`
-on Fly.io) so the real client IP is used instead.
+on Fly.io) so the real client IP is used instead. Better Auth also reads
+`advanced.ipAddress.ipAddressHeaders` from this value to key its built-in rate
+limits; if no IP can be determined, Better Auth falls back to a single shared
+per-path bucket.
 
 ## 10. Manual checks
 
