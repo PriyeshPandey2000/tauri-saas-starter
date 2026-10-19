@@ -1,8 +1,11 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 
-import { eq } from "drizzle-orm";
+import { and, eq, like, lt } from "drizzle-orm";
+
+import type { PgliteDatabase } from "drizzle-orm/pglite";
 
 import type { Database } from "../db/client";
+import * as schema from "../db/schema";
 import { verification } from "../db/schema";
 
 const BASE64URL = /^[A-Za-z0-9_-]+$/;
@@ -54,11 +57,22 @@ export function createChallengeStore(
   now: () => number = Date.now,
 ): ChallengeStore {
   const identifier = (ott: string) => `desktop-pkce:${hashOneTimeToken(ott)}`;
+  // Both drivers expose the same query builder; the union confuses overloads.
+  const store = db as unknown as PgliteDatabase<typeof schema>;
 
   return {
     async set(ott, challenge, ttlMs) {
       const current = new Date(now());
-      await db.insert(verification).values({
+      // Opportunistic cleanup of expired rows for this feature.
+      await store
+        .delete(verification)
+        .where(
+          and(
+            like(verification.identifier, "desktop-pkce:%"),
+            lt(verification.expiresAt, current),
+          ),
+        );
+      await store.insert(verification).values({
         id: randomUUID(),
         identifier: identifier(ott),
         value: challenge,
@@ -68,19 +82,17 @@ export function createChallengeStore(
       });
     },
     async take(ott) {
-      const [row] = await db
-        .select({
-          id: verification.id,
+      // One atomic statement so two concurrent exchanges cannot both win.
+      const [row] = await store
+        .delete(verification)
+        .where(eq(verification.identifier, identifier(ott)))
+        .returning({
           value: verification.value,
           expiresAt: verification.expiresAt,
-        })
-        .from(verification)
-        .where(eq(verification.identifier, identifier(ott)))
-        .limit(1);
+        });
       if (!row) {
         return null;
       }
-      await db.delete(verification).where(eq(verification.id, row.id));
       return new Date(row.expiresAt).getTime() > now() ? row.value : null;
     },
   };

@@ -195,3 +195,16 @@ describe("session and linking policy", () => {
     ).toBe(false);
   });
 });
+
+describe("challenge store", () => {
+  it("lets only one of two concurrent takes win", async () => {
+    const { challenges } = await setup();
+    await challenges.set("race-ott", pkceChallenge("d".repeat(43)), 60_000);
+    const [first, second] = await Promise.all([
+      challenges.take("race-ott"),
+      challenges.take("race-ott"),
+    ]);
+    const successes = [first, second].filter((value) => value !== null);
+    expect(successes).toHaveLength(1);
+  });
+});
