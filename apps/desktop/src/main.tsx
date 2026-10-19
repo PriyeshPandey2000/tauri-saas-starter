@@ -2,10 +2,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AppProviders } from "@/app/providers";
+import { ConfigErrorScreen } from "@/app/ConfigErrorScreen";
 import { createAppQueryClient } from "@/app/query-client";
 import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
 import { useSettingsStore } from "@/features/settings";
+import { ConfigError, getConfig } from "@/shared/lib/config";
 import { applyTheme } from "@/shared/lib/theme";
 import { applyWindowTheme, showMainWindow } from "@/shared/lib/window";
 
@@ -41,6 +43,21 @@ async function bootstrap(): Promise<void> {
       <Splash />
     </StrictMode>,
   );
+
+  try {
+    getConfig();
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      root.render(
+        <StrictMode>
+          <ConfigErrorScreen issues={error.issues} />
+        </StrictMode>,
+      );
+      await showMainWindow();
+      return;
+    }
+    throw error;
+  }
 
   const showTimer = window.setTimeout(() => {
     void showMainWindow();
