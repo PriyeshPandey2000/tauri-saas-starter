@@ -2,7 +2,9 @@ node_modules
 target
 dist
 build
+.turbo
 .vscode
 .idea
 .DS_Store
 .env*
+!.env.example
