@@ -7,6 +7,7 @@ import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
 import { useSettingsStore } from "@/features/settings";
 import { applyTheme } from "@/shared/lib/theme";
+import { showMainWindow } from "@/shared/lib/window";
 
 import "@/shared/i18n";
 import "./index.css";
@@ -33,6 +34,10 @@ async function bootstrap(): Promise<void> {
     </StrictMode>,
   );
 
+  const showFallback = window.setTimeout(() => {
+    void showMainWindow();
+  }, 4000);
+
   await useSettingsStore.persist.rehydrate();
   applyTheme(useSettingsStore.getState().theme);
   registerGlobalErrorHandlers();
@@ -45,6 +50,9 @@ async function bootstrap(): Promise<void> {
       <AppProviders router={router} queryClient={queryClient} />
     </StrictMode>,
   );
+
+  window.clearTimeout(showFallback);
+  await showMainWindow();
 }
 
 void bootstrap();
