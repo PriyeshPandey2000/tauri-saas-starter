@@ -5,6 +5,7 @@ import { secureHeaders } from "hono/secure-headers";
 import type { Auth } from "./auth/auth";
 import { createChallengeStore, type ChallengeStore } from "./auth/desktop-flow";
 import { desktopAuthRoutes } from "./auth/desktop-routes";
+import { createRateLimiter } from "./auth/rate-limit";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
 import type { ApiEnv } from "./env";
 
@@ -41,6 +42,7 @@ export function createApp({ auth, env, challenges: injected }: AppDeps) {
     issuer: env.BETTER_AUTH_URL,
     audience: env.BETTER_AUTH_URL,
   });
+  const desktopLimiter = createRateLimiter({ max: 30, windowMs: 60_000 });
   const app = new Hono<{ Variables: AuthVariables }>();
 
   app.use(
@@ -67,6 +69,18 @@ export function createApp({ auth, env, challenges: injected }: AppDeps) {
 
   app.on(["GET", "POST"], "/api/auth/*", (c) => {
     return auth.handler(c.req.raw);
+  });
+
+  app.use("/auth/desktop/*", async (c, next) => {
+    const key =
+      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
+      c.req.header("x-real-ip") ??
+      "local";
+    if (!desktopLimiter.check(key)) {
+      return c.json({ error: "rate_limited" }, 429);
+    }
+    await next();
+    return;
   });
 
   app.get("/auth/desktop/start", desktopRoutes.start);

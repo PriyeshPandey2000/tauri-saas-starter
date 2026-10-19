@@ -101,7 +101,15 @@ Email verification and password-reset links are sent through the logging
 - The app validates `state` and the PKCE verifier before exchanging the one-time
   token. A mismatch shows an error and the flow must be restarted.
 
-## 8. Manual checks
+## 8. Rate limiting
+
+Better Auth's built-in limiter (sign-in/sign-up/OTT rules) uses per-instance memory
+storage, and the desktop OAuth routes `/auth/desktop/*` use the same model (30
+requests per minute per client). Running more than one API instance requires moving
+both to shared storage (`rateLimit.storage: "database"` plus a `rateLimit` table, or
+Redis).
+
+## 9. Manual checks
 
 - Sign up, verify (check the API console link if verification is enabled), sign in.
 - Google round-trip through the browser and deep link.
