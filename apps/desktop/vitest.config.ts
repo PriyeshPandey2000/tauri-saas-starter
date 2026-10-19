@@ -1,13 +1,19 @@
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import path from "path";
+
+const srcDir = fileURLToPath(new URL("./src", import.meta.url));
+const sharedDir = fileURLToPath(
+  new URL("../../packages/shared/src", import.meta.url),
+);
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@app/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@": srcDir,
+      "@app/shared": sharedDir,
     },
   },
   test: {
