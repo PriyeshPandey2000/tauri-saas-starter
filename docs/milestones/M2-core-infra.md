@@ -181,3 +181,9 @@ Must fix:
 Notes for later (not blocking): `FeatureFlagPort` is async `isEnabled`; M5.2 requires a synchronous `get`/`subscribe` shape, so reshape it there. Production CSP still allows localhost origins (backlog). Module-level `ports`/`logger` singletons coexist with `usePorts()`; acceptable for non-React code (error handlers).
 
 Manual checks (user): keychain round-trip test above; with `VITE_LOG_TARGET=file` run `tauri dev`, change the theme, then confirm `~/Library/Logs/com.example.tauri-saas-starter/app.log` has the line and no secret values.
+
+### Round 2 (2026-10-19): PASS, gated on one user check
+
+Reviewer verified: forced `turbo run lint typecheck test build` 12/12 pass (desktop 47 tests, api 1); `cargo test` 3 pass + 1 ignored (`keychain_roundtrip`); file logger catches plugin rejections and falls back to console without re-logging; `VITE_LOG_TARGET` in schema, `.env.example` and tests; bindings path from `CARGO_MANIFEST_DIR` with a warning instead of a panic; non-JSON 2xx maps to `invalid_response`; secure storage wrapper tested.
+
+Gate before M3 (user): run `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml -- --ignored keychain_roundtrip`. M3 stores tokens in the keychain, so a failure here becomes the first fix of M3. Minor note: an assertion panic inside the test closure skips the cleanup line; the throwaway entry would remain. Harmless, tidy later.
