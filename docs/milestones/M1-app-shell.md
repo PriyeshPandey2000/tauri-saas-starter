@@ -110,7 +110,56 @@ dist/assets/index-*.js                    563.27 kB (gzip 177.39 kB)
 ```
    Compiling tauri-plugin-store v2.5.0
    Compiling tauri-plugin-window-state v2.5.0
+   Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.34s
+```
+
+## Agent report (round 2)
+
+Round-2 fixes, one commit each with a `Refs: M1.n` footer:
+
+- `584b5fc` (M1.11) settings page binds straight to the store; the
+  `@testing-library/react` test mounts the page, sets the theme via the store, then
+  changes another field and asserts the theme is unchanged. New dev deps
+  `@testing-library/react@16.3.3` and `@testing-library/dom@10.4.2` logged in
+  `docs/DECISIONS.md`.
+- `3f39568` (M1.12) `applyWindowTheme` sets the native title bar to `light`/`dark` for
+  an explicit choice and `null` for `system` (follows the OS); no-op outside Tauri. It
+  runs once before `show()` and `WindowThemeSync` (in `app/`) subscribes to
+  `settings.theme`. The one new permission `core:window:allow-set-theme` is the only
+  addition; the capabilities file moved `json` -> `toml` so the permission carries a
+  comment (deviation logged in `docs/DECISIONS.md`).
+- `05e0a73` (M1.13) `settings-storage.ts` warns once (with the cause) when the
+  plugin-store load fails and it falls back to memory storage.
+- `eafc755` the reviewer's doc edit was committed as requested.
+
+Verification (all re-run after the fixes):
+
+```
+pnpm lint      -> 4 tasks, check-vendor-imports: OK (no vendor SDK imports outside ports/adapters)
+pnpm typecheck -> 3 tasks successful
+pnpm test      -> desktop 7 files / 16 tests passed; api 1 file / 1 test passed
+pnpm --filter desktop build -> built in 379ms
+   dist/assets/index-*.js        527.60 kB (gzip 165.31 kB)   <- was 563.27 kB / 177.39 kB
+   dist/assets/settings-*.js       0.07 kB   (separate route chunk)
+   dist/assets/window-*.js        13.20 kB   (lazy)
+   dist/assets/useTranslation-*.js 57.35 kB
+   dist/assets/event-*.js          1.31 kB
+cargo check    -> Finished `dev` profile in 2.34s (capabilities default.toml parsed)
+tauri dev      -> Vite ready on http://localhost:1420/, cargo built appsdesktop, ran
+                  target/debug/appsdesktop (stopped with SIGTERM after the check)
+```
+
+The main chunk shrank because react-hook-form and its zod resolver left the bundle with
+the settings-page rewrite.
+
+Manual checks not run (no display available here; `screencapture` fails with "could not
+create image from display", so the no-flash frame and the title-bar colour cannot be
+seen): title bar dark on a light OS and light on a dark OS, System following the OS,
+window size restore, route throw -> error UI, Cmd/Ctrl+K palette, 404 route, and the
+settings autosave round-trip.
+
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 34.57s
+
 ```
 
 ### Not run
@@ -171,7 +220,7 @@ Should fix (small): 7. `AppShell` re-implements theme resolution with its own `m
 
 10. **Native title bar must follow the app theme, independent of the OS.** Today the window chrome follows the OS (white bar over a dark app). On startup (after `rehydrate()`) and whenever `settings.theme` changes, call the Tauri window `setTheme`: `"light"` or `"dark"` for explicit choices, `null` for "system" so it follows the OS. Check the current Tauri 2 docs for the exact API and add only the needed capability permission, commented. Verify in `tauri dev`: choose Dark on a light-OS machine and the title bar turns dark, and vice versa.
 
-Note (not blocking): main chunk is 177 KB gzip, already ~59% of the 300 KB initial-JS budget with no features. `settings-*.js` is only 1.3 KB because react-hook-form + zod resolver sit in the main chunk. Lazy-load the command palette (cmdk) and check with the bundle visualizer in M9; log in DECISIONS.md backlog.
+Note (not blocking): main chunk is 165 KB gzip, already ~55% of the 300 KB initial-JS budget with no features. react-hook-form left the bundle with the round-2 settings-page rewrite. Lazy-load the command palette (cmdk) and check with the bundle visualizer in M9; log in DECISIONS.md backlog.
 
 Manual runtime checks (agent ran `tauri dev`; see Runtime evidence above):
 
@@ -186,3 +235,4 @@ Manual runtime checks (agent ran `tauri dev`; see Runtime evidence above):
 - [ ] Settings page: change theme, no inconsistent state (autosave replaces submit).
 
 After fixes: re-run verification, update Agent report, stop. Do not push until PASS.
+```

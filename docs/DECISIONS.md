@@ -63,6 +63,8 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 
 ## Deviations
 
+- **Removed `react-hook-form` and `@hookform/resolvers` (M1.11)**: the settings page now binds inputs straight to the zustand store, so both packages left `apps/desktop`. Reason: rule 16 (earn shared code) and bundle size; the rows above stay for history.
+
 - **TypeScript version pin**: pinned TypeScript to `~6.0.3` (6.0.3) in root and all workspaces instead of `^7.0.2`. Reason: `typescript-eslint@8.71.2` peer range is `typescript >=4.8.4 <6.1.0` and does not support TS 7.0 yet. Revisit: when typescript-eslint ships stable support for TypeScript 7.
 - **Module resolution for boundaries**: use `eslint-import-resolver-alias` (map `@` -> `apps/desktop/src`, `@app/shared` -> `packages/shared/src`) instead of `eslint-import-resolver-typescript`. Reason: `eslint-import-resolver-typescript@4.4.5` fails to resolve `@/*` path mappings when the tsconfig uses a relative `baseUrl` under TypeScript 6 (returns `found: false`), which would make `eslint-plugin-boundaries` classify local imports as external and silently skip the rule 15 checks. Revisit: when the TypeScript resolver supports TS 6 relative `baseUrl`.
 - **Rust toolchain bump (M1)**: updated the local `stable` toolchain from rustc 1.89.0 to 1.99.1. Reason: the latest `tauri-plugin-store` 2.5.0 and `tauri-plugin-window-state` 2.5.0 crates require rustc >= 1.90 (rule 14: install latest stable deps). `rust-toolchain.toml` still pins `channel = "stable"`, so CI resolves the same latest stable. Alternative was pinning older crates; rejected to stay on latest stable.
