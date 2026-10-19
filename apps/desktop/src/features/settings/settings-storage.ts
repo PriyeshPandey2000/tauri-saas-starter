@@ -16,7 +16,13 @@ function loadTauriStore(): Promise<Store | null> {
   if (!storePromise) {
     storePromise = import("@tauri-apps/plugin-store")
       .then((mod) => mod.load(SETTINGS_FILE, { autoSave: true }))
-      .catch(() => null);
+      .catch((error: unknown) => {
+        console.warn(
+          "Failed to load the settings store; falling back to memory storage",
+          error,
+        );
+        return null;
+      });
   }
   return storePromise;
 }
