@@ -8,6 +8,12 @@ export const commands = {
 };
 
 /* Types */
+/**
+ *  Errors returned by Tauri commands. Serialized as
+ *  `{ "kind": "...", "message": "..." }` so the frontend gets a typed union.
+ */
+export type AppError = { kind: "Keychain"; message: string } | { kind: "InvalidInput"; message: string } | { kind: "Internal"; message: string };
+
 export type AppInfo = {
 	version: string,
 	os: string,

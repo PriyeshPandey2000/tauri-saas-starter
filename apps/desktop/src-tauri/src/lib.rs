@@ -1,4 +1,5 @@
 mod commands;
+mod error;
 
 use specta_typescript::Typescript;
 use tauri_specta::{Builder, collect_commands};
@@ -6,9 +7,11 @@ use tauri_specta::{Builder, collect_commands};
 const BINDINGS_PATH: &str = "../src/shared/ipc/bindings.ts";
 
 pub fn builder() -> Builder<tauri::Wry> {
-    Builder::<tauri::Wry>::new().commands(collect_commands![
-        commands::app_info::get_app_info
-    ])
+    Builder::<tauri::Wry>::new()
+        .typ::<error::AppError>()
+        .commands(collect_commands![
+            commands::app_info::get_app_info
+        ])
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

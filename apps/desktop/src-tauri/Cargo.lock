@@ -66,6 +66,7 @@ dependencies = [
  "tauri-plugin-store",
  "tauri-plugin-window-state",
  "tauri-specta",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

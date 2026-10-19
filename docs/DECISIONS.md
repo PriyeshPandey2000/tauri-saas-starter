@@ -48,17 +48,21 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | react-hook-form                  | 7.90.0            | 2026-10-19 | latest stable                                                                  |
 | react-i18next                    | 17.1.0            | 2026-10-19 | latest stable                                                                  |
 | sonner                           | 2.0.8             | 2026-10-19 | latest stable; toasts                                                          |
+| specta                           | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
+| specta-typescript                | 0.0.12            | 2026-10-19 | latest stable; used by the pre-release IPC stack (see Deviations)              |
 | tailwind-merge                   | 3.7.0             | 2026-10-19 | latest stable                                                                  |
 | tailwindcss                      | 4.3.3             | 2026-10-19 | latest stable                                                                  |
 | tauri-plugin-store               | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); settings file in app data dir                    |
 | tauri-plugin-window-state        | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); window size/position                             |
+| tauri-specta                     | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
+| thiserror                        | 2.0.21            | 2026-10-19 | latest stable; AppError                                                        |
 | tsx                              | 4.23.15           | 2026-10-19 | latest stable                                                                  |
 | turbo                            | 2.11.9            | 2026-10-19 | latest stable                                                                  |
 | typescript                       | 6.0.3             | 2026-10-19 | pinned below <6.1.0 for typescript-eslint@8.71.2 peer range (TS 7 unsupported) |
 | typescript-eslint                | 8.71.2            | 2026-10-19 | latest stable                                                                  |
 | vite                             | 8.3.4             | 2026-10-19 | latest stable                                                                  |
 | vitest                           | 5.0.5             | 2026-10-19 | latest stable                                                                  |
-| zod                              | 4.6.7             | 2026-10-19 | latest stable; schemas in packages/shared                                      |
+| zod                              | 4.6.7             | 2026-10-19 | latest stable; packages/shared schemas + desktop env config                    |
 | zustand                          | 5.0.15            | 2026-10-19 | latest stable                                                                  |
 
 ## Deviations
