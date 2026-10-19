@@ -29,9 +29,12 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @typescript-eslint/eslint-plugin | 8.71.2            | 2026-10-19 | latest stable                                                                  |
 | @typescript-eslint/parser        | 8.71.2            | 2026-10-19 | latest stable                                                                  |
 | @vitejs/plugin-react             | 6.1.2             | 2026-10-19 | latest stable                                                                  |
+| better-auth                      | 1.7.11            | 2026-10-19 | latest stable; auth server (approved design)                                   |
 | class-variance-authority         | 0.7.1             | 2026-10-19 | latest stable                                                                  |
 | clsx                             | 2.1.1             | 2026-10-19 | latest stable                                                                  |
 | cmdk                             | 1.1.1             | 2026-10-19 | latest stable; command palette                                                 |
+| drizzle-kit                      | 0.31.11           | 2026-10-19 | latest stable; migrations via DATABASE_URL_DIRECT                              |
+| drizzle-orm                      | 0.45.4            | 2026-10-19 | latest stable; Postgres access                                                 |
 | eslint                           | 10.13.0           | 2026-10-19 | latest stable                                                                  |
 | eslint-import-resolver-alias     | 1.1.2             | 2026-10-19 | resolves `@/*` for eslint-plugin-boundaries (see Deviations)                   |
 | eslint-plugin-boundaries         | 7.2.0             | 2026-10-19 | latest stable                                                                  |
@@ -40,10 +43,12 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | hono                             | 4.13.13           | 2026-10-19 | latest stable                                                                  |
 | husky                            | 9.1.7             | 2026-10-19 | latest stable                                                                  |
 | i18next                          | 26.5.2            | 2026-10-19 | latest stable                                                                  |
+| jose                             | 6.2.12            | 2026-10-19 | latest stable; JWT/JWKS verification                                           |
 | jsdom                            | 30.1.3            | 2026-10-19 | latest stable                                                                  |
 | keyring                          | 4.2.0             | 2026-10-19 | latest stable; OS keychain for secure storage                                  |
 | lint-staged                      | 17.6.0            | 2026-10-19 | latest stable                                                                  |
 | lucide-react                     | 1.59.0            | 2026-10-19 | latest stable                                                                  |
+| postgres                         | 3.4.9             | 2026-10-19 | latest stable; Postgres driver (max 5 by default)                              |
 | prettier                         | 3.9.10            | 2026-10-19 | latest stable                                                                  |
 | react                            | 19.3.1            | 2026-10-19 | latest stable                                                                  |
 | react-dom                        | 19.3.1            | 2026-10-19 | latest stable                                                                  |
