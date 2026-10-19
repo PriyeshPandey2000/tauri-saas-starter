@@ -11,6 +11,7 @@ import type { ApiEnv } from "./env";
 export interface AppDeps {
   auth: Auth;
   env: ApiEnv;
+  db?: import("./db/client").Database;
   challenges?: ChallengeStore;
 }
 
