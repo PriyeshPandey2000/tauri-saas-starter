@@ -89,6 +89,16 @@ export function createAuth({ db, env, mailer }: AuthDeps) {
       expiresIn: SEVEN_DAYS_SECONDS,
       updateAge: ONE_DAY_SECONDS,
     },
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+      customRules: {
+        "/sign-in/*": { window: 60, max: 10 },
+        "/sign-up/*": { window: 60, max: 5 },
+        "/one-time-token/*": { window: 60, max: 20 },
+      },
+    },
     plugins: [
       bearer(),
       jwt({
