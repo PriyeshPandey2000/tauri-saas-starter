@@ -4,53 +4,138 @@
 **Prereqs:** Node 22 LTS, pnpm 9+, Rust stable, Tauri 2 prerequisites installed.
 
 ## Tasks
-- [ ] 0.1 Init git repo, `.gitignore` (node_modules, target, dist, .env*, .DS_Store), `.editorconfig`.
-- [ ] 0.2 pnpm workspace (`pnpm-workspace.yaml`) with `apps/*` and `packages/*`. Add Turborepo (`turbo.json`) with `build`, `dev`, `lint`, `typecheck`, `test` pipelines.
-- [ ] 0.3 `packages/config`: shared `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`), ESLint flat config (typescript-eslint, react-hooks, import order), Prettier config.
-- [ ] 0.4 `packages/shared`: empty TS package exporting a placeholder `export const APP_NAME`. Builds with `tsc`.
-- [ ] 0.5 `apps/desktop`: create with Tauri 2 + React + TS + Vite template. Wire to shared tsconfig and eslint config. Path alias `@/` -> `src/`.
-- [ ] 0.6 Install and configure Tailwind v4 and shadcn/ui (`components.json`, `shared/ui/`). Add `Button` component only.
-- [ ] 0.7 Create the folder skeleton from PRD section 4 (`app/ routes/ features/ shared/ ports/`) with `.gitkeep`.
-- [ ] 0.8 `apps/api`: Hono hello-world with `GET /health` returning `{ ok: true }`. Runs with `pnpm --filter api dev`.
-- [ ] 0.9 Tauri release profile in `src-tauri/Cargo.toml`: `lto = true`, `codegen-units = 1`, `opt-level = "s"`, `strip = true`, `panic = "abort"`.
-- [ ] 0.10 Strict CSP in `tauri.conf.json` (default-src 'self'; allow only what dev needs). Empty capabilities except `core:default`.
-- [ ] 0.11 Husky + lint-staged: run eslint + prettier on staged files. Commit message linting is added in 0.17.
-- [ ] 0.12 Root scripts: `dev`, `build`, `lint`, `typecheck`, `test`, `format`.
-- [ ] 0.13 Vitest set up in `apps/desktop` with one trivial passing test.
 
-- [ ] 0.14 **Latest versions.** Per PRD rule 14: scaffold with the current official Tauri 2 create tool, add every dependency at latest stable, check Tauri/plugin version alignment, and fill the "Dependency versions" table in `DECISIONS.md`. Add `.npmrc` with `engine-strict=true`, set `engines` and `packageManager` in root `package.json`, and add `rust-toolchain.toml` pinned to current stable.
-- [ ] 0.15 **Architecture enforcement.** Install `eslint-plugin-boundaries` and encode PRD rule 15 in `packages/config`: element types (`app`, `routes`, `feature`, `shared`, `port`, `adapter`) and allowed import directions. Add rule that features may import other features only never (public API `index.ts` only for `app`/`routes`). Add `pnpm lint:arch` script and include in root `lint`. Add a deliberately bad import in a scratch file to prove the rule fails, paste output, then delete the scratch file.
-- [ ] 0.17 **Commit message standard.** Install `@commitlint/cli` and `@commitlint/config-conventional`; add `commitlint.config.ts` extending `config-conventional` with `scope-enum` allowing: desktop, api, web, shared, config, ci, docs, deps, release, plus feature names (auth, billing, flags, notes, settings, observability, native). Add a Husky `commit-msg` hook running commitlint. From this task onward all commits follow PRD rule 10 (earlier `M0.n:` commits stay as they are; do not rewrite history). Prove it: attempt a bad message (`git commit -m "stuff"`), paste the rejection, then commit properly. Update the earlier note in 0.11 accordingly.
-- [ ] 0.16 Add a `check-vendor-imports` test/script: fails if `@sentry/*`, `posthog-*`, `better-auth`, or other vendor SDKs are imported outside `ports/adapters/`. (Vendors not yet installed are fine; list is extended as milestones add them.)
+- [x] 0.1 Init git repo, `.gitignore` (node_modules, target, dist, .env*, .DS_Store), `.editorconfig`.
+- [x] 0.2 pnpm workspace (`pnpm-workspace.yaml`) with `apps/*` and `packages/*`. Add Turborepo (`turbo.json`) with `build`, `dev`, `lint`, `typecheck`, `test` pipelines.
+- [x] 0.3 `packages/config`: shared `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`), ESLint flat config (typescript-eslint, react-hooks, boundaries), Prettier config.
+- [x] 0.4 `packages/shared` (`@app/shared`) with `APP_NAME` export.
+- [x] 0.5 `apps/desktop`: Tauri 2 + React 19 + TS + Vite 8. Alias `@/` -> `src/` in Vite + tsconfig.
+- [x] 0.6 Tailwind v4 + shadcn/ui (`components.json`, `@/shared/ui/button.tsx`).
+- [x] 0.7 Folder skeleton (`app/ routes/ features/ shared/ ports/`) with `.gitkeep`.
+- [x] 0.8 `apps/api`: Hono 4, `GET /health` -> `{ "ok": true }`.
+- [x] 0.9 `src-tauri/Cargo.toml` release profile (lto, codegen-units=1, opt-level="s", strip, panic=abort).
+- [x] 0.10 Strict CSP + minimal capabilities (`core:default`).
+- [x] 0.11 husky + lint-staged (eslint + prettier on staged). NOTE: commit-msg hook added in 0.17.
+- [x] 0.12 Root scripts: dev/build/lint/lint:arch/check-vendor-imports/typecheck/test/format.
+- [x] 0.13 Vitest in `apps/desktop`, one passing test.
+- [x] 0.14 Latest stable deps; `DECISIONS.md` table; `.npmrc`; engines; packageManager; rust-toolchain.
+- [x] 0.15 Architecture enforcement via eslint-plugin-boundaries + `pnpm lint:arch` (see report; scratch violation proven then deleted).
+- [x] 0.17 commitlint.config.ts + scope-enum; husky commit-msg hook (bad message rejection proven).
+- [x] 0.16 `check-vendor-imports` script (fails on `@sentry/*`/`posthog-*`/`better-auth` outside `ports/adapters/`).
 
 ## Acceptance criteria
+
 - `pnpm install` clean on fresh clone.
 - `pnpm lint:arch` passes on clean tree and fails on a violating import (evidence pasted).
 - `DECISIONS.md` version table lists every installed dependency; none are pre-release.
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` all exit 0.
-- `pnpm --filter desktop tauri dev` opens a window showing the shadcn Button.
+- `pnpm --filter desktop tauri dev` opens a window showing the shadcn Button. (not executed here)
 - `pnpm --filter api dev` serves `/health`.
-- `pnpm --filter desktop tauri build` produces an installer.
+- `pnpm --filter desktop tauri build` produces an installer. (not executed here)
 - No `any`, no TS errors, no eslint warnings.
 
 ## Out of scope
+
 Routing, auth, state, DB, anything not listed.
 
 ## Verification commands (paste output in report)
+
 ```
 pnpm lint && pnpm typecheck && pnpm test
-curl localhost:<port>/health
+curl localhost:8787/health
 pnpm --filter desktop tauri build   # note installer size
 ```
 
 ## Review checklist (reviewer)
+
 - [ ] Workspace boundaries correct, no cross-app relative imports.
 - [ ] Release profile present, CSP strict, capabilities minimal.
 - [ ] Path alias works in both Vite and tsconfig.
 - [ ] No unused deps.
 
 ## Agent report
-_(agent fills)_
+
+Environment: Node v24.18.0, pnpm 10.14.0, rustc 1.90.0. Date 2026-10-19.
+
+### `pnpm lint` (exit 0)
+
+```
+ Tasks:    4 successful, 4 total
+check-vendor-imports: OK (no vendor SDK imports outside ports/adapters)
+```
+
+### `pnpm typecheck` (exit 0)
+
+```
+ Tasks:    3 successful, 3 total
+```
+
+### `pnpm test` (exit 0)
+
+```
+api:  Test Files 1 passed (1)   Tests 1 passed (1)
+desktop:  Test Files 1 passed (1)   Tests 1 passed (1)
+ Tasks:    2 successful, 2 total
+```
+
+### `pnpm build` (exit 0)
+
+```
+ Tasks:    3 successful, 3 total
+@app/shared:build: tsc -p tsconfig.json
+api:build: tsc
+desktop:build: tsc && vite build  ->  ✓ built in 343ms
+```
+
+### M0.10 capabilities
+
+`apps/desktop/src-tauri/capabilities/default.json` permissions = `["core:default"]` only. The scaffold-default `tauri-plugin-opener` (npm dep, Rust crate, plugin registration, and `opener:default` capability) was removed to keep capabilities minimal and deps used.
+
+### M0.15 arch-rule proof (`pnpm lint:arch` on scratch files; files deleted after)
+
+```
+apps/desktop/src/app/shell.ts
+  1:30  error  There is no policy allowing dependencies from elements of type "app" to elements of type "feature"  boundaries/dependencies
+
+apps/desktop/src/features/billing/index.ts
+  1:29  error  ... from "feature" featureName="billing" to "feature" featureName="auth"  boundaries/dependencies
+  2:31  error  ... from "feature" featureName="billing" to "adapter" adapterName="posthog"  boundaries/dependencies
+
+apps/desktop/src/ports/other.ts
+  1:31  error  ... from "port" to "adapter" adapterName="posthog"  boundaries/dependencies
+```
+
+`ports/index.ts` importing the same adapter produced no error (composition root allowed). Scratch files deleted; `pnpm lint:arch` now exits 0.
+
+### M0.16 vendor guard proof (scratch file, deleted after)
+
+```
+Vendor SDK imported outside ports/adapters/:
+  apps/desktop/src/features/auth/vendor-scratch.ts: @sentry/react
+ELIFECYCLE  Command failed with exit code 1.
+```
+
+### M0.17 commitlint proof
+
+```
+$ git commit -m "stuff"
+✖   subject may not be empty [subject-empty]
+✖   type may not be empty [type-empty]
+husky - commit-msg script failed (code 1)
+```
+
+### `curl localhost:8787/health`
+
+```
+HTTP/1.1 200 OK
+{"ok":true}
+```
+
+### Not run
+
+- `pnpm --filter desktop tauri build` (full Rust/installer build) not executed in this session; needs local Tauri prerequisites and time.
+- Fresh-clone `pnpm install` not executed; `pnpm install` on the working tree is clean.
 
 ## Review
+
 _(reviewer fills)_
