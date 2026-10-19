@@ -169,6 +169,8 @@ Must fix:
 
 Should fix (small): 7. `AppShell` re-implements theme resolution with its own `matchMedia` call and does not follow OS changes for the icon; use `resolveTheme` from `shared/lib/theme` and re-render on change. 8. `settings-storage.ts` casts `as unknown as TauriStore`; use the plugin's exported `Store` type. 9. Add small unit tests: `resolveTheme`, `getCommands` ordering, command grouping.
 
+10. **Native title bar must follow the app theme, independent of the OS.** Today the window chrome follows the OS (white bar over a dark app). On startup (after `rehydrate()`) and whenever `settings.theme` changes, call the Tauri window `setTheme`: `"light"` or `"dark"` for explicit choices, `null` for "system" so it follows the OS. Check the current Tauri 2 docs for the exact API and add only the needed capability permission, commented. Verify in `tauri dev`: choose Dark on a light-OS machine and the title bar turns dark, and vice versa.
+
 Note (not blocking): main chunk is 177 KB gzip, already ~59% of the 300 KB initial-JS budget with no features. `settings-*.js` is only 1.3 KB because react-hook-form + zod resolver sit in the main chunk. Lazy-load the command palette (cmdk) and check with the bundle visualizer in M9; log in DECISIONS.md backlog.
 
 Manual runtime checks (agent ran `tauri dev`; see Runtime evidence above):
