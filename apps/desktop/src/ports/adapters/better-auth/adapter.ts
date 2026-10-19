@@ -422,6 +422,25 @@ export function createBetterAuthAdapter(
       await clearLocal();
     },
 
+    async deleteAccount() {
+      const sessionToken = await store.get(AUTH_KEYS.sessionToken);
+      if (!sessionToken) {
+        throw new AuthError("Not signed in");
+      }
+      const response = await fetchImpl(`${authBase()}/delete-user`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${sessionToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) {
+        throw errorFrom(await readJson(response), response.status);
+      }
+      await clearLocal();
+    },
+
     onAuthStateChange(listener) {
       listeners.add(listener);
       return () => {

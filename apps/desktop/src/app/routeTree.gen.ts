@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from "./../routes/__root";
 import { Route as AuthedRouteImport } from "./../routes/_authed";
 import { Route as GuestRouteImport } from "./../routes/_guest";
 import { Route as AuthedIndexRouteImport } from "./../routes/_authed/index";
+import { Route as AuthedAccountRouteImport } from "./../routes/_authed/account";
 import { Route as AuthedSettingsRouteImport } from "./../routes/_authed/settings";
+import { Route as GuestForgotPasswordRouteImport } from "./../routes/_guest/forgot-password";
 import { Route as GuestSignInRouteImport } from "./../routes/_guest/sign-in";
+import { Route as GuestSignUpRouteImport } from "./../routes/_guest/sign-up";
 
 const AuthedRoute = AuthedRouteImport.update({
   id: "/_authed",
@@ -28,46 +31,85 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AuthedRoute,
 } as any);
+const AuthedAccountRoute = AuthedAccountRouteImport.update({
+  id: "/account",
+  path: "/account",
+  getParentRoute: () => AuthedRoute,
+} as any);
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: "/settings",
   path: "/settings",
   getParentRoute: () => AuthedRoute,
+} as any);
+const GuestForgotPasswordRoute = GuestForgotPasswordRouteImport.update({
+  id: "/forgot-password",
+  path: "/forgot-password",
+  getParentRoute: () => GuestRoute,
 } as any);
 const GuestSignInRoute = GuestSignInRouteImport.update({
   id: "/sign-in",
   path: "/sign-in",
   getParentRoute: () => GuestRoute,
 } as any);
+const GuestSignUpRoute = GuestSignUpRouteImport.update({
+  id: "/sign-up",
+  path: "/sign-up",
+  getParentRoute: () => GuestRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof AuthedIndexRoute;
+  "/account": typeof AuthedAccountRoute;
   "/settings": typeof AuthedSettingsRoute;
+  "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
+  "/sign-up": typeof GuestSignUpRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof AuthedIndexRoute;
+  "/account": typeof AuthedAccountRoute;
   "/settings": typeof AuthedSettingsRoute;
+  "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
+  "/sign-up": typeof GuestSignUpRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/_authed": typeof AuthedRouteWithChildren;
   "/_guest": typeof GuestRouteWithChildren;
+  "/_authed/account": typeof AuthedAccountRoute;
   "/_authed/settings": typeof AuthedSettingsRoute;
+  "/_guest/forgot-password": typeof GuestForgotPasswordRoute;
   "/_guest/sign-in": typeof GuestSignInRoute;
+  "/_guest/sign-up": typeof GuestSignUpRoute;
   "/_authed/": typeof AuthedIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/settings" | "/sign-in";
+  fullPaths:
+    | "/"
+    | "/account"
+    | "/settings"
+    | "/forgot-password"
+    | "/sign-in"
+    | "/sign-up";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/settings" | "/sign-in";
+  to:
+    | "/"
+    | "/account"
+    | "/settings"
+    | "/forgot-password"
+    | "/sign-in"
+    | "/sign-up";
   id:
     | "__root__"
     | "/_authed"
     | "/_guest"
+    | "/_authed/account"
     | "/_authed/settings"
+    | "/_guest/forgot-password"
     | "/_guest/sign-in"
+    | "/_guest/sign-up"
     | "/_authed/";
   fileRoutesById: FileRoutesById;
 }
@@ -99,12 +141,26 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthedIndexRouteImport;
       parentRoute: typeof AuthedRoute;
     };
+    "/_authed/account": {
+      id: "/_authed/account";
+      path: "/account";
+      fullPath: "/account";
+      preLoaderRoute: typeof AuthedAccountRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
     "/_authed/settings": {
       id: "/_authed/settings";
       path: "/settings";
       fullPath: "/settings";
       preLoaderRoute: typeof AuthedSettingsRouteImport;
       parentRoute: typeof AuthedRoute;
+    };
+    "/_guest/forgot-password": {
+      id: "/_guest/forgot-password";
+      path: "/forgot-password";
+      fullPath: "/forgot-password";
+      preLoaderRoute: typeof GuestForgotPasswordRouteImport;
+      parentRoute: typeof GuestRoute;
     };
     "/_guest/sign-in": {
       id: "/_guest/sign-in";
@@ -113,15 +169,24 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof GuestSignInRouteImport;
       parentRoute: typeof GuestRoute;
     };
+    "/_guest/sign-up": {
+      id: "/_guest/sign-up";
+      path: "/sign-up";
+      fullPath: "/sign-up";
+      preLoaderRoute: typeof GuestSignUpRouteImport;
+      parentRoute: typeof GuestRoute;
+    };
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAccountRoute: typeof AuthedAccountRoute;
   AuthedSettingsRoute: typeof AuthedSettingsRoute;
   AuthedIndexRoute: typeof AuthedIndexRoute;
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAccountRoute: AuthedAccountRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
 };
@@ -130,11 +195,15 @@ const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren);
 
 interface GuestRouteChildren {
+  GuestForgotPasswordRoute: typeof GuestForgotPasswordRoute;
   GuestSignInRoute: typeof GuestSignInRoute;
+  GuestSignUpRoute: typeof GuestSignUpRoute;
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
+  GuestForgotPasswordRoute: GuestForgotPasswordRoute,
   GuestSignInRoute: GuestSignInRoute,
+  GuestSignUpRoute: GuestSignUpRoute,
 };
 
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren);

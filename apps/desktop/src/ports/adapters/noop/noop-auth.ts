@@ -23,6 +23,9 @@ export const noopAuth: AuthPort = {
   signOut(): Promise<void> {
     return Promise.resolve();
   },
+  deleteAccount(): Promise<void> {
+    return Promise.reject(new Error("Auth is not configured yet"));
+  },
   onAuthStateChange() {
     return () => undefined;
   },

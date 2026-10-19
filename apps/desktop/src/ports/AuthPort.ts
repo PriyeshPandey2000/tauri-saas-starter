@@ -45,6 +45,8 @@ export interface AuthPort {
   refresh(): Promise<void>;
   /** Clear local credentials and the server session. */
   signOut(): Promise<void>;
+  /** Permanently delete the signed-in account. */
+  deleteAccount(): Promise<void>;
   /** Subscribe to local auth transitions; returns an unsubscribe function. */
   onAuthStateChange(listener: AuthStateListener): () => void;
 }

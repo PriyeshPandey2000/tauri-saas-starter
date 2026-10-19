@@ -15,6 +15,7 @@
     "gen:bindings": "cargo test --manifest-path src-tauri/Cargo.toml export_bindings"
   },
   "dependencies": {
+    "@hookform/resolvers": "^6.0.0",
     "@radix-ui/react-slot": "^1.5.0",
     "@tanstack/react-query": "^5.104.4",
     "@tanstack/react-router": "^1.170.45",
@@ -31,6 +32,7 @@
     "lucide-react": "^1.59.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-hook-form": "^7.90.0",
     "react-i18next": "^17.1.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",

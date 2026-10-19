@@ -5,7 +5,8 @@
   "nav": {
     "home": "Home",
     "settings": "Settings",
-    "toggleSidebar": "Toggle sidebar"
+    "toggleSidebar": "Toggle sidebar",
+    "account": "Account"
   },
   "theme": {
     "label": "Theme",
@@ -19,10 +20,10 @@
     "language": "Language",
     "languageEnglish": "English",
     "sidebarCollapsed": "Collapse sidebar by default",
-    "appInfo": "Version {{version}} · {{os}} · {{arch}}"
+    "appInfo": "Version {{version}} \u00b7 {{os}} \u00b7 {{arch}}"
   },
   "commands": {
-    "placeholder": "Type a command or search…",
+    "placeholder": "Type a command or search\u2026",
     "paletteLabel": "Command palette",
     "empty": "No results found.",
     "groupNavigation": "Navigation",
@@ -39,5 +40,40 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist.",
     "backHome": "Back to home"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "working": "Working\u2026",
+    "backToSignIn": "Back to sign in",
+    "signIn": {
+      "title": "Sign in",
+      "description": "Welcome back.",
+      "submit": "Sign in",
+      "google": "Continue with Google",
+      "createAccount": "Create an account",
+      "forgot": "Forgot password?"
+    },
+    "signUp": {
+      "title": "Create account",
+      "description": "Start with email and a strong password.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "verificationSent": "Check your email to verify the account, then sign in."
+    },
+    "forgot": {
+      "title": "Reset password",
+      "description": "We will email you a reset link.",
+      "submit": "Send reset link",
+      "sent": "If that email exists, a reset link is on its way."
+    },
+    "account": {
+      "title": "Account",
+      "signOut": "Sign out",
+      "delete": "Delete account",
+      "confirmDelete": "Confirm delete",
+      "cancel": "Cancel"
+    }
   }
 }
