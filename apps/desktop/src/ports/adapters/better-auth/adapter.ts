@@ -447,7 +447,6 @@ export function createBetterAuthAdapter(
 
     async completeOAuthCallback(callbackUrl) {
       const pending = pendingOAuth;
-      pendingOAuth = null;
       const url = new URL(callbackUrl);
       if (
         `${url.protocol}//${url.host}/${url.pathname.replace(/^\//, "")}` !==
@@ -461,16 +460,22 @@ export function createBetterAuthAdapter(
       }
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
-      if (!pending || !code || !state) {
+      if (!pending || !state) {
         throw new AuthError("No pending sign-in");
       }
       if (now() > pending.expiresAt) {
+        pendingOAuth = null;
         throw new AuthError("Sign-in timed out");
       }
       if (!constantTimeStringEqual(state, pending.state)) {
+        // A bogus link must not cancel the flow that is still in progress.
         throw new AuthError("Sign-in state mismatch", {
           code: "state_mismatch",
         });
+      }
+      pendingOAuth = null;
+      if (!code) {
+        throw new AuthError("Sign-in callback has no code");
       }
 
       const response = await fetchImpl(

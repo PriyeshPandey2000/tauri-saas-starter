@@ -118,3 +118,41 @@ describe("getSession failures", () => {
     await expect(store.get(AUTH_KEYS.sessionToken)).resolves.toBeNull();
   });
 });
+
+describe("oauth callback consumption", () => {
+  it("keeps the pending flow after a bogus link, then accepts the matching one", async () => {
+    const opened: string[] = [];
+    const exchangeCalls: RequestInit[] = [];
+    const adapter = createBetterAuthAdapter({
+      getApiUrl: () => "http://localhost:8787",
+      store: memoryStore(),
+      openExternal: async (url) => {
+        opened.push(url);
+      },
+      fetchImpl: (async (_url: string, init?: RequestInit) => {
+        exchangeCalls.push(init ?? {});
+        return new Response(JSON.stringify({ error: "invalid_pkce" }), {
+          status: 400,
+        });
+      }) as unknown as typeof fetch,
+    });
+
+    await adapter.signInWithOAuth("google");
+    const state = new URL(opened[0] ?? "").searchParams.get("state");
+    expect(state).toBeTruthy();
+
+    await expect(
+      adapter.completeOAuthCallback(
+        "tauri-saas-starter://auth/callback?code=abc&state=bogus",
+      ),
+    ).rejects.toMatchObject({ code: "state_mismatch" });
+    expect(exchangeCalls).toHaveLength(0);
+
+    await expect(
+      adapter.completeOAuthCallback(
+        `tauri-saas-starter://auth/callback?code=abc&state=${state}`,
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(exchangeCalls).toHaveLength(1);
+  });
+});
