@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import app from "./app.js";
+import app from "./app";
 
 const port = process.env.PORT ? Number(process.env.PORT) : 8787;
 
@@ -16,7 +16,7 @@ const server = createServer(async (req, res) => {
       }
     }
   }
-  let body: any;
+  let body: Buffer | undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
     const chunks: Buffer[] = [];
     for await (const chunk of req) {
@@ -24,7 +24,11 @@ const server = createServer(async (req, res) => {
     }
     body = Buffer.concat(chunks);
   }
-  const fetchReq = new Request(url, { method, headers, body: body ? new Uint8Array(body) : undefined });
+  const fetchReq = new Request(url, {
+    method,
+    headers,
+    body: body ? new Uint8Array(body) : undefined,
+  });
   const resp = await app.fetch(fetchReq);
   res.writeHead(resp.status, Object.fromEntries(resp.headers.entries()));
   const buf = Buffer.from(await resp.arrayBuffer());

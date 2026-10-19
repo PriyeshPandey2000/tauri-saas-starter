@@ -1,15 +1,12 @@
 {
   "extends": "../../packages/config/tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": "src",
     "outDir": "dist",
     "noEmit": false,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "module": "esnext",
     "moduleResolution": "bundler"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
