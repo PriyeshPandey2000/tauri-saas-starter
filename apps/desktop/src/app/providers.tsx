@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
+import { DeepLinkBridge } from "@/features/auth";
 import { useSettingsStore } from "@/features/settings";
 import { PortsProvider, ports } from "@/ports";
 import { Toaster } from "@/shared/ui/sonner";
@@ -25,6 +26,7 @@ export function AppProviders({ router, queryClient }: AppProvidersProps) {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <WindowThemeSync />
+            <DeepLinkBridge />
             <RouterProvider router={router} />
             <Toaster theme={theme} />
           </ThemeProvider>
