@@ -3,7 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "noEmit": false,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }
