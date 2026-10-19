@@ -47,3 +47,11 @@ The file logger rotates at 2 MB.
 1. Run the app and drive enough logging to exceed 2 MB, or lower the cap
    temporarily.
 2. Confirm a rotated file appears and the active log stays under the cap.
+
+## Compose Postgres port clash (M3, M4)
+
+A native Postgres listening on `127.0.0.1:5432` shadows the compose container's
+published port, so `localhost:5432` reaches the wrong server.
+
+1. Free 5432, or change the host side of the port mapping in `docker-compose.yml`
+   to `"5433:5432"` and use `postgres://app:app@localhost:5433/app`.
