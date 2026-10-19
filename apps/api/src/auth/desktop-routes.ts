@@ -85,7 +85,7 @@ async function finishOAuth(
   const ott = await auth.api.generateOneTimeToken({
     headers: c.req.raw.headers,
   });
-  challenges.set(ott.token, parsed.data.challenge, OTT_TTL_MS);
+  await challenges.set(ott.token, parsed.data.challenge, OTT_TTL_MS);
   return c.redirect(
     deepLink(env, { code: ott.token, state: parsed.data.state }),
     302,
@@ -102,7 +102,7 @@ async function exchangeOAuth(
   if (!parsed.success) {
     return c.json({ error: "invalid_request" }, 400);
   }
-  const challenge = challenges.take(parsed.data.token);
+  const challenge = await challenges.take(parsed.data.token);
   if (
     !challenge ||
     !constantTimeEqual(pkceChallenge(parsed.data.verifier), challenge)

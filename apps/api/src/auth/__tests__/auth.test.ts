@@ -31,7 +31,7 @@ async function setup() {
     env,
     mailer: { send: vi.fn(async () => undefined) },
   });
-  const challenges = createChallengeStore();
+  const challenges = createChallengeStore(db);
   const app = createApp({ auth, env, db, challenges });
   return { auth, app, challenges, client };
 }
@@ -87,7 +87,7 @@ describe("auth API", () => {
     const ott = await auth.api.generateOneTimeToken({
       headers: new Headers({ authorization: `Bearer ${created.token}` }),
     });
-    challenges.set(ott.token, pkceChallenge("a".repeat(43)), 60_000);
+    await challenges.set(ott.token, pkceChallenge("a".repeat(43)), 60_000);
 
     const wrong = await app.fetch(
       new Request("http://localhost:8787/auth/desktop/exchange", {
@@ -137,7 +137,7 @@ describe("auth API", () => {
 
   it("rejects an expired challenge", async () => {
     const { app, challenges } = await setup();
-    challenges.set("expired-ott", pkceChallenge("c".repeat(43)), -1);
+    await challenges.set("expired-ott", pkceChallenge("c".repeat(43)), -1);
     const response = await app.fetch(
       new Request("http://localhost:8787/auth/desktop/exchange", {
         method: "POST",

@@ -34,8 +34,11 @@ export function resolveCorsOrigins(
   return [...TAURI_ORIGINS, ...DEV_ORIGINS, ...extra];
 }
 
-export function createApp({ auth, env, challenges: injected }: AppDeps) {
-  const challenges = injected ?? createChallengeStore();
+export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
+  if (!injected && !db) {
+    throw new Error("createApp needs a database or a challenge store");
+  }
+  const challenges = injected ?? createChallengeStore(db!);
   const desktopRoutes = desktopAuthRoutes({ auth, env, challenges });
   const requireAuth = createRequireAuth({
     jwksUrl: `${env.BETTER_AUTH_URL}/api/auth/jwks`,

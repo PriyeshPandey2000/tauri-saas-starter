@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   constantTimeEqual,
-  createChallengeStore,
+  hashOneTimeToken,
   isBase64Url,
   pkceChallenge,
 } from "../desktop-flow";
@@ -29,20 +29,10 @@ describe("PKCE helpers", () => {
   });
 });
 
-describe("challenge store", () => {
-  it("returns the challenge once", () => {
-    const store = createChallengeStore();
-    store.set("ott", "challenge", 1000);
-    expect(store.take("ott")).toBe("challenge");
-    expect(store.take("ott")).toBeNull();
-  });
-
-  it("drops expired entries", () => {
-    let now = 0;
-    const store = createChallengeStore(() => now);
-    store.set("ott", "challenge", 1000);
-    now = 1000;
-    expect(store.take("ott")).toBeNull();
-    expect(store.size()).toBe(0);
+describe("challenge storage", () => {
+  it("keys challenges by a hash of the OTT", () => {
+    expect(hashOneTimeToken("abc")).toBe(
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
   });
 });

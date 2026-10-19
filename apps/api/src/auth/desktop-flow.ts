@@ -1,4 +1,9 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+
+import { eq } from "drizzle-orm";
+
+import type { Database } from "../db/client";
+import { verification } from "../db/schema";
 
 const BASE64URL = /^[A-Za-z0-9_-]+$/;
 
@@ -30,41 +35,53 @@ export function constantTimeEqual(left: string, right: string): boolean {
 
 export interface ChallengeStore {
   /** Remember the challenge for an OTT until it expires. */
-  set(ott: string, challenge: string, ttlMs: number): void;
+  set(ott: string, challenge: string, ttlMs: number): Promise<void>;
   /** Consume the challenge for an OTT; returns null when missing or expired. */
-  take(ott: string): string | null;
-  size(): number;
+  take(ott: string): Promise<string | null>;
 }
 
-/** Single-process TTL store for `{ott -> challenge}` (see the design note). */
+/** Hash the OTT so the verification table never stores the bearer value. */
+export function hashOneTimeToken(ott: string): string {
+  return createHash("sha256").update(ott).digest("hex");
+}
+
+/**
+ * `{ott -> challenge}` in the `verification` table, keyed by a hash of the OTT.
+ * Single use; rows expire with the OTT.
+ */
 export function createChallengeStore(
+  db: Database,
   now: () => number = Date.now,
 ): ChallengeStore {
-  const entries = new Map<string, { challenge: string; expiresAt: number }>();
-
-  function dropExpired(): void {
-    const current = now();
-    for (const [key, entry] of entries) {
-      if (entry.expiresAt <= current) {
-        entries.delete(key);
-      }
-    }
-  }
+  const identifier = (ott: string) => `desktop-pkce:${hashOneTimeToken(ott)}`;
 
   return {
-    set(ott, challenge, ttlMs) {
-      dropExpired();
-      entries.set(ott, { challenge, expiresAt: now() + ttlMs });
+    async set(ott, challenge, ttlMs) {
+      const current = new Date(now());
+      await db.insert(verification).values({
+        id: randomUUID(),
+        identifier: identifier(ott),
+        value: challenge,
+        expiresAt: new Date(current.getTime() + ttlMs),
+        createdAt: current,
+        updatedAt: current,
+      });
     },
-    take(ott) {
-      dropExpired();
-      const entry = entries.get(ott);
-      entries.delete(ott);
-      return entry && entry.expiresAt > now() ? entry.challenge : null;
-    },
-    size() {
-      dropExpired();
-      return entries.size;
+    async take(ott) {
+      const [row] = await db
+        .select({
+          id: verification.id,
+          value: verification.value,
+          expiresAt: verification.expiresAt,
+        })
+        .from(verification)
+        .where(eq(verification.identifier, identifier(ott)))
+        .limit(1);
+      if (!row) {
+        return null;
+      }
+      await db.delete(verification).where(eq(verification.id, row.id));
+      return new Date(row.expiresAt).getTime() > now() ? row.value : null;
     },
   };
 }

@@ -74,7 +74,8 @@ device must sign in again.
 4. `GET /auth/desktop/callback?state&challenge` (browser cookie present) validates
    both query values (base64url, length bounds), reads the session with
    `auth.api.getSession`, issues a one-time token (`3` minutes), stores
-   `{ott -> challenge}` in a TTL map (same 3 minute TTL), and responds `302` to
+   `{ott -> challenge}` in the `verification` table keyed by `sha256(ott)` (3 minute
+   TTL, single use), and responds `302` to
    `tauri-saas-starter://auth/callback?code={ott}&state={state}`.
 5. The OS opens the app. The deep-link handler compares `state` to the pending value
    (constant time, single use). Mismatch or expiry: reject, no exchange.
@@ -178,9 +179,8 @@ tauri-saas-starter://...`. Without the single-instance plugin (M8) a deep link
   cookie jars, so a browser-completed OAuth flow cannot hand its cookie to the app.
 - **Session token as the only token:** simplest, but M3.9 requires a short-lived
   access token plus a single refresh retry.
-- **In-memory `{ott -> challenge}` map:** accepted for M3 because the boilerplate
-  runs one API instance. Multi-instance deployments must move it to Postgres or
-  Redis before scaling (logged as a follow-up).
+- **DB-backed `{ott -> challenge}`:** stored in `verification` keyed by a hash of
+  the OTT, so any API instance can finish the exchange and raw OTTs are not at rest.
 
 ## Required env (documented in `docs/auth-setup.md`)
 
