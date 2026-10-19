@@ -138,4 +138,19 @@ Running target/debug/appsdesktop
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: CHANGES REQUIRED** (2026-10-19). Good foundations; the two riskiest pieces (keychain, file logging) are unproven and have small defects.
+
+Verified by reviewer: forced `turbo run lint typecheck test build` pass (desktop 35 tests, api 1); `cargo test` 3 pass; no raw `invoke(` outside bindings; `tauri-specta`/`specta`/`specta-typescript` pinned exactly; capabilities all commented; ports are vendor-neutral; apiClient handles timeout/caller-abort/schema errors; config fails fast with a readable error; `.env.development` contains no secrets.
+
+Must fix:
+
+1. **Keychain unproven.** `keyring` 4.x is built on `keyring-core` with per-platform stores; the default `v1` feature enables the native stores, but nobody has shown `Entry::new` + set/get/delete works (and persists) on a real keychain. Add an `#[ignore]` Rust integration test `keychain_roundtrip` using a unique throwaway service name (set, get == value, delete, get == None, delete again ok) and clean up on failure. The user will run it: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml -- --ignored keychain_roundtrip`. If `Entry::new` needs an explicit default store in this keyring version, fix it.
+2. **Possible infinite log loop.** `file-logger.ts` uses `void debug(...)`. If the plugin call rejects (e.g. capability denied), the rejection hits the global `unhandledrejection` handler, which logs again, which rejects again. Catch each call and swallow/`console` fallback (never log from the catch through the same logger). Add a test.
+3. **File logging never exercised.** `createPorts()` uses the console logger in dev, so the file adapter, rotation and redaction-in-file are unverifiable locally. Add an optional `VITE_LOG_TARGET` (`console` | `file`, in the Zod config schema and `.env.example`; default console in dev, file otherwise) so the file logger can be forced in `tauri dev`.
+4. **Bindings path depends on cwd.** `BINDINGS_PATH` is relative; the debug startup export `.expect(...)`s and panics if the binary is launched from another directory. Build the path from `env!("CARGO_MANIFEST_DIR")`, and log a warning instead of panicking if export fails in debug.
+5. **apiClient mislabels bad JSON.** A 2xx response with a non-JSON body throws a `SyntaxError` that is mapped to `network`. Map `response.json()` failures to `invalid_response`. Add a test.
+6. **No test for `secureStorage.ts`.** Add unit tests with mocked bindings: ok path, `AppError` -> `SecureStorageError` (kind preserved), null for missing key.
+
+Notes for later (not blocking): `FeatureFlagPort` is async `isEnabled`; M5.2 requires a synchronous `get`/`subscribe` shape, so reshape it there. Production CSP still allows localhost origins (backlog). Module-level `ports`/`logger` singletons coexist with `usePorts()`; acceptable for non-React code (error handlers).
+
+Manual checks (user): keychain round-trip test above; with `VITE_LOG_TARGET=file` run `tauri dev`, change the theme, then confirm `~/Library/Logs/com.example.tauri-saas-starter/app.log` has the line and no secret values.
