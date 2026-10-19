@@ -9,68 +9,139 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./../routes/__root";
-import { Route as IndexRouteImport } from "./../routes/index";
-import { Route as SettingsRouteImport } from "./../routes/settings";
+import { Route as AuthedRouteImport } from "./../routes/_authed";
+import { Route as GuestRouteImport } from "./../routes/_guest";
+import { Route as AuthedIndexRouteImport } from "./../routes/_authed/index";
+import { Route as AuthedSettingsRouteImport } from "./../routes/_authed/settings";
+import { Route as GuestSignInRouteImport } from "./../routes/_guest/sign-in";
 
-const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+const AuthedRoute = AuthedRouteImport.update({
+  id: "/_authed",
   getParentRoute: () => rootRouteImport,
 } as any);
-const SettingsRoute = SettingsRouteImport.update({
+const GuestRoute = GuestRouteImport.update({
+  id: "/_guest",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AuthedIndexRoute = AuthedIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => AuthedRoute,
+} as any);
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: "/settings",
   path: "/settings",
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
+} as any);
+const GuestSignInRoute = GuestSignInRouteImport.update({
+  id: "/sign-in",
+  path: "/sign-in",
+  getParentRoute: () => GuestRoute,
 } as any);
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/settings": typeof SettingsRoute;
+  "/": typeof AuthedIndexRoute;
+  "/settings": typeof AuthedSettingsRoute;
+  "/sign-in": typeof GuestSignInRoute;
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/settings": typeof SettingsRoute;
+  "/": typeof AuthedIndexRoute;
+  "/settings": typeof AuthedSettingsRoute;
+  "/sign-in": typeof GuestSignInRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/settings": typeof SettingsRoute;
+  "/_authed": typeof AuthedRouteWithChildren;
+  "/_guest": typeof GuestRouteWithChildren;
+  "/_authed/settings": typeof AuthedSettingsRoute;
+  "/_guest/sign-in": typeof GuestSignInRoute;
+  "/_authed/": typeof AuthedIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/settings";
+  fullPaths: "/" | "/settings" | "/sign-in";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/settings";
-  id: "__root__" | "/" | "/settings";
+  to: "/" | "/settings" | "/sign-in";
+  id:
+    | "__root__"
+    | "/_authed"
+    | "/_guest"
+    | "/_authed/settings"
+    | "/_guest/sign-in"
+    | "/_authed/";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  SettingsRoute: typeof SettingsRoute;
+  AuthedRoute: typeof AuthedRouteWithChildren;
+  GuestRoute: typeof GuestRouteWithChildren;
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
+    "/_authed": {
+      id: "/_authed";
+      path: "";
       fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
+      preLoaderRoute: typeof AuthedRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/settings": {
-      id: "/settings";
+    "/_guest": {
+      id: "/_guest";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof GuestRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_authed/": {
+      id: "/_authed/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthedIndexRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
+    "/_authed/settings": {
+      id: "/_authed/settings";
       path: "/settings";
       fullPath: "/settings";
-      preLoaderRoute: typeof SettingsRouteImport;
-      parentRoute: typeof rootRouteImport;
+      preLoaderRoute: typeof AuthedSettingsRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
+    "/_guest/sign-in": {
+      id: "/_guest/sign-in";
+      path: "/sign-in";
+      fullPath: "/sign-in";
+      preLoaderRoute: typeof GuestSignInRouteImport;
+      parentRoute: typeof GuestRoute;
     };
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedSettingsRoute: typeof AuthedSettingsRoute;
+  AuthedIndexRoute: typeof AuthedIndexRoute;
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedIndexRoute: AuthedIndexRoute,
+};
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren);
+
+interface GuestRouteChildren {
+  GuestSignInRoute: typeof GuestSignInRoute;
+}
+
+const GuestRouteChildren: GuestRouteChildren = {
+  GuestSignInRoute: GuestSignInRoute,
+};
+
+const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren);
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  SettingsRoute: SettingsRoute,
+  AuthedRoute: AuthedRouteWithChildren,
+  GuestRoute: GuestRouteWithChildren,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
