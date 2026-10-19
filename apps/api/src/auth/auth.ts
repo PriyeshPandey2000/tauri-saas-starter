@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
+import { getSessionCookie } from "better-auth/cookies";
 import { bearer, jwt, oneTimeToken } from "better-auth/plugins";
 
 import type { Database } from "../db/client";
@@ -114,6 +115,35 @@ export function createAuth({ db, database, env, mailer }: AuthDeps) {
       }),
       oneTimeToken({ expiresIn: 3 }),
     ],
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (!db) {
+          return;
+        }
+        if (ctx.path !== "/token" && ctx.path !== "/get-session") {
+          return;
+        }
+        const headers = ctx.headers ?? new Headers();
+        const authorization = headers.get("authorization");
+        const token = authorization?.startsWith("Bearer ")
+          ? authorization.slice("Bearer ".length).trim()
+          : getSessionCookie(headers);
+        if (!token) {
+          return;
+        }
+        const [row] = await db
+          .select({ createdAt: schema.session.createdAt })
+          .from(schema.session)
+          .where(eq(schema.session.token, token))
+          .limit(1);
+        if (
+          row &&
+          Date.now() - new Date(row.createdAt).getTime() >= THIRTY_DAYS_MS
+        ) {
+          throw new APIError("UNAUTHORIZED", { message: "Session expired" });
+        }
+      }),
+    },
     databaseHooks: {
       session: {
         create: {
@@ -124,35 +154,6 @@ export function createAuth({ db, database, env, mailer }: AuthDeps) {
                 expiresAt: clampSessionExpiry(
                   new Date(session.createdAt),
                   new Date(session.expiresAt),
-                ),
-              },
-            };
-          },
-        },
-        update: {
-          async before(session) {
-            const token = (session as { token?: string }).token;
-            const nextExpiry = (session as { expiresAt?: Date }).expiresAt;
-            if (!token || !nextExpiry) {
-              return;
-            }
-            if (!db) {
-              return;
-            }
-            const [existing] = await db
-              .select({ createdAt: schema.session.createdAt })
-              .from(schema.session)
-              .where(eq(schema.session.token, token))
-              .limit(1);
-            if (!existing) {
-              return;
-            }
-            return {
-              data: {
-                ...session,
-                expiresAt: clampSessionExpiry(
-                  new Date(existing.createdAt),
-                  new Date(nextExpiry),
                 ),
               },
             };

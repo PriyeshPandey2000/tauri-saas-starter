@@ -25,15 +25,15 @@ const env: ApiEnv = {
 };
 
 async function setup() {
-  const { db } = await createTestDb();
+  const { db, client } = await createTestDb();
   const auth = createAuth({
     db,
     env,
     mailer: { send: vi.fn(async () => undefined) },
   });
   const challenges = createChallengeStore();
-  const app = createApp({ auth, env, challenges });
-  return { auth, app, challenges };
+  const app = createApp({ auth, env, db, challenges });
+  return { auth, app, challenges, client };
 }
 
 async function signUp(auth: ReturnType<typeof createAuth>) {
@@ -110,6 +110,29 @@ describe("auth API", () => {
       }),
     );
     expect(replay.status).toBe(400);
+  });
+
+  it("rejects token minting after the 30-day absolute cap", async () => {
+    const { auth, app, client } = await setup();
+    const created = await signUp(auth);
+    await client.query(
+      "UPDATE session SET created_at = now() - interval '31 days' WHERE token = $1",
+      [created.token],
+    );
+
+    const mint = await app.fetch(
+      new Request("http://localhost:8787/api/auth/token", {
+        headers: { authorization: `Bearer ${created.token}` },
+      }),
+    );
+    expect(mint.status).toBe(401);
+
+    const read = await app.fetch(
+      new Request("http://localhost:8787/api/auth/get-session", {
+        headers: { authorization: `Bearer ${created.token}` },
+      }),
+    );
+    expect(read.status).toBe(401);
   });
 
   it("rejects an expired challenge", async () => {
