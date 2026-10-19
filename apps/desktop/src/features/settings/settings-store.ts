@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 
 import {
   DEFAULT_SETTINGS,
@@ -9,7 +9,7 @@ import {
   type Theme,
 } from "@app/shared";
 
-import { settingsStorage } from "./settings-storage";
+import { settingsPersistStorage } from "./settings-storage";
 
 export type SettingsState = AppSettings & {
   setTheme: (theme: Theme) => void;
@@ -39,7 +39,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "app-settings",
-      storage: createJSONStorage(() => settingsStorage),
+      storage: settingsPersistStorage,
       partialize: (state) => ({
         theme: state.theme,
         language: state.language,

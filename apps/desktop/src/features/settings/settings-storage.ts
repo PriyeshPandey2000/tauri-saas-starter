@@ -1,6 +1,12 @@
 import { isTauri } from "@tauri-apps/api/core";
 import type { Store } from "@tauri-apps/plugin-store";
-import type { StateStorage } from "zustand/middleware";
+import {
+  createJSONStorage,
+  type PersistStorage,
+  type StateStorage,
+} from "zustand/middleware";
+
+import type { AppSettings } from "@app/shared";
 
 const SETTINGS_FILE = "settings.json";
 const memory = new Map<string, string>();
@@ -47,4 +53,19 @@ export const settingsStorage: StateStorage = {
     }
     await store.delete(name);
   },
+};
+
+const jsonStorage = createJSONStorage<AppSettings>(() => settingsStorage);
+
+export const settingsPersistStorage: PersistStorage<AppSettings> = {
+  getItem: async (name) => {
+    try {
+      return await jsonStorage.getItem(name);
+    } catch (error) {
+      console.warn("Discarding unreadable stored settings", error);
+      return null;
+    }
+  },
+  setItem: (name, value) => jsonStorage.setItem(name, value),
+  removeItem: (name) => jsonStorage.removeItem(name),
 };
