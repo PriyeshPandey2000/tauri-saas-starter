@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
 import type { Auth } from "./auth/auth";
-import { createChallengeStore } from "./auth/desktop-flow";
+import { createChallengeStore, type ChallengeStore } from "./auth/desktop-flow";
 import { desktopAuthRoutes } from "./auth/desktop-routes";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
 import type { ApiEnv } from "./env";
@@ -11,6 +11,7 @@ import type { ApiEnv } from "./env";
 export interface AppDeps {
   auth: Auth;
   env: ApiEnv;
+  challenges?: ChallengeStore;
 }
 
 /** Exact webview origins: macOS/Linux use `tauri://`, Windows uses `http(s)://tauri.localhost`. */
@@ -31,8 +32,8 @@ export function resolveCorsOrigins(
   return [...TAURI_ORIGINS, ...DEV_ORIGINS, ...extra];
 }
 
-export function createApp({ auth, env }: AppDeps) {
-  const challenges = createChallengeStore();
+export function createApp({ auth, env, challenges: injected }: AppDeps) {
+  const challenges = injected ?? createChallengeStore();
   const desktopRoutes = desktopAuthRoutes({ auth, env, challenges });
   const requireAuth = createRequireAuth({
     jwksUrl: `${env.BETTER_AUTH_URL}/api/auth/jwks`,

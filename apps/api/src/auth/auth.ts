@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { betterAuth } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { bearer, jwt, oneTimeToken } from "better-auth/plugins";
@@ -38,17 +38,21 @@ export function shouldBlockImplicitLink(input: LinkCheckInput): boolean {
 }
 
 export interface AuthDeps {
-  db: Database;
+  /** Drizzle database. Omitted only when an explicit `database` adapter is given. */
+  db?: Database;
+  database?: BetterAuthOptions["database"];
   env: ApiEnv;
   mailer: MailerPort;
 }
 
-export function createAuth({ db, env, mailer }: AuthDeps) {
+export function createAuth({ db, database, env, mailer }: AuthDeps) {
+  const resolvedDatabase =
+    database ?? drizzleAdapter(db as Database, { provider: "pg", schema });
   return betterAuth({
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [env.BETTER_AUTH_URL],
-    database: drizzleAdapter(db, { provider: "pg", schema }),
+    database: resolvedDatabase,
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 10,
@@ -132,6 +136,9 @@ export function createAuth({ db, env, mailer }: AuthDeps) {
             if (!token || !nextExpiry) {
               return;
             }
+            if (!db) {
+              return;
+            }
             const [existing] = await db
               .select({ createdAt: schema.session.createdAt })
               .from(schema.session)
@@ -156,6 +163,9 @@ export function createAuth({ db, env, mailer }: AuthDeps) {
         create: {
           async before(account) {
             if (account.providerId === "credential") {
+              return;
+            }
+            if (!db) {
               return;
             }
             const [target] = await db
