@@ -1,16 +1,11 @@
 {
   "app": {
-    "name": "Tauri SaaS Starter",
-    "loading": "Loading…"
+    "name": "Tauri SaaS Starter"
   },
   "nav": {
     "home": "Home",
     "settings": "Settings",
     "toggleSidebar": "Toggle sidebar"
-  },
-  "common": {
-    "reload": "Reload",
-    "cancel": "Cancel"
   },
   "theme": {
     "label": "Theme",
@@ -23,8 +18,7 @@
     "description": "Manage appearance and application preferences.",
     "language": "Language",
     "languageEnglish": "English",
-    "sidebarCollapsed": "Collapse sidebar by default",
-    "saved": "Settings saved"
+    "sidebarCollapsed": "Collapse sidebar by default"
   },
   "commands": {
     "placeholder": "Type a command or search…",
@@ -37,6 +31,7 @@
   "error": {
     "title": "Something went wrong",
     "description": "An unexpected error occurred. Reload the app to continue.",
+    "tryAgain": "Try again",
     "reload": "Reload app"
   },
   "notFound": {

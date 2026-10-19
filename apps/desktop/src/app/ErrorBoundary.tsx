@@ -23,7 +23,7 @@ export function ErrorFallback({ error, reset }: ErrorFallbackProps) {
       <div className="flex gap-2">
         {reset ? (
           <Button variant="outline" onClick={reset}>
-            {t("error.reload")}
+            {t("error.tryAgain")}
           </Button>
         ) : null}
         <Button onClick={() => window.location.reload()}>
