@@ -1,1 +1,1 @@
-export const APP_NAME = "desktop-app-boilerplate";
+export const APP_NAME = "Tauri SaaS Starter";
