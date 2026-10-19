@@ -124,7 +124,16 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
           });
         }
 
-        const body: unknown = await response.json();
+        let body: unknown;
+        try {
+          body = await response.json();
+        } catch (error) {
+          throw new ApiError("Response body was not valid JSON", {
+            code: "invalid_response",
+            status: response.status,
+            details: error instanceof Error ? error.message : String(error),
+          });
+        }
         const parsed = request.schema.safeParse(body);
         if (!parsed.success) {
           throw new ApiError("Response did not match the expected schema", {

@@ -105,3 +105,23 @@ describe("api client", () => {
     expect(init.headers).toMatchObject({ authorization: "Bearer token-123" });
   });
 });
+
+describe("api client non-JSON success body", () => {
+  it("maps a 2xx body that is not JSON to invalid_response", async () => {
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: (async () =>
+        new Response("<html>ok</html>", {
+          status: 200,
+        })) as unknown as typeof fetch,
+    });
+
+    await expect(
+      client.request("/users/1", { schema: ItemSchema }),
+    ).rejects.toMatchObject({
+      code: "invalid_response",
+      status: 200,
+      message: "Response body was not valid JSON",
+    });
+  });
+});
