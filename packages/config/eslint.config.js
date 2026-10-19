@@ -19,6 +19,7 @@ export default [
       '**/.turbo/**',
       '**/node_modules/**',
       '**/src-tauri/**',
+      '**/routeTree.gen.ts',
     ],
   },
   {
@@ -45,7 +46,7 @@ export default [
         },
         node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
       },
-      'boundaries/ignore': ['**/*.d.ts'],
+      'boundaries/ignore': ['**/*.d.ts', '**/packages/shared/**'],
       'boundaries/files': [{ pattern: '**/ports/index.ts', category: 'composition-root' }],
       'boundaries/elements': [
         { type: 'adapter', pattern: 'ports/adapters/*', capture: ['adapterName'] },
