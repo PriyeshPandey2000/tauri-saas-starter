@@ -31,6 +31,7 @@ export function createRequireAuth(
       const { payload } = await jwtVerify(token, jwks, {
         issuer: options.issuer,
         audience: options.audience,
+        algorithms: ["EdDSA"],
         clockTolerance: 30,
       });
       c.set("claims", payload);

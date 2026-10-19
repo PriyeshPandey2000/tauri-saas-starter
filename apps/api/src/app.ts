@@ -25,13 +25,14 @@ export const TAURI_ORIGINS = [
 export const DEV_ORIGINS = ["http://localhost:1420"];
 
 export function resolveCorsOrigins(
-  env: Pick<ApiEnv, "CORS_ORIGINS">,
+  env: Pick<ApiEnv, "CORS_ORIGINS" | "NODE_ENV">,
 ): string[] {
   const extra = (env.CORS_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
-  return [...TAURI_ORIGINS, ...DEV_ORIGINS, ...extra];
+  const dev = env.NODE_ENV === "production" ? [] : DEV_ORIGINS;
+  return [...TAURI_ORIGINS, ...dev, ...extra];
 }
 
 export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
@@ -61,6 +62,7 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
       origin: resolveCorsOrigins(env),
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
+      exposeHeaders: ["set-auth-token"],
       credentials: false,
       maxAge: 600,
     }),

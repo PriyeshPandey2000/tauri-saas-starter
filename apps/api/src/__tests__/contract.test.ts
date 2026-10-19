@@ -16,6 +16,7 @@ import { createTestDb } from "../db/test-db";
 import type { ApiEnv } from "../env";
 
 const env: ApiEnv = {
+  NODE_ENV: "test",
   PORT: 8787,
   DATABASE_URL: "postgres://user:pass@localhost:5432/app",
   DATABASE_URL_DIRECT: "postgres://user:pass@localhost:5432/app",
