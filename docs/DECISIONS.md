@@ -58,3 +58,4 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - Linux support
 - Session replay, perf tracing
 - Store distribution (MSIX / Mac App Store)
+- Move dev-only CSP origins (`http://localhost:1420`, `ws://localhost:1420`) out of the production CSP in `tauri.conf.json` into a dev-only override (scheduled M2/M9)
