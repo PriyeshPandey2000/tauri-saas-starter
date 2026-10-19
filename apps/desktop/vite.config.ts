@@ -22,4 +22,10 @@ export default defineConfig({
       "@app/shared": sharedDir,
     },
   },
+  clearScreen: false,
+  server: {
+    port: 1420,
+    strictPort: true,
+    watch: { ignored: ["**/src-tauri/**"] },
+  },
 });
