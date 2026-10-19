@@ -10,4 +10,6 @@ permissions = [
   "store:default",
   "window-state:default",
   "core:window:allow-set-theme",
+  # Frontend writes through the LoggerPort file adapter; reads/level control stay denied.
+  "log:allow-log",
 ]

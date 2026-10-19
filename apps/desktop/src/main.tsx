@@ -7,6 +7,7 @@ import { createAppQueryClient } from "@/app/query-client";
 import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
 import { useSettingsStore } from "@/features/settings";
+import { logger } from "@/ports";
 import { ConfigError, getConfig } from "@/shared/lib/config";
 import { applyTheme } from "@/shared/lib/theme";
 import { applyWindowTheme, showMainWindow } from "@/shared/lib/window";
@@ -16,10 +17,10 @@ import "./index.css";
 
 function registerGlobalErrorHandlers(): void {
   window.addEventListener("error", (event) => {
-    console.error("window.onerror", event.error ?? event.message);
+    logger.error("window.onerror", { error: event.error ?? event.message });
   });
   window.addEventListener("unhandledrejection", (event) => {
-    console.error("unhandledrejection", event.reason);
+    logger.error("unhandledrejection", { reason: event.reason });
   });
 }
 

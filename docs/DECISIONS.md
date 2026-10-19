@@ -20,6 +20,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @testing-library/dom             | 10.4.2            | 2026-10-19 | latest stable; peer of @testing-library/react                                  |
 | @tauri-apps/api                  | 2.12.4            | 2026-10-19 | latest stable                                                                  |
 | @tauri-apps/cli                  | 2.12.3            | 2026-10-19 | latest stable                                                                  |
+| @tauri-apps/plugin-log           | 2.10.1            | 2026-10-19 | latest stable; file logger adapter                                             |
 | @tauri-apps/plugin-store         | 2.5.0             | 2026-10-19 | latest stable; settings persistence                                            |
 | @tauri-apps/plugin-window-state  | 2.5.0             | 2026-10-19 | latest stable; window size/position                                            |
 | @types/node                      | 26.6.5            | 2026-10-19 | latest stable                                                                  |
@@ -40,6 +41,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | husky                            | 9.1.7             | 2026-10-19 | latest stable                                                                  |
 | i18next                          | 26.5.2            | 2026-10-19 | latest stable                                                                  |
 | jsdom                            | 30.1.3            | 2026-10-19 | latest stable                                                                  |
+| keyring                          | 4.2.0             | 2026-10-19 | latest stable; OS keychain for secure storage                                  |
 | lint-staged                      | 17.6.0            | 2026-10-19 | latest stable                                                                  |
 | lucide-react                     | 1.59.0            | 2026-10-19 | latest stable                                                                  |
 | prettier                         | 3.9.10            | 2026-10-19 | latest stable                                                                  |
@@ -52,6 +54,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | specta-typescript                | 0.0.12            | 2026-10-19 | latest stable; used by the pre-release IPC stack (see Deviations)              |
 | tailwind-merge                   | 3.7.0             | 2026-10-19 | latest stable                                                                  |
 | tailwindcss                      | 4.3.3             | 2026-10-19 | latest stable                                                                  |
+| tauri-plugin-log                 | 2.10.1            | 2026-10-19 | latest stable; rotating log file (5 x 2MB)                                     |
 | tauri-plugin-store               | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); settings file in app data dir                    |
 | tauri-plugin-window-state        | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); window size/position                             |
 | tauri-specta                     | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
