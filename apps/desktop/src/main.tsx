@@ -7,7 +7,7 @@ import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
 import { useSettingsStore } from "@/features/settings";
 import { applyTheme } from "@/shared/lib/theme";
-import { showMainWindow } from "@/shared/lib/window";
+import { applyWindowTheme, showMainWindow } from "@/shared/lib/window";
 
 import "@/shared/i18n";
 import "./index.css";
@@ -48,6 +48,7 @@ async function bootstrap(): Promise<void> {
 
   await loadSettings();
   applyTheme(useSettingsStore.getState().theme);
+  await applyWindowTheme(useSettingsStore.getState().theme);
   registerGlobalErrorHandlers();
 
   const queryClient = createAppQueryClient();

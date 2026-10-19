@@ -1,0 +1,13 @@
+# TOML is used here (not JSON) so this capability can carry comments.
+# `core:window:allow-set-theme` is not part of `core:window:default`. It lets the
+# app set the native window (title bar) theme to match the in-app theme.
+"$schema" = "../gen/schemas/desktop-schema.json"
+identifier = "default"
+description = "Capability for the main window"
+windows = ["main"]
+permissions = [
+  "core:default",
+  "store:default",
+  "window-state:default",
+  "core:window:allow-set-theme",
+]

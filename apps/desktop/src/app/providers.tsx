@@ -8,6 +8,7 @@ import { Toaster } from "@/shared/ui/sonner";
 import { ErrorBoundary } from "./ErrorBoundary";
 import type { AppRouter } from "./router";
 import { ThemeProvider } from "./ThemeProvider";
+import { WindowThemeSync } from "./WindowThemeSync";
 
 type AppProvidersProps = {
   router: AppRouter;
@@ -21,6 +22,7 @@ export function AppProviders({ router, queryClient }: AppProvidersProps) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <WindowThemeSync />
           <RouterProvider router={router} />
           <Toaster theme={theme} />
         </ThemeProvider>
