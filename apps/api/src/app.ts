@@ -3,6 +3,9 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
 import type { Auth } from "./auth/auth";
+import { createChallengeStore } from "./auth/desktop-flow";
+import { desktopAuthRoutes } from "./auth/desktop-routes";
+import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
 import type { ApiEnv } from "./env";
 
 export interface AppDeps {
@@ -29,7 +32,14 @@ export function resolveCorsOrigins(
 }
 
 export function createApp({ auth, env }: AppDeps) {
-  const app = new Hono();
+  const challenges = createChallengeStore();
+  const desktopRoutes = desktopAuthRoutes({ auth, env, challenges });
+  const requireAuth = createRequireAuth({
+    jwksUrl: `${env.BETTER_AUTH_URL}/api/auth/jwks`,
+    issuer: env.BETTER_AUTH_URL,
+    audience: env.BETTER_AUTH_URL,
+  });
+  const app = new Hono<{ Variables: AuthVariables }>();
 
   app.use(
     "*",
@@ -55,6 +65,15 @@ export function createApp({ auth, env }: AppDeps) {
 
   app.on(["GET", "POST"], "/api/auth/*", (c) => {
     return auth.handler(c.req.raw);
+  });
+
+  app.get("/auth/desktop/start", desktopRoutes.start);
+  app.get("/auth/desktop/callback", desktopRoutes.finish);
+  app.post("/auth/desktop/exchange", desktopRoutes.exchange);
+
+  app.get("/api/me", requireAuth, (c) => {
+    const claims = c.get("claims");
+    return c.json({ userId: claims.sub ?? null });
   });
 
   return app;
