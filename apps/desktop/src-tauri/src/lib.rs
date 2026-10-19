@@ -4,7 +4,10 @@ mod error;
 use specta_typescript::Typescript;
 use tauri_specta::{Builder, collect_commands};
 
-const BINDINGS_PATH: &str = "../src/shared/ipc/bindings.ts";
+fn bindings_path() -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../src/shared/ipc/bindings.ts")
+}
 
 const TYPED_ERROR_IMPL: &str = r#"async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {
     try {
@@ -32,9 +35,9 @@ pub fn run() {
     let builder = builder();
 
     #[cfg(debug_assertions)]
-    builder
-        .export(Typescript::default(), BINDINGS_PATH)
-        .expect("failed to export typescript bindings");
+    if let Err(error) = builder.export(Typescript::default(), bindings_path()) {
+        eprintln!("warning: failed to export TypeScript bindings: {error}");
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -62,7 +65,7 @@ mod tests {
     #[test]
     fn export_bindings() {
         builder()
-            .export(Typescript::default(), BINDINGS_PATH)
+            .export(Typescript::default(), bindings_path())
             .expect("failed to export typescript bindings");
     }
 }
