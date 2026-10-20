@@ -8,7 +8,8 @@
     "toggleSidebar": "Toggle sidebar",
     "account": "Account",
     "notes": "Notes",
-    "flags": "Flags"
+    "flags": "Flags",
+    "pricing": "Pricing"
   },
   "theme": {
     "label": "Theme",
@@ -117,5 +118,29 @@
   "betaExport": {
     "title": "Beta export",
     "body": "This screen is gated by the betaExport feature flag."
+  },
+  "billing": {
+    "title": "Plans",
+    "description": "Upgrade to unlock paid features. Checkout opens in your browser.",
+    "currentPlan": "Current plan",
+    "current": "Current",
+    "upgrade": "Upgrade",
+    "manage": "Manage subscription",
+    "offline": "Offline: showing the last verified plan.",
+    "pastDue": "Your last payment failed. Update your payment method to keep access.",
+    "upgradeTitle": "Upgrade required",
+    "upgradeBody": "This feature is part of the Pro plan.",
+    "upgradeFeature": "The \"{{feature}}\" feature is part of the Pro plan.",
+    "viewPlans": "View plans",
+    "freeFeatures": "Core features",
+    "exportTitle": "Export",
+    "exportBody": "Paid export is enabled for your account.",
+    "status": {
+      "active": "Active",
+      "trialing": "Trialing",
+      "past_due": "Past due",
+      "canceled": "Canceled",
+      "none": "Free"
+    }
   }
 }

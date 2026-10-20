@@ -16,6 +16,7 @@ import { storeQueryCache } from "./adapters/query-cache/store-query-cache";
 import { noopAnalytics } from "./adapters/noop/noop-analytics";
 import { noopAuth } from "./adapters/noop/noop-auth";
 import { noopBilling } from "./adapters/noop/noop-billing";
+import { createBillingAdapter } from "./adapters/billing/billing-adapter";
 import { noopErrorReporter } from "./adapters/noop/noop-error-reporter";
 import {
   createBetterAuthAdapter,
@@ -44,7 +45,7 @@ import {
 import { AUTH_KEYS } from "./adapters/better-auth/adapter";
 
 export type { AuthPort, AuthSession, AuthUser } from "./AuthPort";
-export type { BillingPort, BillingPlanId, Entitlements } from "./BillingPort";
+export type { BillingPort } from "./BillingPort";
 export type { FeatureFlagPort } from "./FeatureFlagPort";
 export type { AnalyticsPort } from "./AnalyticsPort";
 export type {
@@ -122,7 +123,7 @@ export function createPorts(): Ports {
 
   return {
     auth,
-    billing: noopBilling,
+    billing: isTauri() ? createBillingAdapter() : noopBilling,
     featureFlags,
     analytics: noopAnalytics,
     errorReporter: noopErrorReporter,

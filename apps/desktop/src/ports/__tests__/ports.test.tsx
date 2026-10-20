@@ -24,11 +24,8 @@ describe("ports composition root", () => {
     await expect(ports.auth.getSession()).resolves.toBeNull();
     expect(ports.featureFlags.get("newDashboard")).toBe(false);
     expect(ports.featureFlags.getAll()).toEqual(DEFAULT_FLAGS);
-    await expect(ports.billing.getEntitlements()).resolves.toEqual({
-      planId: null,
-      features: [],
-      active: false,
-    });
+    await expect(ports.billing.getEntitlement()).resolves.toBeNull();
+    await expect(ports.billing.getPlans()).resolves.toHaveLength(2);
   });
 
   it("keeps in-memory storage values until removed", async () => {

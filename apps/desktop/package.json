@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "gen:bindings": "cargo test --manifest-path src-tauri/Cargo.toml export_bindings"
+    "gen:bindings": "cargo test --manifest-path src-tauri/Cargo.toml export_bindings",
+    "verify:bundle-secrets": "node ../../scripts/check-bundle-secrets.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.0",

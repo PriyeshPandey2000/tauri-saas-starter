@@ -1,17 +1,16 @@
-import type { BillingPort, Entitlements } from "../../BillingPort";
+import type { PlanSummary } from "@app/shared";
 
-const NO_ENTITLEMENTS: Entitlements = {
-  planId: null,
-  features: [],
-  active: false,
-};
+import type { BillingPort } from "../../BillingPort";
 
-/** Billing adapter with no plans and no checkout. */
+const NO_PLANS: PlanSummary[] = [
+  { key: "free", name: "Free", features: [] },
+  { key: "pro", name: "Pro", features: ["export", "sync"] },
+];
+
+/** Billing adapter with no backend configured. */
 export const noopBilling: BillingPort = {
-  getEntitlements(): Promise<Entitlements> {
-    return Promise.resolve(NO_ENTITLEMENTS);
-  },
-  startCheckout(): Promise<void> {
-    return Promise.reject(new Error("Billing is not configured yet"));
-  },
+  getEntitlement: () => Promise.resolve(null),
+  startCheckout: () => Promise.reject(new Error("Billing is not configured")),
+  openPortal: () => Promise.reject(new Error("Billing is not configured")),
+  getPlans: () => Promise.resolve(NO_PLANS),
 };

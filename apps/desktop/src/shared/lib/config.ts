@@ -16,6 +16,8 @@ export const ConfigSchema = z.object({
     .transform((value) => value === "true")
     .optional(),
   VITE_SENTRY_DSN: z.string().url().optional(),
+  /** JSON array of { kid, jwk } public keys for entitlement snapshots. */
+  VITE_ENTITLEMENT_PUBLIC_KEYS: z.string().optional(),
   /** Where notes are read/written. Local SQLite is the default. */
   VITE_NOTES_SOURCE: NotesSourceSchema.optional(),
 });

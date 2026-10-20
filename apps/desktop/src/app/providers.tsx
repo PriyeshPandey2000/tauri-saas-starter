@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { DeepLinkBridge } from "@/features/auth";
+import { BillingDeepLinkBridge, PastDueBanner } from "@/features/billing";
 import "@/features/flags";
 import "@/features/notes";
 import { useSettingsStore } from "@/features/settings";
@@ -29,6 +30,8 @@ export function AppProviders({ router, queryClient }: AppProvidersProps) {
           <ThemeProvider>
             <WindowThemeSync />
             <DeepLinkBridge />
+            <BillingDeepLinkBridge />
+            <PastDueBanner />
             <RouterProvider router={router} />
             <Toaster theme={theme} />
           </ThemeProvider>

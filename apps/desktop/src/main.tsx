@@ -11,6 +11,7 @@ import {
   persistQueryCache,
   restoreQueryCache,
 } from "@/app/query-persistence";
+import { initializeBilling } from "@/app/billing-wiring";
 import { initializeFeatureFlags } from "@/app/feature-flags-wiring";
 import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
@@ -78,6 +79,7 @@ async function bootstrap(): Promise<void> {
   await applyWindowTheme(useSettingsStore.getState().theme);
   registerGlobalErrorHandlers();
   initializeFeatureFlags();
+  initializeBilling();
 
   const queryClient = createAppQueryClient();
   await restoreQueryCache(queryClient);

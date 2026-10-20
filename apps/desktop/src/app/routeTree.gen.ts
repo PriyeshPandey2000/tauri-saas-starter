@@ -14,7 +14,9 @@ import { Route as GuestRouteImport } from "./../routes/_guest";
 import { Route as AuthedIndexRouteImport } from "./../routes/_authed/index";
 import { Route as AuthedAccountRouteImport } from "./../routes/_authed/account";
 import { Route as AuthedBetaExportRouteImport } from "./../routes/_authed/beta-export";
+import { Route as AuthedExportRouteImport } from "./../routes/_authed/export";
 import { Route as AuthedNotesRouteImport } from "./../routes/_authed/notes";
+import { Route as AuthedPricingRouteImport } from "./../routes/_authed/pricing";
 import { Route as AuthedSettingsRouteImport } from "./../routes/_authed/settings";
 import { Route as GuestForgotPasswordRouteImport } from "./../routes/_guest/forgot-password";
 import { Route as GuestSignInRouteImport } from "./../routes/_guest/sign-in";
@@ -44,9 +46,19 @@ const AuthedBetaExportRoute = AuthedBetaExportRouteImport.update({
   path: "/beta-export",
   getParentRoute: () => AuthedRoute,
 } as any);
+const AuthedExportRoute = AuthedExportRouteImport.update({
+  id: "/export",
+  path: "/export",
+  getParentRoute: () => AuthedRoute,
+} as any);
 const AuthedNotesRoute = AuthedNotesRouteImport.update({
   id: "/notes",
   path: "/notes",
+  getParentRoute: () => AuthedRoute,
+} as any);
+const AuthedPricingRoute = AuthedPricingRouteImport.update({
+  id: "/pricing",
+  path: "/pricing",
   getParentRoute: () => AuthedRoute,
 } as any);
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -79,7 +91,9 @@ export interface FileRoutesByFullPath {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
   "/beta-export": typeof AuthedBetaExportRoute;
+  "/export": typeof AuthedExportRoute;
   "/notes": typeof AuthedNotesRoute;
+  "/pricing": typeof AuthedPricingRoute;
   "/settings": typeof AuthedSettingsRouteWithChildren;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
@@ -90,7 +104,9 @@ export interface FileRoutesByTo {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
   "/beta-export": typeof AuthedBetaExportRoute;
+  "/export": typeof AuthedExportRoute;
   "/notes": typeof AuthedNotesRoute;
+  "/pricing": typeof AuthedPricingRoute;
   "/settings": typeof AuthedSettingsRouteWithChildren;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
@@ -103,7 +119,9 @@ export interface FileRoutesById {
   "/_guest": typeof GuestRouteWithChildren;
   "/_authed/account": typeof AuthedAccountRoute;
   "/_authed/beta-export": typeof AuthedBetaExportRoute;
+  "/_authed/export": typeof AuthedExportRoute;
   "/_authed/notes": typeof AuthedNotesRoute;
+  "/_authed/pricing": typeof AuthedPricingRoute;
   "/_authed/settings": typeof AuthedSettingsRouteWithChildren;
   "/_guest/forgot-password": typeof GuestForgotPasswordRoute;
   "/_guest/sign-in": typeof GuestSignInRoute;
@@ -117,7 +135,9 @@ export interface FileRouteTypes {
     | "/"
     | "/account"
     | "/beta-export"
+    | "/export"
     | "/notes"
+    | "/pricing"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
@@ -128,7 +148,9 @@ export interface FileRouteTypes {
     | "/"
     | "/account"
     | "/beta-export"
+    | "/export"
     | "/notes"
+    | "/pricing"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
@@ -140,7 +162,9 @@ export interface FileRouteTypes {
     | "/_guest"
     | "/_authed/account"
     | "/_authed/beta-export"
+    | "/_authed/export"
     | "/_authed/notes"
+    | "/_authed/pricing"
     | "/_authed/settings"
     | "/_guest/forgot-password"
     | "/_guest/sign-in"
@@ -191,11 +215,25 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthedBetaExportRouteImport;
       parentRoute: typeof AuthedRoute;
     };
+    "/_authed/export": {
+      id: "/_authed/export";
+      path: "/export";
+      fullPath: "/export";
+      preLoaderRoute: typeof AuthedExportRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
     "/_authed/notes": {
       id: "/_authed/notes";
       path: "/notes";
       fullPath: "/notes";
       preLoaderRoute: typeof AuthedNotesRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
+    "/_authed/pricing": {
+      id: "/_authed/pricing";
+      path: "/pricing";
+      fullPath: "/pricing";
+      preLoaderRoute: typeof AuthedPricingRouteImport;
       parentRoute: typeof AuthedRoute;
     };
     "/_authed/settings": {
@@ -251,7 +289,9 @@ const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
 interface AuthedRouteChildren {
   AuthedAccountRoute: typeof AuthedAccountRoute;
   AuthedBetaExportRoute: typeof AuthedBetaExportRoute;
+  AuthedExportRoute: typeof AuthedExportRoute;
   AuthedNotesRoute: typeof AuthedNotesRoute;
+  AuthedPricingRoute: typeof AuthedPricingRoute;
   AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren;
   AuthedIndexRoute: typeof AuthedIndexRoute;
 }
@@ -259,7 +299,9 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAccountRoute: AuthedAccountRoute,
   AuthedBetaExportRoute: AuthedBetaExportRoute,
+  AuthedExportRoute: AuthedExportRoute,
   AuthedNotesRoute: AuthedNotesRoute,
+  AuthedPricingRoute: AuthedPricingRoute,
   AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
 };

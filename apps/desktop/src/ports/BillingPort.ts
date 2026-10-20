@@ -1,17 +1,19 @@
-/** Identifier of a purchasable plan. */
-export type BillingPlanId = string;
+import type {
+  BillingPlan,
+  CheckoutResponse,
+  Entitlement,
+  PlanSummary,
+  PortalResponse,
+} from "@app/shared";
 
-/** What the current user may access. */
-export interface Entitlements {
-  planId: BillingPlanId | null;
-  features: string[];
-  active: boolean;
-}
-
-/** Billing boundary. Implemented by an adapter in later milestones. */
+/** Billing boundary. The adapter talks to our API only, never to Dodo. */
 export interface BillingPort {
-  /** Read the current user's entitlements. */
-  getEntitlements(): Promise<Entitlements>;
-  /** Start checkout for a plan; the adapter opens the external flow. */
-  startCheckout(planId: BillingPlanId): Promise<void>;
+  /** Signed entitlement for the current user, or `null` when billing is off. */
+  getEntitlement(): Promise<Entitlement | null>;
+  /** Create a checkout session and open it in the system browser. */
+  startCheckout(planKey: BillingPlan): Promise<CheckoutResponse>;
+  /** Open the provider customer portal in the system browser. */
+  openPortal(): Promise<PortalResponse>;
+  /** Public plan catalogue (no product ids). */
+  getPlans(): Promise<PlanSummary[]>;
 }
