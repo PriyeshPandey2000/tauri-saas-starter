@@ -10,6 +10,11 @@ export const ConfigSchema = z.object({
   VITE_LOG_TARGET: LogTargetSchema.optional(),
   VITE_POSTHOG_KEY: z.string().min(1).optional(),
   VITE_POSTHOG_HOST: z.string().url().optional(),
+  /** "true" skips all PostHog requests until telemetry consent is granted. */
+  VITE_FLAGS_REQUIRE_CONSENT: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
   VITE_SENTRY_DSN: z.string().url().optional(),
   /** Where notes are read/written. Local SQLite is the default. */
   VITE_NOTES_SOURCE: NotesSourceSchema.optional(),

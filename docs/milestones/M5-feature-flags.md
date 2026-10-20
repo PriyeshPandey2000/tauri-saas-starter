@@ -129,4 +129,22 @@ of `posthog-js` (see `docs/DECISIONS.md` for the size rationale).
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: PASS after one small round** (2026-10-20). Design is clean: synchronous port, registry as single source of truth, per-user/anonymous disk cache validated with Zod, consent-gated identification and exposure events, background refresh with timeout, prod-proof overrides, kill switch and route gate, and `flags` removed from the query-cache allowlist. Forced `turbo run lint typecheck test build` 12/12 (desktop 93 tests, api 28).
+
+Fix in one commit:
+
+1. **CSP blocks PostHog in the real app.** `apps/desktop/scripts/tauri.mjs` builds `connect-src` from the API origin only, so `POST {host}/flags?v=2` and `/i/v0/e/` are blocked by the webview CSP; flags would silently stay on defaults. When `VITE_POSTHOG_KEY` is set, add the PostHog origin (`VITE_POSTHOG_HOST`, default `https://us.i.posthog.com`) to `connect-src`. Extract the CSP builder into a function and unit test it (with and without the key, dev and prod).
+2. **Boot ordering.** `initializeFeatureFlags` calls `setConsent()` before `init()`. With consent true, `setConsent` triggers a refresh and `get()` can capture exposure before `init` has loaded the install id, so requests and exposure events use the shared id `anon:unknown`. Never refresh or capture until `init` has completed and `installId` is set; queue consent and apply it after init. Add a test: consent granted before init sends no request and no event with `anon:unknown`.
+3. Remove the `user-agent` header from the `/flags` request (browsers ignore it; the comment is misleading).
+4. docs/feature-flags.md: state plainly that even anonymous evaluation sends the install id and the client IP to PostHog, and that identification and exposure events wait for consent. Add an optional `VITE_FLAGS_REQUIRE_CONSENT=true` that skips all PostHog requests until consent is granted (default false), with a test.
+
+Human checks (add to docs/deferred-checks.md): real `VITE_POSTHOG_KEY`; create `betaExport` in PostHog and confirm a dashboard rule change reaches a built app within the refresh interval; confirm the flags request is not blocked by the CSP in a built app.
+
+### Review fix round (2026-10-20)
+
+1. `apps/desktop/scripts/csp.mjs` now builds the CSP; it adds the PostHog origin only when `VITE_POSTHOG_KEY` is set (host from `VITE_POSTHOG_HOST`, default US cloud) and keeps the dev origins dev-only. Four unit tests cover key/no-key and dev/prod.
+2. The adapter has an `initialized` gate: `refresh` and exposure capture do nothing until `init` has loaded `installId`; `setConsent` only queues when not initialized. Tests prove that consent granted before init sends no request (and never `anon:unknown`) and that `VITE_FLAGS_REQUIRE_CONSENT=true` sends nothing until consent.
+3. The `user-agent` header is gone from the `/flags` request.
+4. `docs/feature-flags.md` states that anonymous evaluation sends the install id and client IP to PostHog, and documents `VITE_FLAGS_REQUIRE_CONSENT` (default false).
+
+Verification: `turbo run lint typecheck build` 10/10; forced tests 27 files / 99 desktop, 9 / 28 API; `cargo test` 3 passed, 1 ignored.

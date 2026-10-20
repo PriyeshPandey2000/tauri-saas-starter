@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { loadEnv } from "vite";
 
+import { buildCsp } from "./csp.mjs";
+
 const command = process.argv[2] ?? "dev";
 const mode = command === "dev" ? "development" : "production";
 const env = loadEnv(mode, process.cwd(), "");
@@ -11,26 +13,18 @@ if (!apiUrl) {
   process.exit(1);
 }
 
-let apiOrigin;
+let csp;
 try {
-  apiOrigin = new URL(apiUrl).origin;
+  csp = buildCsp({
+    apiUrl,
+    posthogKey: env.VITE_POSTHOG_KEY,
+    posthogHost: env.VITE_POSTHOG_HOST,
+    isDev: command === "dev",
+  });
 } catch {
   console.error(`VITE_API_URL is not a valid URL: ${apiUrl}`);
   process.exit(1);
 }
-
-const connectSrc = ["'self'", apiOrigin];
-if (command === "dev") {
-  connectSrc.push("http://localhost:1420", "ws://localhost:1420");
-}
-
-const csp = [
-  "default-src 'self'",
-  "img-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
-  "script-src 'self'",
-  `connect-src ${connectSrc.join(" ")}`,
-].join("; ");
 
 const config = JSON.stringify({ app: { security: { csp } } });
 const child = spawn(

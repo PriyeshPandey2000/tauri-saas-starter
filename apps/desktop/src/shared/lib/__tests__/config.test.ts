@@ -17,9 +17,13 @@ describe("parseConfig", () => {
       parseConfig({
         ...validEnv,
         VITE_POSTHOG_KEY: "ph-key",
+        VITE_FLAGS_REQUIRE_CONSENT: "true",
         VITE_SENTRY_DSN: "https://public@sentry.example.com/1",
       }),
-    ).toMatchObject({ VITE_POSTHOG_KEY: "ph-key" });
+    ).toMatchObject({
+      VITE_POSTHOG_KEY: "ph-key",
+      VITE_FLAGS_REQUIRE_CONSENT: true,
+    });
   });
 
   it("rejects a missing API URL", () => {

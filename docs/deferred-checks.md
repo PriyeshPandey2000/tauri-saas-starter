@@ -86,3 +86,8 @@ These need a built/running app (the Tauri plugin cannot run under Node).
 3. With the key present, disable the network: the app must start with cached values, then defaults on a fresh install.
 4. Grant telemetry consent in settings and confirm the person uses the auth user id; revoke it and confirm the next request uses the anonymous id and no further exposure events appear.
 5. Open `/settings/flags` in a dev build, set an override, restart, and confirm it persists; build with `VITE_APP_ENV=prod` and confirm the route redirects and overrides cannot be set.
+
+6. Confirm the built app's CSP allows the PostHog request (no `connect-src`
+   violation in the webview console) with a real `VITE_POSTHOG_KEY`.
+7. Create `betaExport` in PostHog and confirm a dashboard rule change reaches a
+   built app within the 5-minute refresh interval.

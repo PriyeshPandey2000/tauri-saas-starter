@@ -34,6 +34,8 @@ export interface PostHogFlagAdapterOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   refreshIntervalMs?: number;
+  /** Skip every PostHog request until consent is granted. */
+  requireConsent?: boolean;
   onWarning?: (message: string, context?: unknown) => void;
 }
 
@@ -64,6 +66,7 @@ export function createPostHogFlagAdapter(
   let entries: Record<string, Record<string, unknown>> = {};
   let consent = false;
   let refreshTimer: ReturnType<typeof setInterval> | null = null;
+  let initialized = false;
   let generation = 0;
   let warned = false;
 
@@ -125,17 +128,19 @@ export function createPostHogFlagAdapter(
   }
 
   async function refresh(): Promise<void> {
+    if (!initialized || !installId) {
+      return;
+    }
+    if (options.requireConsent && !consent) {
+      return;
+    }
     const requestedKey = cacheKey();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetchImpl(`${host}/flags?v=2`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          // Client runtime: receive client + "all" flags, not server-only ones.
-          "user-agent": "tauri-saas-starter/desktop",
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           api_key: options.apiKey,
           distinct_id: distinctId(),
@@ -221,6 +226,7 @@ export function createPostHogFlagAdapter(
       }
       installId = cached.installId;
       entries = cached.entries;
+      initialized = true;
       applyCache();
       notify();
       if (refreshTimer) {
@@ -234,7 +240,7 @@ export function createPostHogFlagAdapter(
     },
 
     get<K extends FlagKey>(key: K): FlagValue<K> {
-      if (consent && !exposed.has(key)) {
+      if (consent && initialized && installId && !exposed.has(key)) {
         exposed.add(key);
         queueMicrotask(() => captureExposure(key));
       }
@@ -254,6 +260,7 @@ export function createPostHogFlagAdapter(
 
     async reset() {
       generation += 1;
+      initialized = false;
       if (refreshTimer) {
         clearInterval(refreshTimer);
         refreshTimer = null;
@@ -277,7 +284,9 @@ export function createPostHogFlagAdapter(
       consent = granted;
       exposed.clear();
       // Re-evaluate as the identified user (granted) or the anonymous install.
-      void refresh();
+      if (initialized) {
+        void refresh();
+      }
     },
 
     canOverride: () => false,

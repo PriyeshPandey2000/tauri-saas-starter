@@ -177,6 +177,76 @@ describe("consent and exposure", () => {
   });
 });
 
+describe("startup ordering", () => {
+  function trackingFetch(
+    calls: { url: string; body: Record<string, unknown> }[],
+  ) {
+    return vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      calls.push({
+        url: String(url),
+        body: JSON.parse(String(init?.body)) as Record<string, unknown>,
+      });
+      if (String(url).includes("/i/v0/e/")) {
+        return new Response("{}", { status: 200 });
+      }
+      return new Response(
+        JSON.stringify({
+          flags: { newDashboard: { enabled: true } },
+          errorsWhileComputingFlags: false,
+        }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+  }
+
+  it("applies consent granted before init without anon:unknown requests", async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = [];
+    const flags = adapter({ fetchImpl: trackingFetch(calls) });
+
+    flags.setConsent(true);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toHaveLength(0);
+
+    await flags.init("user-a");
+    await vi.waitFor(() => {
+      expect(
+        calls.some(
+          (call) =>
+            call.url.includes("/flags") && call.body.distinct_id === "user-a",
+        ),
+      ).toBe(true);
+    });
+    expect(
+      calls.some((call) => String(call.body.distinct_id).includes("unknown")),
+    ).toBe(false);
+    expect(calls.some((call) => call.url.includes("/i/v0/e/"))).toBe(false);
+  });
+
+  it("can skip every PostHog request until consent", async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = [];
+    const flags = createPostHogFlagAdapter({
+      apiKey: "phc_test",
+      cache: createMemoryFlagCache({ installId: ANON_ID }),
+      fetchImpl: trackingFetch(calls),
+      timeoutMs: 100,
+      refreshIntervalMs: 0,
+      requireConsent: true,
+    });
+
+    await flags.init("user-a");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toHaveLength(0);
+
+    flags.get("newDashboard");
+    expect(calls).toHaveLength(0);
+
+    flags.setConsent(true);
+    await vi.waitFor(() => {
+      expect(calls.some((call) => call.url.includes("/flags"))).toBe(true);
+    });
+  });
+});
+
 describe("local overrides", () => {
   it("are impossible in production", async () => {
     const flags = createLocalOverrideAdapter(

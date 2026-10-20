@@ -105,6 +105,7 @@ export function createPorts(): Ports {
         apiKey: flagsApiKey,
         host: flagsHost,
         cache: createPluginFlagCache(),
+        requireConsent: rawEnv.VITE_FLAGS_REQUIRE_CONSENT === "true",
         onWarning: (message, context) =>
           logger.warn(message, context as LogContext | undefined),
       })

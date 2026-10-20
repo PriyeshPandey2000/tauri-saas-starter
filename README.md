@@ -29,19 +29,19 @@ It is opinionated and small on purpose. You can read the whole thing.
 Built from [`docs/PRD.md`](docs/PRD.md) in milestones. Each one is reviewed
 before the next starts.
 
-| # | Milestone | State |
-|---|---|---|
-| M0 | Monorepo, tooling, lint-enforced architecture | Done |
-| M1 | App shell: routing, theming, settings, command palette | Done |
-| M2 | Config, logging, typed IPC, OS keychain, ports | Done |
-| M3 | Auth: email + Google, JWT, deep-link OAuth | Done* |
-| M4 | Per-user SQLite, migrations, notes example, API | Done |
-| M5 | Feature flags (PostHog) | In progress |
-| M6 | Billing and licensing | Planned |
-| M7 | Crash reporting and analytics with consent | Planned |
-| M8 | Tray, shortcuts, single instance, auto-update | Planned |
-| M9 | CI, end-to-end tests, signed releases | Planned |
-| M10 | Rename script, feature generator, setup docs | Planned |
+| #   | Milestone                                              | State   |
+| --- | ------------------------------------------------------ | ------- |
+| M0  | Monorepo, tooling, lint-enforced architecture          | Done    |
+| M1  | App shell: routing, theming, settings, command palette | Done    |
+| M2  | Config, logging, typed IPC, OS keychain, ports         | Done    |
+| M3  | Auth: email + Google, JWT, deep-link OAuth             | Done*   |
+| M4  | Per-user SQLite, migrations, notes example, API        | Done    |
+| M5  | Feature flags (PostHog)                                | Done    |
+| M6  | Billing and licensing                                  | Planned |
+| M7  | Crash reporting and analytics with consent             | Planned |
+| M8  | Tray, shortcuts, single instance, auto-update          | Planned |
+| M9  | CI, end-to-end tests, signed releases                  | Planned |
+| M10 | Rename script, feature generator, setup docs           | Planned |
 
 \* The Google sign-in logic is tested, but the live OAuth round trip has not
 been run yet. See [`docs/deferred-checks.md`](docs/deferred-checks.md) for
@@ -102,14 +102,14 @@ docs/               PRD, milestones, decisions, setup guides
 
 ## Stack
 
-| Area | Choice |
-|---|---|
-| Shell | Tauri 2 |
-| UI | React, TypeScript (strict), Vite, Tailwind v4, shadcn/ui |
-| Routing and data | TanStack Router, TanStack Query, Zustand, Zod |
-| API | Hono, Better Auth, Drizzle |
-| Databases | Postgres (server, any host), SQLite (desktop) |
-| Tooling | pnpm workspaces, Turborepo, Vitest, commitlint |
+| Area             | Choice                                                   |
+| ---------------- | -------------------------------------------------------- |
+| Shell            | Tauri 2                                                  |
+| UI               | React, TypeScript (strict), Vite, Tailwind v4, shadcn/ui |
+| Routing and data | TanStack Router, TanStack Query, Zustand, Zod            |
+| API              | Hono, Better Auth, Drizzle                               |
+| Databases        | Postgres (server, any host), SQLite (desktop)            |
+| Tooling          | pnpm workspaces, Turborepo, Vitest, commitlint           |
 
 ## Quick start
 
@@ -144,14 +144,14 @@ built app, not in `tauri dev`.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `pnpm lint` | ESLint, architecture rules, vendor-import guard |
-| `pnpm typecheck` | TypeScript across all packages |
-| `pnpm test` | Vitest (API tests run on PGlite, no Docker needed) |
-| `pnpm build` | Build every package |
-| `pnpm db:up` / `db:down` / `db:reset` | Local Postgres |
-| `pnpm --filter desktop gen:bindings` | Regenerate the Rust-to-TS bindings |
+| Command                               | What it does                                       |
+| ------------------------------------- | -------------------------------------------------- |
+| `pnpm lint`                           | ESLint, architecture rules, vendor-import guard    |
+| `pnpm typecheck`                      | TypeScript across all packages                     |
+| `pnpm test`                           | Vitest (API tests run on PGlite, no Docker needed) |
+| `pnpm build`                          | Build every package                                |
+| `pnpm db:up` / `db:down` / `db:reset` | Local Postgres                                     |
+| `pnpm --filter desktop gen:bindings`  | Regenerate the Rust-to-TS bindings                 |
 
 ## Rules the code follows
 

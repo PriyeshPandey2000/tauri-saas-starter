@@ -17,19 +17,28 @@ a 3-second timeout and a 5-minute interval. Startup never waits on the network.
 
 ## Consent
 
-Until `settings.telemetryConsent` is `"granted"` the flag adapter:
+Even anonymous evaluation is a network request: until
+`settings.telemetryConsent` is `"granted"` the adapter sends the random
+per-install id (`anon:<uuid>`) as `distinct_id` to PostHog, which also sees the
+client IP. It sends no person properties (PostHog autocapture is not used at
+all — the app talks to the REST endpoint, not the JS SDK), never the auth user
+id, and no `$feature_flag_called` exposure events.
 
-- sends only a random per-install anonymous id (`anon:<uuid>`) as
-  `distinct_id`, never the user id;
-- sends no person properties (PostHog autocapture is not used at all — the app
-  talks to the REST endpoint, not the JS SDK);
-- sends no `$feature_flag_called` exposure events.
+Set `VITE_FLAGS_REQUIRE_CONSENT=true` to skip **all** PostHog requests until
+consent is granted (default `false`). Flags then resolve from the per-install
+cache or registry defaults.
 
 After consent is granted, the adapter identifies with the auth user id and
 sends one exposure event per flag per session. Revoking consent stops
 identification immediately: the next request uses the anonymous id again and
-the exposure set is cleared. Consent is read from the existing settings store
-and wired in `apps/desktop/src/app/feature-flags-wiring.ts`.
+the exposure set is cleared. Nothing is requested before `init()` has loaded
+the install id, so a consent toggle at boot cannot produce an `anon:unknown`
+request. Consent is read from the existing settings store and wired in
+`apps/desktop/src/app/feature-flags-wiring.ts`.
+
+The CSP builder (`apps/desktop/scripts/csp.mjs`) adds the PostHog origin to
+`connect-src` only when `VITE_POSTHOG_KEY` is set; the dev server origins are
+dev-only.
 
 ## Caching
 
