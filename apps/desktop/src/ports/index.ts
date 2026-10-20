@@ -1,18 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 
-import type { AnalyticsPort } from "./AnalyticsPort";
-import type { OpenerPort } from "./OpenerPort";
-import type { AuthPort } from "./AuthPort";
-import type { BillingPort } from "./BillingPort";
-import type { ErrorReporterPort } from "./ErrorReporterPort";
-import type { FeatureFlagPort } from "./FeatureFlagPort";
 import type { LogContext, LoggerPort } from "./LoggerPort";
-import type { StoragePort } from "./StoragePort";
-import type { QueryCachePort } from "./QueryCachePort";
-import {
-  createDatabaseManager,
-  type DatabaseManager,
-} from "./adapters/sqlite/database-manager";
+import { createDatabaseManager } from "./adapters/sqlite/database-manager";
 import { storeQueryCache } from "./adapters/query-cache/store-query-cache";
 import { noopAnalytics } from "./adapters/noop/noop-analytics";
 import { noopAuth } from "./adapters/noop/noop-auth";
@@ -20,6 +9,12 @@ import { noopBilling } from "./adapters/noop/noop-billing";
 import { createBillingAdapter } from "./adapters/billing/billing-adapter";
 import { noopErrorReporter } from "./adapters/noop/noop-error-reporter";
 import { createPostHogAnalytics } from "./adapters/analytics/posthog-analytics";
+import {
+  createE2eAnalytics,
+  createE2eFlags,
+  e2eAuth,
+  e2eBilling,
+} from "./adapters/e2e/e2e-ports";
 import { tauriOpener } from "./adapters/opener/tauri-opener";
 import { createSentryErrorReporter } from "./adapters/sentry/sentry-error-reporter";
 import {
@@ -60,22 +55,12 @@ export type { StoragePort } from "./StoragePort";
 export type { LogContext, LoggerPort } from "./LoggerPort";
 export type { DatabasePort, ExecuteResult, SqlParam } from "./DatabasePort";
 export type { QueryCachePort } from "./QueryCachePort";
-export type { DatabaseManager } from "./adapters/sqlite/database-manager";
+export type { DatabaseManager } from "./DatabaseManagerPort";
 export { PortsProvider, usePorts } from "./ports-context";
 
-/** Everything the UI may reach; adapters stay behind these interfaces. */
-export interface Ports {
-  auth: AuthPort;
-  billing: BillingPort;
-  featureFlags: FeatureFlagPort;
-  analytics: AnalyticsPort;
-  errorReporter: ErrorReporterPort;
-  storage: StoragePort;
-  logger: LoggerPort;
-  database: DatabaseManager;
-  queryCache: QueryCachePort;
-  opener: OpenerPort;
-}
+import type { Ports } from "./Ports";
+
+export type { Ports } from "./Ports";
 
 /**
  * Composition root. Milestone 2 has no vendor adapters yet, so every port is
@@ -84,9 +69,12 @@ export interface Ports {
 export function createPorts(): Ports {
   const target = resolveLogTarget(import.meta.env, import.meta.env.DEV);
   const logger = target === "file" && isTauri() ? fileLogger : consoleLogger;
-  const auth = isTauri()
-    ? createBetterAuthAdapter({ getApiUrl: () => getConfig().VITE_API_URL })
-    : noopAuth;
+  const e2e = import.meta.env.VITE_E2E === "true";
+  const auth = e2e
+    ? e2eAuth
+    : isTauri()
+      ? createBetterAuthAdapter({ getApiUrl: () => getConfig().VITE_API_URL })
+      : noopAuth;
 
   // Read the flag env directly: a bad config must still render the config
   // error screen instead of throwing during module evaluation.
@@ -143,21 +131,27 @@ export function createPorts(): Ports {
       })
     : noopAnalytics;
 
-  const featureFlags = createLocalOverrideAdapter(
-    baseFeatureFlags,
-    createPluginFlagOverrideStore(),
-    {
-      allowOverrides,
-      onWarning: (message, context) =>
-        logger.warn(message, context as LogContext | undefined),
-    },
-  );
+  const featureFlags = e2e
+    ? createE2eFlags()
+    : createLocalOverrideAdapter(
+        baseFeatureFlags,
+        createPluginFlagOverrideStore(),
+        {
+          allowOverrides,
+          onWarning: (message, context) =>
+            logger.warn(message, context as LogContext | undefined),
+        },
+      );
 
   return {
     auth,
-    billing: isTauri() ? createBillingAdapter() : noopBilling,
+    billing: e2e
+      ? e2eBilling
+      : isTauri()
+        ? createBillingAdapter()
+        : noopBilling,
     featureFlags,
-    analytics,
+    analytics: e2e ? createE2eAnalytics() : analytics,
     errorReporter,
     storage: createMemoryStorage(),
     logger,
@@ -175,5 +169,9 @@ setDefaultSecureStore({
 
 export const ports: Ports = createPorts();
 export const logger: LoggerPort = ports.logger;
-setAuthTokenProvider(() => getSecureValue(AUTH_KEYS.accessToken));
+setAuthTokenProvider(() =>
+  import.meta.env.VITE_E2E === "true"
+    ? localStorage.getItem("e2e-token")
+    : getSecureValue(AUTH_KEYS.accessToken),
+);
 setAuthRefreshHandler(() => ports.auth.refresh());

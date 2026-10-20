@@ -26,14 +26,7 @@ export async function databaseName(userId: string): Promise<string> {
   return `app-${hex}.db`;
 }
 
-export interface DatabaseManager {
-  /** The open database, or `null` before sign-in / after sign-out. */
-  current(): DatabasePort | null;
-  /** Open `userId`'s database, apply pragmas and migrations. Idempotent. */
-  open(userId: string): Promise<DatabasePort>;
-  /** Close the open database, if any. Called from the sign-out registry. */
-  close(): Promise<void>;
-}
+import type { DatabaseManager } from "../../DatabaseManagerPort";
 
 export interface DatabaseManagerOptions {
   /** Inject a client for tests; production loads `@tauri-apps/plugin-sql`. */

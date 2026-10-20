@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import type { Ports } from "./index";
+import type { Ports } from "./Ports";
 
 const PortsContext = createContext<Ports | null>(null);
 
