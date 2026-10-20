@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import { AppProviders } from "@/app/providers";
 import { onSignOut, useAuthStore } from "@/features/auth";
+import { useEntitlementStore } from "@/features/billing";
 import { ConfigErrorScreen } from "@/app/ConfigErrorScreen";
 import { createAppQueryClient } from "@/app/query-client";
 import {
@@ -12,6 +13,9 @@ import {
   restoreQueryCache,
 } from "@/app/query-persistence";
 import { initializeBilling } from "@/app/billing-wiring";
+import { initializeDeepLinks, registerDeepLinkHandler } from "@/app/deepLinks";
+import { initializeNative } from "@/app/native";
+import { startUpdateChecks } from "@/app/updater";
 import { initializeObservability } from "@/app/analytics-wiring";
 import { initializeFeatureFlags } from "@/app/feature-flags-wiring";
 import { createAppRouter } from "@/app/router";
@@ -87,6 +91,15 @@ async function bootstrap(): Promise<void> {
   registerGlobalErrorHandlers();
   initializeFeatureFlags();
   initializeBilling();
+  registerDeepLinkHandler("auth/callback", (url) =>
+    useAuthStore.getState().completeOAuth(url.toString()),
+  );
+  registerDeepLinkHandler("billing/success", async () => {
+    const store = useEntitlementStore.getState();
+    await store.refresh();
+    store.startPolling();
+  });
+  initializeDeepLinks();
 
   const queryClient = createAppQueryClient();
   await restoreQueryCache(queryClient);
@@ -105,6 +118,8 @@ async function bootstrap(): Promise<void> {
   });
   const router = createAppRouter(queryClient);
   initializeObservability(router);
+  initializeNative(router);
+  startUpdateChecks();
 
   root.render(
     <StrictMode>

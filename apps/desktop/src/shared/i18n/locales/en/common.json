@@ -35,7 +35,16 @@
     "reportSend": "Continue",
     "reportIntro": "Reported from the app:",
     "reportSubject": "App problem report",
-    "reportMissingSupport": "No support address is configured."
+    "reportMissingSupport": "No support address is configured.",
+    "nativeTitle": "Desktop behavior",
+    "closeToTray": "Keep running in the tray when the window closes",
+    "launchAtLogin": "Launch at login",
+    "notifications": "Show desktop notifications",
+    "shortcut": "Global shortcut (show/hide window)",
+    "shortcutHint": "Default: CommandOrControl+Shift+Space. Leave empty to disable.",
+    "updateChannel": "Update channel",
+    "channelStable": "Stable",
+    "channelBeta": "Beta (requires the betaUpdates flag)"
   },
   "commands": {
     "placeholder": "Type a command or search…",
@@ -161,5 +170,17 @@
     "body": "Crash reports and anonymous usage events help us fix problems. Emails, tokens, request bodies and file paths are removed before anything is sent. You can change this anytime in Settings.",
     "accept": "Accept",
     "decline": "Decline"
+  },
+  "native": {
+    "shortcutConflict": "Shortcut \"{{shortcut}}\" is unavailable. Choose another in Settings.",
+    "notificationsTitle": "Notifications enabled",
+    "notificationsBody": "You will see desktop notifications.",
+    "updateAvailable": "Update {{version}} available",
+    "download": "Download",
+    "downloading": "Downloading update…",
+    "downloadingProgress": "Downloading update… {{percent}}%",
+    "updateInstalled": "Update installed",
+    "restart": "Restart to update",
+    "updateFailed": "Update failed"
   }
 }

@@ -13,6 +13,22 @@ export function SettingsPage() {
   const setTelemetryConsent = useSettingsStore(
     (state) => state.setTelemetryConsent,
   );
+  const closeToTray = useSettingsStore((state) => state.closeToTray);
+  const launchAtLogin = useSettingsStore((state) => state.launchAtLogin);
+  const notificationsEnabled = useSettingsStore(
+    (state) => state.notificationsEnabled,
+  );
+  const globalShortcut = useSettingsStore((state) => state.globalShortcut);
+  const updateChannel = useSettingsStore((state) => state.updateChannel);
+  const setCloseToTray = useSettingsStore((state) => state.setCloseToTray);
+  const setLaunchAtLogin = useSettingsStore((state) => state.setLaunchAtLogin);
+  const setNotificationsEnabled = useSettingsStore(
+    (state) => state.setNotificationsEnabled,
+  );
+  const setGlobalShortcut = useSettingsStore(
+    (state) => state.setGlobalShortcut,
+  );
+  const setUpdateChannel = useSettingsStore((state) => state.setUpdateChannel);
   const setTheme = useSettingsStore((state) => state.setTheme);
   const setLanguage = useSettingsStore((state) => state.setLanguage);
   const setSidebarCollapsed = useSettingsStore(
@@ -91,6 +107,68 @@ export function SettingsPage() {
             </span>
           </span>
         </label>
+
+        <div className="flex flex-col gap-3 border-t border-input pt-4">
+          <h2 className="text-sm font-medium">{t("settings.nativeTitle")}</h2>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={closeToTray}
+              onChange={(event) => setCloseToTray(event.target.checked)}
+              className="accent-primary"
+            />
+            {t("settings.closeToTray")}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={launchAtLogin}
+              onChange={(event) => setLaunchAtLogin(event.target.checked)}
+              className="accent-primary"
+            />
+            {t("settings.launchAtLogin")}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={notificationsEnabled}
+              onChange={(event) =>
+                setNotificationsEnabled(event.target.checked)
+              }
+              className="accent-primary"
+            />
+            {t("settings.notifications")}
+          </label>
+          <label htmlFor="shortcut" className="flex flex-col gap-1 text-sm">
+            {t("settings.shortcut")}
+            <input
+              id="shortcut"
+              value={globalShortcut}
+              onChange={(event) => setGlobalShortcut(event.target.value)}
+              className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
+            />
+            <span className="text-xs text-muted-foreground">
+              {t("settings.shortcutHint")}
+            </span>
+          </label>
+          <label
+            htmlFor="update-channel"
+            className="flex flex-col gap-1 text-sm"
+          >
+            {t("settings.updateChannel")}
+            <select
+              id="update-channel"
+              value={updateChannel}
+              onChange={(event) =>
+                setUpdateChannel(event.target.value as "stable" | "beta")
+              }
+              className="h-9 max-w-xs rounded-md border border-input bg-transparent px-3 text-sm"
+            >
+              <option value="stable">{t("settings.channelStable")}</option>
+              <option value="beta">{t("settings.channelBeta")}</option>
+            </select>
+          </label>
+        </div>
 
         <div className="flex flex-col gap-2 border-t border-input pt-4">
           <h2 className="text-sm font-medium">{t("settings.reportTitle")}</h2>

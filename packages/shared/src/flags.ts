@@ -27,6 +27,13 @@ export const FLAG_REGISTRY = {
     owner: "billing",
     removeBy: "2027-03-31",
   },
+  betaUpdates: {
+    schema: z.boolean(),
+    default: false,
+    description: "Offer the beta update channel.",
+    owner: "desktop",
+    removeBy: "2027-06-30",
+  },
   killSwitchSync: {
     schema: z.boolean(),
     default: false,
@@ -67,6 +74,7 @@ export const DEFAULT_FLAGS: FlagValues = {
   newDashboard: false,
   betaExport: false,
   checkoutVariant: "a",
+  betaUpdates: false,
   killSwitchSync: false,
 };
 

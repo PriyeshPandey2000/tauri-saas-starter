@@ -11,6 +11,11 @@ export const AppSettingsSchema = z.object({
   language: z.string().min(1).default("en"),
   sidebarCollapsed: z.boolean().default(false),
   telemetryConsent: TelemetryConsentSchema.default("unset"),
+  closeToTray: z.boolean().default(false),
+  launchAtLogin: z.boolean().default(false),
+  notificationsEnabled: z.boolean().default(false),
+  globalShortcut: z.string().max(64).default("CommandOrControl+Shift+Space"),
+  updateChannel: z.enum(["stable", "beta"]).default("stable"),
 });
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
 export type AppSettingsInput = z.input<typeof AppSettingsSchema>;

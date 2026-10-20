@@ -8,7 +8,6 @@ export { Gate } from "./components/gate";
 export { UpgradePrompt } from "./components/upgrade-prompt";
 export { PastDueBanner } from "./components/past-due-banner";
 export { PricingPage } from "./components/pricing-page";
-export { BillingDeepLinkBridge } from "./components/billing-deep-link";
 
 registerNavItem({
   id: "pricing",
