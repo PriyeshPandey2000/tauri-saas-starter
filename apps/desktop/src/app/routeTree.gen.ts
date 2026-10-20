@@ -13,11 +13,13 @@ import { Route as AuthedRouteImport } from "./../routes/_authed";
 import { Route as GuestRouteImport } from "./../routes/_guest";
 import { Route as AuthedIndexRouteImport } from "./../routes/_authed/index";
 import { Route as AuthedAccountRouteImport } from "./../routes/_authed/account";
+import { Route as AuthedBetaExportRouteImport } from "./../routes/_authed/beta-export";
 import { Route as AuthedNotesRouteImport } from "./../routes/_authed/notes";
 import { Route as AuthedSettingsRouteImport } from "./../routes/_authed/settings";
 import { Route as GuestForgotPasswordRouteImport } from "./../routes/_guest/forgot-password";
 import { Route as GuestSignInRouteImport } from "./../routes/_guest/sign-in";
 import { Route as GuestSignUpRouteImport } from "./../routes/_guest/sign-up";
+import { Route as AuthedSettingsFlagsRouteImport } from "./../routes/_authed/settings.flags";
 
 const AuthedRoute = AuthedRouteImport.update({
   id: "/_authed",
@@ -35,6 +37,11 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
 const AuthedAccountRoute = AuthedAccountRouteImport.update({
   id: "/account",
   path: "/account",
+  getParentRoute: () => AuthedRoute,
+} as any);
+const AuthedBetaExportRoute = AuthedBetaExportRouteImport.update({
+  id: "/beta-export",
+  path: "/beta-export",
   getParentRoute: () => AuthedRoute,
 } as any);
 const AuthedNotesRoute = AuthedNotesRouteImport.update({
@@ -62,67 +69,84 @@ const GuestSignUpRoute = GuestSignUpRouteImport.update({
   path: "/sign-up",
   getParentRoute: () => GuestRoute,
 } as any);
+const AuthedSettingsFlagsRoute = AuthedSettingsFlagsRouteImport.update({
+  id: "/flags",
+  path: "/flags",
+  getParentRoute: () => AuthedSettingsRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
+  "/beta-export": typeof AuthedBetaExportRoute;
   "/notes": typeof AuthedNotesRoute;
-  "/settings": typeof AuthedSettingsRoute;
+  "/settings": typeof AuthedSettingsRouteWithChildren;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
   "/sign-up": typeof GuestSignUpRoute;
+  "/settings/flags": typeof AuthedSettingsFlagsRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
+  "/beta-export": typeof AuthedBetaExportRoute;
   "/notes": typeof AuthedNotesRoute;
-  "/settings": typeof AuthedSettingsRoute;
+  "/settings": typeof AuthedSettingsRouteWithChildren;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
   "/sign-up": typeof GuestSignUpRoute;
+  "/settings/flags": typeof AuthedSettingsFlagsRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/_authed": typeof AuthedRouteWithChildren;
   "/_guest": typeof GuestRouteWithChildren;
   "/_authed/account": typeof AuthedAccountRoute;
+  "/_authed/beta-export": typeof AuthedBetaExportRoute;
   "/_authed/notes": typeof AuthedNotesRoute;
-  "/_authed/settings": typeof AuthedSettingsRoute;
+  "/_authed/settings": typeof AuthedSettingsRouteWithChildren;
   "/_guest/forgot-password": typeof GuestForgotPasswordRoute;
   "/_guest/sign-in": typeof GuestSignInRoute;
   "/_guest/sign-up": typeof GuestSignUpRoute;
   "/_authed/": typeof AuthedIndexRoute;
+  "/_authed/settings/flags": typeof AuthedSettingsFlagsRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | "/"
     | "/account"
+    | "/beta-export"
     | "/notes"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
-    | "/sign-up";
+    | "/sign-up"
+    | "/settings/flags";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
     | "/account"
+    | "/beta-export"
     | "/notes"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
-    | "/sign-up";
+    | "/sign-up"
+    | "/settings/flags";
   id:
     | "__root__"
     | "/_authed"
     | "/_guest"
     | "/_authed/account"
+    | "/_authed/beta-export"
     | "/_authed/notes"
     | "/_authed/settings"
     | "/_guest/forgot-password"
     | "/_guest/sign-in"
     | "/_guest/sign-up"
-    | "/_authed/";
+    | "/_authed/"
+    | "/_authed/settings/flags";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -160,6 +184,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthedAccountRouteImport;
       parentRoute: typeof AuthedRoute;
     };
+    "/_authed/beta-export": {
+      id: "/_authed/beta-export";
+      path: "/beta-export";
+      fullPath: "/beta-export";
+      preLoaderRoute: typeof AuthedBetaExportRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
     "/_authed/notes": {
       id: "/_authed/notes";
       path: "/notes";
@@ -195,20 +226,41 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof GuestSignUpRouteImport;
       parentRoute: typeof GuestRoute;
     };
+    "/_authed/settings/flags": {
+      id: "/_authed/settings/flags";
+      path: "/flags";
+      fullPath: "/settings/flags";
+      preLoaderRoute: typeof AuthedSettingsFlagsRouteImport;
+      parentRoute: typeof AuthedSettingsRoute;
+    };
   }
 }
 
+interface AuthedSettingsRouteChildren {
+  AuthedSettingsFlagsRoute: typeof AuthedSettingsFlagsRoute;
+}
+
+const AuthedSettingsRouteChildren: AuthedSettingsRouteChildren = {
+  AuthedSettingsFlagsRoute: AuthedSettingsFlagsRoute,
+};
+
+const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
+  AuthedSettingsRouteChildren,
+);
+
 interface AuthedRouteChildren {
   AuthedAccountRoute: typeof AuthedAccountRoute;
+  AuthedBetaExportRoute: typeof AuthedBetaExportRoute;
   AuthedNotesRoute: typeof AuthedNotesRoute;
-  AuthedSettingsRoute: typeof AuthedSettingsRoute;
+  AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren;
   AuthedIndexRoute: typeof AuthedIndexRoute;
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAccountRoute: AuthedAccountRoute,
+  AuthedBetaExportRoute: AuthedBetaExportRoute,
   AuthedNotesRoute: AuthedNotesRoute,
-  AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
 };
 

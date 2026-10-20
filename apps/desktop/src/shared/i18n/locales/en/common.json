@@ -7,7 +7,8 @@
     "settings": "Settings",
     "toggleSidebar": "Toggle sidebar",
     "account": "Account",
-    "notes": "Notes"
+    "notes": "Notes",
+    "flags": "Flags"
   },
   "theme": {
     "label": "Theme",
@@ -21,10 +22,10 @@
     "language": "Language",
     "languageEnglish": "English",
     "sidebarCollapsed": "Collapse sidebar by default",
-    "appInfo": "Version {{version}} \u00b7 {{os}} \u00b7 {{arch}}"
+    "appInfo": "Version {{version}} · {{os}} · {{arch}}"
   },
   "commands": {
-    "placeholder": "Type a command or search\u2026",
+    "placeholder": "Type a command or search…",
     "paletteLabel": "Command palette",
     "empty": "No results found.",
     "groupNavigation": "Navigation",
@@ -57,10 +58,11 @@
     "empty": "No notes yet.",
     "loadError": "Could not load your notes.",
     "retry": "Retry",
-    "validationError": "Enter a title of 1 to 200 characters."
+    "validationError": "Enter a title of 1 to 200 characters.",
+    "syncDisabled": "Remote sync is temporarily disabled by a kill switch. Local notes still work."
   },
   "db": {
-    "opening": "Opening your notes\u2026",
+    "opening": "Opening your notes…",
     "errorTitle": "Local database unavailable",
     "errorBody": "Your notes could not be opened. Your data is safe. Retry, or restart the app if the problem continues.",
     "retry": "Retry",
@@ -70,7 +72,7 @@
     "email": "Email",
     "password": "Password",
     "name": "Name",
-    "working": "Working\u2026",
+    "working": "Working…",
     "backToSignIn": "Back to sign in",
     "signIn": {
       "title": "Sign in",
@@ -100,5 +102,20 @@
       "confirmDelete": "Confirm delete",
       "cancel": "Cancel"
     }
+  },
+  "flags": {
+    "title": "Feature flags",
+    "description": "Dev and staging only. Overrides win over remote values and registry defaults.",
+    "sourceOverride": "override",
+    "sourceRemote": "remote",
+    "sourceDefault": "default",
+    "toggle": "Toggle",
+    "clear": "Clear",
+    "clearAll": "Clear all overrides",
+    "prodDisabled": "Local flag overrides are disabled in production."
+  },
+  "betaExport": {
+    "title": "Beta export",
+    "body": "This screen is gated by the betaExport feature flag."
   }
 }

@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { DeepLinkBridge } from "@/features/auth";
+import "@/features/flags";
 import "@/features/notes";
 import { useSettingsStore } from "@/features/settings";
 import { PortsProvider, ports } from "@/ports";
