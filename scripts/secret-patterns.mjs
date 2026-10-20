@@ -17,6 +17,14 @@ export const secretPatterns = [
     name: "better auth secret",
     regex: /BETTER_AUTH_SECRET=[A-Za-z0-9+/]{24,}={0,2}/,
   },
+  {
+    name: "sentry auth token",
+    regex: /\bsntry[a-z]?_[A-Za-z0-9]{16,}\b/,
+  },
+  {
+    name: "sentry dsn",
+    regex: /SENTRY_DSN=https:\/\/[^\s"']*@[^\s"']*ingest[^\s"']*/,
+  },
 ];
 
 /** Database URLs with a real embedded password (placeholders excluded). */
