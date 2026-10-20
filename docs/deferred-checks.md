@@ -110,3 +110,10 @@ These need a built/running app (the Tauri plugin cannot run under Node).
 4. With a real PostHog key, accept consent and confirm the M7 events and `$pageview` arrive; then revoke and confirm they stop.
 5. In a built app with devtools, confirm zero network requests to Sentry/PostHog before consent and no breadcrumbs sent. Confirm flag requests are also absent with the default `VITE_FLAGS_REQUIRE_CONSENT=true`.
 6. Confirm the first-run consent card does not block sign-in, and that the settings toggle + "Report a problem" preview shows the redacted log before confirmation.
+
+## Native features (M8)
+
+1. Built macOS app: tray menu, close-to-tray, dock behavior, global shortcut conflict toast, notifications permission, launch at login.
+2. Single instance: second launch focuses the first and forwards a deep link; cold and warm deep links both route only to the allowlisted handlers.
+3. A real update from version N to N+1 through a signed `latest.json` feed on macOS (and Windows), including progress and restart.
+4. Forced updater failure (bad signature/offline feed) keeps the app running and reports the error.

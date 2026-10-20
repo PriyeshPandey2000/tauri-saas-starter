@@ -38,7 +38,7 @@ before the next starts.
 | M5  | Feature flags (PostHog)                                | Done    |
 | M6  | Billing and licensing                                  | Done    |
 | M7  | Crash reporting and analytics with consent             | Done    |
-| M8  | Tray, shortcuts, single instance, auto-update          | Planned |
+| M8  | Tray, shortcuts, single instance, auto-update          | Done    |
 | M9  | CI, end-to-end tests, signed releases                  | Planned |
 | M10 | Rename script, feature generator, setup docs           | Planned |
 
