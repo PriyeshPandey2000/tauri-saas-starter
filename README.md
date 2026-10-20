@@ -66,18 +66,29 @@ you start a real product (see [Make it yours](#make-it-yours)).
 ## How it fits together
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontSize':'15px','lineColor':'#22c55e','edgeLabelBackground':'#f5f5f5'}}}%%
 flowchart LR
   subgraph Desktop["Desktop app (Tauri 2)"]
-    UI["React UI<br/>routes and features"] --> Ports["Ports<br/>interfaces"]
-    Ports --> Adapters["Adapters<br/>auth, storage, logging"]
-    Adapters --> Rust["Rust shell<br/>typed IPC"]
+    UI("React UI<br/>routes and features") --> Ports("Ports<br/>interfaces")
+    Ports --> Adapters("Adapters<br/>auth, storage, logging")
+    Adapters --> Rust("Rust shell<br/>typed IPC")
     Rust --> SQLite[("SQLite<br/>one file per user")]
     Rust --> Keychain[("OS keychain<br/>tokens")]
   end
   Adapters -- "HTTPS + JWT" --> API
   subgraph Server["Server"]
-    API["Hono API<br/>Better Auth, requireAuth, notes"] --> PG[("Postgres<br/>Drizzle")]
+    API("Hono API<br/>Better Auth, requireAuth, notes") --> PG[("Postgres<br/>Drizzle")]
   end
+
+  classDef app fill:#0a0a0a,stroke:#39ff14,stroke-width:2px,color:#f5f5f5
+  classDef server fill:#0a0a0a,stroke:#f5f5f5,stroke-width:2px,color:#f5f5f5
+  classDef store fill:#0a0a0a,stroke:#39ff14,stroke-width:4px,color:#f5f5f5
+  class UI,Ports,Adapters,Rust app
+  class API server
+  class SQLite,Keychain,PG store
+  style Desktop fill:#141414,stroke:#39ff14,stroke-width:2px,color:#39ff14
+  style Server fill:#141414,stroke:#f5f5f5,stroke-width:2px,color:#f5f5f5
+  linkStyle default stroke:#22c55e,stroke-width:2px
 ```
 
 ## Repo layout
