@@ -10,8 +10,8 @@ import { desktopAuthRoutes } from "./auth/desktop-routes";
 import { createRateLimiter, resolveClientKey } from "./auth/rate-limit";
 import { resolveTrustedOrigins } from "./auth/origins";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
+import { registerNotesRoutes } from "./notes/routes";
 import type { ApiEnv } from "./env";
-
 export {
   DEV_ORIGINS,
   TAURI_ORIGINS,
@@ -96,6 +96,12 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
     const claims = c.get("claims");
     return c.json({ userId: claims.sub ?? null });
   });
+
+  if (db) {
+    app.use("/notes", requireAuth);
+    app.use("/notes/*", requireAuth);
+    registerNotesRoutes(app, db);
+  }
 
   return app;
 }

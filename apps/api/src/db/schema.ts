@@ -86,3 +86,21 @@ export const jwks = pgTable("jwks", {
   alg: text("alg"),
   crv: text("crv"),
 });
+
+export const notes = pgTable(
+  "notes",
+  {
+    id: text("id").primaryKey(),
+    // Owner. Every read and write filters on this column, never a client value.
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body").notNull().default(""),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    index("notes_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ],
+);

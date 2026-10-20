@@ -10,7 +10,14 @@ const MIGRATIONS_DIR = fileURLToPath(
   new URL("../../drizzle/", import.meta.url),
 );
 
-const TABLES = ["session", "account", "verification", "jwks", "user"] as const;
+const TABLES = [
+  "notes",
+  "session",
+  "account",
+  "verification",
+  "jwks",
+  "user",
+] as const;
 
 /** In-memory Postgres (PGlite) with the committed migrations applied. */
 export async function createTestDb() {

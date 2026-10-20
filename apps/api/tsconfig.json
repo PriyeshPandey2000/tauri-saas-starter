@@ -9,5 +9,8 @@
     "moduleResolution": "bundler"
   },
   "include": ["src"],
-  "exclude": ["src/__tests__/contract.test.ts"]
+  "exclude": [
+    "src/__tests__/contract.test.ts",
+    "src/notes/__tests__/isolation.test.ts"
+  ]
 }
