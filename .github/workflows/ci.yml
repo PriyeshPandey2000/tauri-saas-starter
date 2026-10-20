@@ -165,7 +165,11 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter desktop build
+      - name: Build frontend (production config)
+        env:
+          VITE_API_URL: https://api.example.invalid
+          VITE_APP_ENV: prod
+        run: pnpm --filter desktop build
       - run: cargo build --release --manifest-path apps/desktop/src-tauri/Cargo.toml
       - name: Smoke test
         shell: bash
