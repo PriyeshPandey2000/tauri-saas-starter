@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="docs/assets/logo.svg" alt="Tauri SaaS Starter" width="450" height="120">
+  <img src="docs/assets/logo.svg" alt="Tauri SaaS Starter" width="450" height="150">
 </h1>
 
 <p align="center">
