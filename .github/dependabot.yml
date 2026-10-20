@@ -5,14 +5,31 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Pinned by engines/typescript-eslint peer range (<6.1.0); bump deliberately.
+      - dependency-name: typescript
+        update-types:
+          - version-update:version-major
+          - version-update:version-minor
+      # Pinned specta shims; see docs/DECISIONS.md pre-release allowlist.
+      - dependency-name: tauri-specta
+      - dependency-name: specta
     groups:
-      npm:
-        patterns: ["*"]
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - "*"
   - package-ecosystem: cargo
     directory: /apps/desktop/src-tauri
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      tauri-crates:
+        patterns:
+          - "tauri*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

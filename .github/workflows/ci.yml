@@ -20,6 +20,7 @@ jobs:
   architecture:
     name: architecture
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -42,6 +43,7 @@ jobs:
   security:
     name: security
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -57,26 +59,24 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Secret scan (tracked files)
-        run: |
-          git ls-files | grep -iE '\.env|\.pem|\.key|secret' || true
-          ! git grep -nE 'phc_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9+/=]{16,}|sntry[a-z]?_[A-Za-z0-9]{16,}|(dodo|sk_live|sk_test)_[A-Za-z0-9]{16,}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' -- . ':!pnpm-lock.yaml'
+        run: node scripts/check-tracked-secrets.mjs
       - name: Bundle secret scan
         env:
           VITE_API_URL: https://api.example.invalid
           VITE_APP_ENV: prod
         run: pnpm --filter desktop build && pnpm --filter desktop verify:bundle-secrets
       - run: pnpm audit --prod --audit-level=high
-      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2.0.0
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # zip advisories reach us through tauri-plugin-updater and have no
-          # compatible fixed release yet; see docs/DECISIONS.md.
-          ignore: RUSTSEC-2026-0367,RUSTSEC-2026-0368,RUSTSEC-2026-0369
+          tool: cargo-audit
+      # Same ignore list as local runs; see docs/DECISIONS.md for the zip advisories.
+      - run: pnpm audit:rust
 
   commitlint:
     name: commitlint
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
@@ -91,6 +91,7 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -113,6 +114,7 @@ jobs:
   rust:
     name: rust
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
     steps:
@@ -127,6 +129,7 @@ jobs:
   e2e:
     name: e2e
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -149,6 +152,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
