@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { ports } from "@/ports";
+import { openUserDatabase } from "./local-db";
 import { runSignOutHandlers } from "./sign-out-registry";
 import type { AuthSession } from "@/ports";
 import type { SignInInput, SignUpInput } from "@app/shared";
@@ -41,6 +42,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const session = await ports.auth.signIn(input);
       set({ session, status: "authenticated" });
+      openUserDatabase(session);
     } catch (error) {
       set({ status: "unauthenticated", error: messageOf(error) });
       throw error;
@@ -53,6 +55,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const result = await ports.auth.signUp(input);
       if (result.status === "authenticated") {
         set({ session: result.session, status: "authenticated" });
+        openUserDatabase(result.session);
         return "authenticated";
       }
       set({ status: "unauthenticated" });
@@ -78,6 +81,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const session = await ports.auth.completeOAuthCallback(callbackUrl);
       set({ session, status: "authenticated" });
+      openUserDatabase(session);
     } catch (error) {
       set({ status: "unauthenticated", error: messageOf(error) });
       throw error;
@@ -114,6 +118,7 @@ export function initializeAuth(): Promise<void> {
             session,
             status: session ? "authenticated" : "unauthenticated",
           });
+          openUserDatabase(session);
         },
       });
     }
@@ -125,6 +130,7 @@ export function initializeAuth(): Promise<void> {
           status: session ? "authenticated" : "unauthenticated",
           initialized: true,
         });
+        openUserDatabase(session);
       } catch (error) {
         useAuthStore.setState({
           session: null,

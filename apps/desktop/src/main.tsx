@@ -5,11 +5,17 @@ import { AppProviders } from "@/app/providers";
 import { onSignOut } from "@/features/auth";
 import { ConfigErrorScreen } from "@/app/ConfigErrorScreen";
 import { createAppQueryClient } from "@/app/query-client";
+import {
+  clearQueryCache,
+  persistQueryCache,
+  restoreQueryCache,
+} from "@/app/query-persistence";
 import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
 import { useSettingsStore } from "@/features/settings";
-import { logger } from "@/ports";
+import { logger, ports } from "@/ports";
 import { ConfigError, getConfig } from "@/shared/lib/config";
+import { useDatabaseStore } from "@/shared/lib/db-status";
 import { applyTheme } from "@/shared/lib/theme";
 import { applyWindowTheme, showMainWindow } from "@/shared/lib/window";
 
@@ -71,7 +77,14 @@ async function bootstrap(): Promise<void> {
   registerGlobalErrorHandlers();
 
   const queryClient = createAppQueryClient();
+  await restoreQueryCache(queryClient);
+  persistQueryCache(queryClient);
   onSignOut(() => queryClient.clear());
+  onSignOut(() => void clearQueryCache());
+  onSignOut(() => {
+    void ports.database.close();
+    useDatabaseStore.getState().reset();
+  });
   const router = createAppRouter(queryClient);
 
   root.render(

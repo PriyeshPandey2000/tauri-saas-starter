@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { authedRedirect, initializeAuth, useAuthStore } from "@/features/auth";
+import { DatabaseGate } from "@/features/notes";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async ({ location }) => {
@@ -13,5 +14,14 @@ export const Route = createFileRoute("/_authed")({
       throw redirect(target);
     }
   },
-  component: Outlet,
+  component: AuthedLayout,
 });
+
+function AuthedLayout() {
+  const userId = useAuthStore((state) => state.session?.user.id ?? null);
+  return (
+    <DatabaseGate userId={userId}>
+      <Outlet />
+    </DatabaseGate>
+  );
+}

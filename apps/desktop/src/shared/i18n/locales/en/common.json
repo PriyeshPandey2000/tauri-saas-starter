@@ -6,7 +6,8 @@
     "home": "Home",
     "settings": "Settings",
     "toggleSidebar": "Toggle sidebar",
-    "account": "Account"
+    "account": "Account",
+    "notes": "Notes"
   },
   "theme": {
     "label": "Theme",
@@ -40,6 +41,29 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist.",
     "backHome": "Back to home"
+  },
+  "notes": {
+    "title": "Notes",
+    "description": "Your notes, stored for this account.",
+    "new": "New note",
+    "edit": "Edit note",
+    "fieldTitle": "Title",
+    "fieldBody": "Body",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleted": "Note deleted",
+    "undo": "Undo",
+    "empty": "No notes yet.",
+    "loadError": "Could not load your notes.",
+    "retry": "Retry",
+    "validationError": "Enter a title of 1 to 200 characters."
+  },
+  "db": {
+    "opening": "Opening your notes\u2026",
+    "errorTitle": "Local database unavailable",
+    "errorBody": "Your notes could not be opened. Your data is safe. Retry, or restart the app if the problem continues.",
+    "retry": "Retry"
   },
   "auth": {
     "email": "Email",

@@ -13,6 +13,7 @@ import { Route as AuthedRouteImport } from "./../routes/_authed";
 import { Route as GuestRouteImport } from "./../routes/_guest";
 import { Route as AuthedIndexRouteImport } from "./../routes/_authed/index";
 import { Route as AuthedAccountRouteImport } from "./../routes/_authed/account";
+import { Route as AuthedNotesRouteImport } from "./../routes/_authed/notes";
 import { Route as AuthedSettingsRouteImport } from "./../routes/_authed/settings";
 import { Route as GuestForgotPasswordRouteImport } from "./../routes/_guest/forgot-password";
 import { Route as GuestSignInRouteImport } from "./../routes/_guest/sign-in";
@@ -34,6 +35,11 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
 const AuthedAccountRoute = AuthedAccountRouteImport.update({
   id: "/account",
   path: "/account",
+  getParentRoute: () => AuthedRoute,
+} as any);
+const AuthedNotesRoute = AuthedNotesRouteImport.update({
+  id: "/notes",
+  path: "/notes",
   getParentRoute: () => AuthedRoute,
 } as any);
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -60,6 +66,7 @@ const GuestSignUpRoute = GuestSignUpRouteImport.update({
 export interface FileRoutesByFullPath {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
+  "/notes": typeof AuthedNotesRoute;
   "/settings": typeof AuthedSettingsRoute;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/": typeof AuthedIndexRoute;
   "/account": typeof AuthedAccountRoute;
+  "/notes": typeof AuthedNotesRoute;
   "/settings": typeof AuthedSettingsRoute;
   "/forgot-password": typeof GuestForgotPasswordRoute;
   "/sign-in": typeof GuestSignInRoute;
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   "/_authed": typeof AuthedRouteWithChildren;
   "/_guest": typeof GuestRouteWithChildren;
   "/_authed/account": typeof AuthedAccountRoute;
+  "/_authed/notes": typeof AuthedNotesRoute;
   "/_authed/settings": typeof AuthedSettingsRoute;
   "/_guest/forgot-password": typeof GuestForgotPasswordRoute;
   "/_guest/sign-in": typeof GuestSignInRoute;
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
   fullPaths:
     | "/"
     | "/account"
+    | "/notes"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
   to:
     | "/"
     | "/account"
+    | "/notes"
     | "/settings"
     | "/forgot-password"
     | "/sign-in"
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | "/_authed"
     | "/_guest"
     | "/_authed/account"
+    | "/_authed/notes"
     | "/_authed/settings"
     | "/_guest/forgot-password"
     | "/_guest/sign-in"
@@ -148,6 +160,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AuthedAccountRouteImport;
       parentRoute: typeof AuthedRoute;
     };
+    "/_authed/notes": {
+      id: "/_authed/notes";
+      path: "/notes";
+      fullPath: "/notes";
+      preLoaderRoute: typeof AuthedNotesRouteImport;
+      parentRoute: typeof AuthedRoute;
+    };
     "/_authed/settings": {
       id: "/_authed/settings";
       path: "/settings";
@@ -181,12 +200,14 @@ declare module "@tanstack/react-router" {
 
 interface AuthedRouteChildren {
   AuthedAccountRoute: typeof AuthedAccountRoute;
+  AuthedNotesRoute: typeof AuthedNotesRoute;
   AuthedSettingsRoute: typeof AuthedSettingsRoute;
   AuthedIndexRoute: typeof AuthedIndexRoute;
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAccountRoute: AuthedAccountRoute,
+  AuthedNotesRoute: AuthedNotesRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
 };

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const AppEnvSchema = z.enum(["dev", "staging", "prod"]);
 export const LogTargetSchema = z.enum(["console", "file"]);
+export const NotesSourceSchema = z.enum(["local", "remote"]);
 
 export const ConfigSchema = z.object({
   VITE_API_URL: z.string().url(),
@@ -10,11 +11,14 @@ export const ConfigSchema = z.object({
   VITE_POSTHOG_KEY: z.string().min(1).optional(),
   VITE_POSTHOG_HOST: z.string().url().optional(),
   VITE_SENTRY_DSN: z.string().url().optional(),
+  /** Where notes are read/written. Local SQLite is the default. */
+  VITE_NOTES_SOURCE: NotesSourceSchema.optional(),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
 export type AppEnv = z.infer<typeof AppEnvSchema>;
 export type LogTarget = z.infer<typeof LogTargetSchema>;
+export type NotesSource = z.infer<typeof NotesSourceSchema>;
 
 /**
  * Explicit target wins; otherwise console in dev and the log file elsewhere.
