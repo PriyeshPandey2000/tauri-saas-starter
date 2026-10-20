@@ -28,6 +28,15 @@ describe("buildCsp", () => {
     expect(csp).toContain("https://us.i.posthog.com");
   });
 
+  it("adds the Sentry ingest origin when a DSN is set", () => {
+    const csp = buildCsp({
+      apiUrl: "https://api.example.com",
+      sentryDsn: "https://key@o1.ingest.sentry.io/42",
+      isDev: false,
+    });
+    expect(csp).toContain("https://o1.ingest.sentry.io");
+  });
+
   it("adds the dev server origins only in dev", () => {
     const dev = buildCsp({ apiUrl: "https://api.example.com", isDev: true });
     const prod = buildCsp({ apiUrl: "https://api.example.com", isDev: false });

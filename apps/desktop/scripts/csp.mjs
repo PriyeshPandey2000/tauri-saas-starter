@@ -4,12 +4,21 @@ const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
  * Build the production/dev webview CSP. PostHog is only reachable when the
  * project key is configured, so the origin is not opened needlessly.
  */
-export function buildCsp({ apiUrl, posthogKey, posthogHost, isDev }) {
+export function buildCsp({
+  apiUrl,
+  posthogKey,
+  posthogHost,
+  sentryDsn,
+  isDev,
+}) {
   const apiOrigin = new URL(apiUrl).origin;
   const connectSrc = ["'self'", apiOrigin];
 
   if (posthogKey) {
     connectSrc.push(new URL(posthogHost || DEFAULT_POSTHOG_HOST).origin);
+  }
+  if (sentryDsn) {
+    connectSrc.push(new URL(sentryDsn).origin);
   }
   if (isDev) {
     connectSrc.push("http://localhost:1420", "ws://localhost:1420");

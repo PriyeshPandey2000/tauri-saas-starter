@@ -12,6 +12,7 @@ import {
   restoreQueryCache,
 } from "@/app/query-persistence";
 import { initializeBilling } from "@/app/billing-wiring";
+import { initializeObservability } from "@/app/analytics-wiring";
 import { initializeFeatureFlags } from "@/app/feature-flags-wiring";
 import { createAppRouter } from "@/app/router";
 import { Splash } from "@/app/Splash";
@@ -28,9 +29,15 @@ import "./index.css";
 function registerGlobalErrorHandlers(): void {
   window.addEventListener("error", (event) => {
     logger.error("window.onerror", { error: event.error ?? event.message });
+    void ports.errorReporter.captureException(event.error ?? event.message, {
+      tags: { source: "window.onerror" },
+    });
   });
   window.addEventListener("unhandledrejection", (event) => {
     logger.error("unhandledrejection", { reason: event.reason });
+    void ports.errorReporter.captureException(event.reason, {
+      tags: { source: "unhandledrejection" },
+    });
   });
 }
 
@@ -97,6 +104,7 @@ async function bootstrap(): Promise<void> {
     useDatabaseStore.getState().reset();
   });
   const router = createAppRouter(queryClient);
+  initializeObservability(router);
 
   root.render(
     <StrictMode>

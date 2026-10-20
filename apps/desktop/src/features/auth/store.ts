@@ -12,6 +12,8 @@ export type SignUpOutcome = "authenticated" | "verification_required";
 interface AuthStore {
   status: AuthStatus;
   session: AuthSession | null;
+  /** Which flow produced the session; used for consent-gated analytics. */
+  lastAuthMethod: "email" | "google" | null;
   error: string | null;
   initialized: boolean;
   clearError(): void;
@@ -30,6 +32,7 @@ function messageOf(error: unknown): string {
 export const useAuthStore = create<AuthStore>((set) => ({
   status: "loading",
   session: null,
+  lastAuthMethod: null,
   error: null,
   initialized: false,
 
@@ -41,7 +44,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ error: null, status: "loading" });
     try {
       const session = await ports.auth.signIn(input);
-      set({ session, status: "authenticated" });
+      set({ session, status: "authenticated", lastAuthMethod: "email" });
       openUserDatabase(session);
     } catch (error) {
       set({ status: "unauthenticated", error: messageOf(error) });
@@ -54,7 +57,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const result = await ports.auth.signUp(input);
       if (result.status === "authenticated") {
-        set({ session: result.session, status: "authenticated" });
+        set({
+          session: result.session,
+          status: "authenticated",
+          lastAuthMethod: "email",
+        });
         openUserDatabase(result.session);
         return "authenticated";
       }
@@ -80,7 +87,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ error: null, status: "loading" });
     try {
       const session = await ports.auth.completeOAuthCallback(callbackUrl);
-      set({ session, status: "authenticated" });
+      set({ session, status: "authenticated", lastAuthMethod: "google" });
       openUserDatabase(session);
     } catch (error) {
       set({ status: "unauthenticated", error: messageOf(error) });
@@ -93,7 +100,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
       await ports.auth.signOut();
     } finally {
       await runSignOutHandlers();
-      set({ session: null, status: "unauthenticated", error: null });
+      set({
+        session: null,
+        status: "unauthenticated",
+        error: null,
+        lastAuthMethod: null,
+      });
     }
   },
 

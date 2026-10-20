@@ -6,7 +6,7 @@ import { DeepLinkBridge } from "@/features/auth";
 import { BillingDeepLinkBridge, PastDueBanner } from "@/features/billing";
 import "@/features/flags";
 import "@/features/notes";
-import { useSettingsStore } from "@/features/settings";
+import { ConsentPrompt, useSettingsStore } from "@/features/settings";
 import { PortsProvider, ports } from "@/ports";
 import { Toaster } from "@/shared/ui/sonner";
 
@@ -33,6 +33,7 @@ export function AppProviders({ router, queryClient }: AppProvidersProps) {
             <BillingDeepLinkBridge />
             <PastDueBanner />
             <RouterProvider router={router} />
+            <ConsentPrompt />
             <Toaster theme={theme} />
           </ThemeProvider>
         </QueryClientProvider>

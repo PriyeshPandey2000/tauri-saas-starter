@@ -1,6 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 
 import type { AnalyticsPort } from "./AnalyticsPort";
+import type { OpenerPort } from "./OpenerPort";
 import type { AuthPort } from "./AuthPort";
 import type { BillingPort } from "./BillingPort";
 import type { ErrorReporterPort } from "./ErrorReporterPort";
@@ -18,6 +19,9 @@ import { noopAuth } from "./adapters/noop/noop-auth";
 import { noopBilling } from "./adapters/noop/noop-billing";
 import { createBillingAdapter } from "./adapters/billing/billing-adapter";
 import { noopErrorReporter } from "./adapters/noop/noop-error-reporter";
+import { createPostHogAnalytics } from "./adapters/analytics/posthog-analytics";
+import { tauriOpener } from "./adapters/opener/tauri-opener";
+import { createSentryErrorReporter } from "./adapters/sentry/sentry-error-reporter";
 import {
   createBetterAuthAdapter,
   setDefaultSecureStore,
@@ -70,6 +74,7 @@ export interface Ports {
   logger: LoggerPort;
   database: DatabaseManager;
   queryCache: QueryCachePort;
+  opener: OpenerPort;
 }
 
 /**
@@ -111,6 +116,33 @@ export function createPorts(): Ports {
           logger.warn(message, context as LogContext | undefined),
       })
     : noopFeatureFlags;
+  const sentryDsn =
+    typeof rawEnv.VITE_SENTRY_DSN === "string"
+      ? rawEnv.VITE_SENTRY_DSN
+      : undefined;
+  const appVersion =
+    typeof rawEnv.VITE_APP_VERSION === "string"
+      ? rawEnv.VITE_APP_VERSION
+      : "0.1.0";
+  const errorReporter = sentryDsn
+    ? createSentryErrorReporter({
+        dsn: sentryDsn,
+        environment:
+          typeof rawEnv.VITE_APP_ENV === "string" ? rawEnv.VITE_APP_ENV : "dev",
+        release: appVersion,
+        onWarning: (message, context) =>
+          logger.warn(message, context as LogContext | undefined),
+      })
+    : noopErrorReporter;
+  const analytics = flagsApiKey
+    ? createPostHogAnalytics({
+        apiKey: flagsApiKey,
+        host: flagsHost,
+        onWarning: (message, context) =>
+          logger.warn(message, context as LogContext | undefined),
+      })
+    : noopAnalytics;
+
   const featureFlags = createLocalOverrideAdapter(
     baseFeatureFlags,
     createPluginFlagOverrideStore(),
@@ -125,12 +157,13 @@ export function createPorts(): Ports {
     auth,
     billing: isTauri() ? createBillingAdapter() : noopBilling,
     featureFlags,
-    analytics: noopAnalytics,
-    errorReporter: noopErrorReporter,
+    analytics,
+    errorReporter,
     storage: createMemoryStorage(),
     logger,
     database: createDatabaseManager(),
     queryCache: storeQueryCache,
+    opener: tauriOpener,
   };
 }
 

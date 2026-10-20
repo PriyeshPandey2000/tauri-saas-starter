@@ -20,7 +20,7 @@ describe("SettingsPage", () => {
       useSettingsStore.getState().setTheme("dark");
     });
 
-    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getAllByRole("checkbox")[0]!);
 
     expect(useSettingsStore.getState().theme).toBe("dark");
     expect(useSettingsStore.getState().sidebarCollapsed).toBe(

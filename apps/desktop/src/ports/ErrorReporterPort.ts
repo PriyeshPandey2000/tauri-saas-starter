@@ -4,10 +4,13 @@ export interface ErrorReportContext {
   extra?: Record<string, unknown>;
 }
 
-/** Error-reporting boundary. Implemented by an adapter in later milestones. */
+/** Error-reporting boundary. Every call is consent-gated in the adapter. */
 export interface ErrorReporterPort {
-  /** Report a thrown value. */
   captureException(error: unknown, context?: ErrorReportContext): Promise<void>;
-  /** Report a notable message without an exception. */
   captureMessage(message: string, context?: ErrorReportContext): Promise<void>;
+  addBreadcrumb(message: string, data?: Record<string, unknown>): void;
+  /** Opaque auth user id, or `null` after sign-out. */
+  setUser(userId: string | null): void;
+  /** Grant/revoke sending immediately. */
+  setConsent(granted: boolean): void;
 }

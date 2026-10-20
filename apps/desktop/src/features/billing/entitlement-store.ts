@@ -11,6 +11,7 @@ import {
 } from "./entitlement-cache";
 
 let warnedMissingKeys = false;
+let completionTracked = false;
 
 const POLL_INTERVAL_MS = 3_000;
 const POLL_DEADLINE_MS = 2 * 60_000;
@@ -99,7 +100,18 @@ export const useEntitlementStore = create<EntitlementState>((set, get) => ({
         set({ loading: false, error: "Entitlement belongs to another user" });
         return;
       }
+      const previous = get().entitlement;
       set({ entitlement, loading: false, error: null, offline: false });
+      if (
+        !completionTracked &&
+        entitlement.status === "active" &&
+        previous?.status !== "active"
+      ) {
+        completionTracked = true;
+        void ports.analytics.track("checkout_completed", {
+          plan: entitlement.plan,
+        });
+      }
       await saveEntitlement(userId, entitlement, keys());
     } catch (error) {
       set({
@@ -112,6 +124,7 @@ export const useEntitlementStore = create<EntitlementState>((set, get) => ({
 
   async reset() {
     stopPolling();
+    completionTracked = false;
     const userId = get().userId ?? undefined;
     set({
       userId: null,

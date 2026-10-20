@@ -7,6 +7,7 @@ import { useSettingsStore } from "./settings-store";
 
 export { useSettingsStore } from "./settings-store";
 export { SettingsPage } from "./components/settings-page";
+export { ConsentPrompt } from "./components/consent-prompt";
 
 registerNavItem({
   id: "settings",

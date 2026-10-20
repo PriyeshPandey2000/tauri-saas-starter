@@ -23,7 +23,19 @@
     "language": "Language",
     "languageEnglish": "English",
     "sidebarCollapsed": "Collapse sidebar by default",
-    "appInfo": "Version {{version}} · {{os}} · {{arch}}"
+    "appInfo": "Version {{version}} · {{os}} · {{arch}}",
+    "telemetry": "Send crash reports and usage analytics",
+    "telemetryHint": "Off until you accept. Turning this off stops all sends immediately.",
+    "reportTitle": "Report a problem",
+    "reportBody": "Attach the last log file, scrubbed of emails, tokens and home paths.",
+    "reportPreview": "Preview what will be attached",
+    "reportAttached": "This is exactly what will be attached:",
+    "reportEmpty": "(the log file is empty)",
+    "reportConfirm": "I understand and want to attach this log",
+    "reportSend": "Continue",
+    "reportIntro": "Reported from the app:",
+    "reportSubject": "App problem report",
+    "reportMissingSupport": "No support address is configured."
   },
   "commands": {
     "placeholder": "Type a command or search…",
@@ -143,5 +155,11 @@
       "none": "Free"
     },
     "entitlementKeysMissing": "Dev: VITE_ENTITLEMENT_PUBLIC_KEYS is empty, so offline entitlement grace is disabled."
+  },
+  "consent": {
+    "title": "Help improve the app?",
+    "body": "Crash reports and anonymous usage events help us fix problems. Emails, tokens, request bodies and file paths are removed before anything is sent. You can change this anytime in Settings.",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

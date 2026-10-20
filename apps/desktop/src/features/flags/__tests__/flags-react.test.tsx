@@ -13,6 +13,7 @@ vi.mock("@/ports", () => {
   const listeners = new Set<() => void>();
   return {
     ports: {
+      analytics: { track: async () => undefined },
       featureFlags: {
         get: (key: string) => values.get(key),
         getAll: () => Object.fromEntries(values),

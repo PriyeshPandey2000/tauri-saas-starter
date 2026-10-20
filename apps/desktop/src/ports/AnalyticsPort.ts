@@ -1,7 +1,13 @@
-/** Analytics boundary. Calls must only happen after the user consents. */
+import type { AnalyticsEvent, AnalyticsProperties } from "@app/shared";
+
+/** Analytics boundary. Every call is consent-gated in the adapter. */
 export interface AnalyticsPort {
-  /** Record a product event with optional properties. */
-  track(event: string, properties?: Record<string, unknown>): Promise<void>;
-  /** Attach a stable user id to later events. */
-  identify(userId: string, traits?: Record<string, unknown>): Promise<void>;
+  track<E extends AnalyticsEvent>(
+    event: E,
+    properties: AnalyticsProperties<E>,
+  ): Promise<void>;
+  page(path: string): Promise<void>;
+  identify(userId: string): Promise<void>;
+  reset(): Promise<void>;
+  setConsent(granted: boolean): void;
 }

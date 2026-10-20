@@ -19,6 +19,7 @@ try {
     apiUrl,
     posthogKey: env.VITE_POSTHOG_KEY,
     posthogHost: env.VITE_POSTHOG_HOST,
+    sentryDsn: env.VITE_SENTRY_DSN,
     isDev: command === "dev",
   });
 } catch {

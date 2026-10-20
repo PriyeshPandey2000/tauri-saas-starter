@@ -42,6 +42,7 @@ export function PricingPage() {
     setError(null);
     try {
       await ports.billing.startCheckout(planKey);
+      void ports.analytics.track("checkout_started", { plan: planKey });
       startPolling();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));

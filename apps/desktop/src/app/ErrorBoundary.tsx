@@ -55,6 +55,7 @@ export class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     void ports.errorReporter.captureException(error, {
+      tags: { source: "ErrorBoundary" },
       extra: { componentStack: info.componentStack },
     });
     ports.logger.error("Uncaught error in component tree", {

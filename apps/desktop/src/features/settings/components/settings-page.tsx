@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import { AppInfoFooter } from "./app-info-footer";
+import { ReportProblem } from "./report-problem";
 import { useSettingsStore } from "../settings-store";
 
 export function SettingsPage() {
@@ -8,6 +9,10 @@ export function SettingsPage() {
   const theme = useSettingsStore((state) => state.theme);
   const language = useSettingsStore((state) => state.language);
   const sidebarCollapsed = useSettingsStore((state) => state.sidebarCollapsed);
+  const telemetryConsent = useSettingsStore((state) => state.telemetryConsent);
+  const setTelemetryConsent = useSettingsStore(
+    (state) => state.setTelemetryConsent,
+  );
   const setTheme = useSettingsStore((state) => state.setTheme);
   const setLanguage = useSettingsStore((state) => state.setLanguage);
   const setSidebarCollapsed = useSettingsStore(
@@ -69,6 +74,28 @@ export function SettingsPage() {
           />
           {t("settings.sidebarCollapsed")}
         </label>
+
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={telemetryConsent === "granted"}
+            onChange={(event) =>
+              setTelemetryConsent(event.target.checked ? "granted" : "denied")
+            }
+            className="mt-1 accent-primary"
+          />
+          <span>
+            {t("settings.telemetry")}
+            <span className="block text-xs text-muted-foreground">
+              {t("settings.telemetryHint")}
+            </span>
+          </span>
+        </label>
+
+        <div className="flex flex-col gap-2 border-t border-input pt-4">
+          <h2 className="text-sm font-medium">{t("settings.reportTitle")}</h2>
+          <ReportProblem />
+        </div>
       </div>
 
       <AppInfoFooter />
