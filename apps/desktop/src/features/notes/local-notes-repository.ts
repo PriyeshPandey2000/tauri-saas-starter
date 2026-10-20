@@ -3,10 +3,12 @@ import {
   NoteSchema,
   type Note,
   type NoteInput,
+  type NoteList,
   type NoteUpdate,
 } from "@app/shared";
 
-import type { NotesRepository } from "./repository";
+import { logger } from "@/ports";
+import type { NotePageOptions, NotesRepository } from "./repository-core";
 
 /** The SQL surface the repository needs; a `DatabasePort` satisfies it. */
 export interface Queryable {
@@ -28,13 +30,32 @@ interface NoteRow {
   updated_at: string;
 }
 
-function toNote(row: NoteRow): Note {
-  return NoteSchema.parse({
+/**
+ * A row as a note, or `null` when it does not validate. One bad row (for
+ * example from a partial upgrade) must not hide every other note.
+ */
+function toNote(row: NoteRow): Note | null {
+  const parsed = NoteSchema.safeParse({
     id: row.id,
     title: row.title,
     body: row.body,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  });
+  if (!parsed.success) {
+    logger.warn("Skipping an invalid local note row", {
+      id: row.id,
+      issues: parsed.error.issues,
+    });
+    return null;
+  }
+  return parsed.data;
+}
+
+function toNotes(rows: NoteRow[]): Note[] {
+  return rows.flatMap((row) => {
+    const note = toNote(row);
+    return note ? [note] : [];
   });
 }
 
@@ -50,13 +71,18 @@ export function createLocalNotesRepository(db: Queryable): NotesRepository {
   }
 
   return {
-    async list(): Promise<Note[]> {
+    async list(options: NotePageOptions = {}): Promise<NoteList> {
+      const limit = options.limit
+        ? Math.min(Math.max(Math.trunc(options.limit), 1), 200)
+        : -1;
       const rows = await db.query<NoteRow>(
         `SELECT id, title, body, created_at, updated_at
            FROM notes WHERE deleted_at IS NULL
-          ORDER BY updated_at DESC`,
+          ORDER BY updated_at DESC, id DESC
+          LIMIT $1`,
+        [limit],
       );
-      return rows.map(toNote);
+      return { notes: toNotes(rows), nextCursor: null };
     },
 
     async get(id: string): Promise<Note | null> {
@@ -84,20 +110,21 @@ export function createLocalNotesRepository(db: Queryable): NotesRepository {
 
     async update(id: string, patch: NoteUpdate): Promise<Note> {
       const existing = await findRow(id);
-      if (!existing) {
+      const parsed = existing ? toNote(existing) : null;
+      if (!parsed) {
         throw new Error(`Note ${id} not found`);
       }
       const title = NoteInputSchema.shape.title.parse(
-        patch.title ?? existing.title,
+        patch.title ?? parsed.title,
       );
-      const body = patch.body ?? existing.body;
+      const body = patch.body ?? parsed.body;
       const updatedAt = new Date().toISOString();
       await db.execute(
         `UPDATE notes SET title = $1, body = $2, updated_at = $3
           WHERE id = $4 AND deleted_at IS NULL`,
         [title, body, updatedAt, id],
       );
-      return { ...toNote(existing), title, body, updatedAt };
+      return { ...parsed, title, body, updatedAt };
     },
 
     async remove(id: string): Promise<void> {
@@ -114,13 +141,14 @@ export function createLocalNotesRepository(db: Queryable): NotesRepository {
         [id],
       );
       const row = rows[0];
-      if (!row) {
+      const note = row ? toNote(row) : null;
+      if (!note) {
         throw new Error(`Note ${id} not found`);
       }
       await db.execute(`UPDATE notes SET deleted_at = NULL WHERE id = $1`, [
         id,
       ]);
-      return toNote(row);
+      return note;
     },
   };
 }

@@ -143,4 +143,68 @@ Not covered by automated tests (user-only, logged in `docs/deferred-checks.md`):
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: CHANGES REQUIRED** (2026-10-20). The server side is solid; the desktop side has a cross-user data leak path and a few isolation/architecture gaps.
+
+Verified by reviewer: forced `turbo run lint typecheck test build` 12/12 (desktop 71 tests, api 25); `cargo test` 3 pass + 1 ignored; notes migration applies on a fresh Postgres 17 (table, `user_id` FK with cascade, `(user_id, updated_at)` index); notes routes sit behind `requireAuth`, every query filters on the JWT `sub`, foreign ids return 404 (never 403), payload limits (title 200, body 20k); local SQL is fully parameterized; local migrations run per migration in a transaction and roll back on failure; Origin header used in API tests. (One earlier forced run failed in `@app/shared#build`; two later forced runs passed and a standalone build passed, so treated as a transient.)
+
+Must fix:
+
+1. **Cross-user leak through the persisted query cache.** `restoreQueryCache` hydrates one global on-disk cache at boot, before anyone is signed in; notes query keys (`["notes","list"]`) are not scoped by user; the cache is cleared only by `onSignOut`, but when a session is lost another way (401 on refresh, revoked/expired, `clearLocal` in the adapter) `runSignOutHandlers` never runs, so user A's cached notes stay on disk and in memory and are shown to user B on the next sign-in. The persisted JSON also stores note titles/bodies in plaintext in a second file. Fix: (a) do not persist user-data queries at all (notes already live in the per-user SQLite); use an allowlist of persistable keys instead of a denylist; (b) scope every user-data query key by user id; (c) run the sign-out handlers on EVERY transition to unauthenticated (including 401/revocation), and clear the in-memory QueryClient when the signed-in user id changes. Add a test: sign in as A, load notes, session lost via 401, sign in as B -> B sees none of A's data.
+2. **DatabaseManager race.** `open()` uses `pending ??= openDatabase(userId)`, so while A's open is pending, `open(B)` returns A's promise (B gets A's database). `close()` does not wait for a pending open. Serialize: key the pending promise by user id; if a different user is requested, await the pending open, close, then open. Add a test with two quick opens for different users.
+3. **Database file name collisions.** `databaseName` replaces unsafe characters with `_`, so ids `a.b` and `a_b` share a file. Use a hash (e.g. sha256 hex of the user id) for the file name.
+4. **DatabaseGate blocks the whole authed area.** If a migration fails, Account/Settings (and sign-out) are unreachable. Gate only the notes route, or render a sign-out action on the error screen.
+5. **Required tests missing (M4.10).** Add: optimistic update rollback on failure (update and remove), virtualization (render 10,000 notes, assert fewer than 100 note nodes in the DOM), DatabaseGate states (opening/error/retry), and the two isolation tests above.
+6. **Notes code lives in `shared/`.** `shared/lib/local-notes-repository.ts` and `shared/lib/repository.ts` are notes-specific; move them into `features/notes/` so the feature can be deleted cleanly (M10 `feature:remove notes`). Keep only generic helpers in shared.
+
+Should fix: 7. `ownerId` falls back to `""` when `sub` is missing; return 401 instead. 8. `GET /notes` is unbounded; add `limit` (default 50, max 200) and `before` cursor on `(updated_at, id)`; update the remote repository and schema. 9. One invalid local row makes `list()` throw (`NoteSchema.parse`); skip and log invalid rows instead.
+
+Notes: local SQLite is plaintext (already in backlog); the remote repository is implemented but unused (local-first default, per M4-questions Q2).
+
+Human checks to add to docs/deferred-checks.md: scroll 10,000 notes smoothly; two accounts on one machine see separate notes; force a migration failure and confirm the error screen offers sign-out.
+
+### Review fix round (2026-10-20)
+
+All nine must/should-fix items are addressed in `fix(desktop): isolate per-user data and close m4 review gaps`:
+
+1. Query cache now uses an **allowlist** (`flags`, `preferences`); notes are never written to disk, older blobs containing notes are filtered on restore, every note key is prefixed with the user id (`["notes", userId, ...]`), a user change clears the `QueryClient`, and the sign-out handlers run on **every** transition to unauthenticated (the auth adapter's `clearLocal` emits `null`, which the store now turns into cleanup).
+2. `DatabaseManager` runs opens and closes through one queue and keys pending opens by user id; a different user waits for the pending open, closes, then opens.
+3. The database file name is `app-<sha256(userId)>.db`.
+4. `DatabaseGate` now wraps only `/notes`; Account/Settings stay reachable, and the error screen offers Retry and Sign out.
+5. Tests added: optimistic update/remove rollback, virtualization (10,000 notes, <100 `li`), DatabaseGate opening/error/retry/sign-out, two quick opens for different users, query-cache isolation.
+6. `repository.ts`/`local-notes-repository.ts` moved to `features/notes/` (now `repository-core.ts` and `local-notes-repository.ts`); `shared` keeps no notes code.
+7. A missing `sub` returns 401 (route helper plus a unit test that never reaches the database).
+8. `GET /notes` takes `limit` (default 50, max 200) and a `(updated_at, id)` `before` cursor, returns `nextCursor`, and rejects a malformed cursor with 400. `NoteListSchema` is shared; the remote repository and isolation tests use it.
+9. `list()` skips and logs invalid local rows instead of throwing.
+
+Verification (real output):
+
+```
+$ pnpm turbo run lint typecheck build
+ Tasks:    10 successful, 10 total
+
+$ pnpm turbo run test --force
+desktop:test:  Test Files  24 passed (24)
+desktop:test:       Tests  84 passed (84)
+api:test:  Test Files  9 passed (9)
+api:test:       Tests  28 passed (28)
+ Tasks:    2 successful, 2 total
+
+$ pnpm --filter desktop lint && pnpm --filter api lint
+(no findings)
+
+$ cd apps/desktop/src-tauri && cargo test
+running 4 tests
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
+```
+
+Migration on real Postgres (Docker up, compose published on 5433):
+
+```
+$ pnpm db:up
+ Container desktop-app-boilerplate-db-1  Started
+$ DB_PORT=5433 DATABASE_URL_DIRECT="postgres://app:app@127.0.0.1:5433/app" pnpm --filter api db:migrate
+[✓] migrations applied successfully!
+$ docker compose exec -T db psql -U app -d app -c "\d notes"
+ "notes_user_id_updated_at_idx" btree (user_id, updated_at)
+ "notes_user_id_user_id_fk" FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+```

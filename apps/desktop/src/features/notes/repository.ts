@@ -1,10 +1,10 @@
 import type { DatabasePort } from "@/ports";
-import type { NotesRepository } from "@/shared/lib/repository";
+import type { NotesRepository } from "./repository-core";
 import { getConfig } from "@/shared/lib/config";
-import { createLocalNotesRepository } from "@/shared/lib/local-notes-repository";
+import { createLocalNotesRepository } from "./local-notes-repository";
 import { createRemoteNotesRepository } from "./remote-notes-repository";
 
-export type { NotesRepository } from "@/shared/lib/repository";
+export type { NotesRepository } from "./repository-core";
 
 /**
  * Pick the notes backend. Local SQLite is the default so the app works

@@ -8,6 +8,8 @@ import { useDatabaseStore } from "@/shared/lib/db-status";
 interface DatabaseGateProps {
   /** Signed-in user id, or `null` before sign-in. */
   userId: string | null;
+  /** Lets the error screen leave the broken database behind. */
+  onSignOut?: () => void;
   children: ReactNode;
 }
 
@@ -17,7 +19,11 @@ interface DatabaseGateProps {
  * registry. A failed open or migration shows an error screen; on-disk data
  * stays intact.
  */
-export function DatabaseGate({ userId, children }: DatabaseGateProps) {
+export function DatabaseGate({
+  userId,
+  onSignOut,
+  children,
+}: DatabaseGateProps) {
   const { t } = useTranslation();
   const phase = useDatabaseStore((state) => state.phase);
   const error = useDatabaseStore((state) => state.error);
@@ -43,17 +49,28 @@ export function DatabaseGate({ userId, children }: DatabaseGateProps) {
             {error}
           </p>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            if (userId) {
-              void ports.database.open(userId).catch(() => undefined);
-            }
-          }}
-          className="h-9 rounded-md border border-input px-4 text-sm"
-        >
-          {t("db.retry")}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (userId) {
+                void ports.database.open(userId).catch(() => undefined);
+              }
+            }}
+            className="h-9 rounded-md border border-input px-4 text-sm"
+          >
+            {t("db.retry")}
+          </button>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="h-9 rounded-md border border-input px-4 text-sm"
+            >
+              {t("db.signOut")}
+            </button>
+          )}
+        </div>
       </section>
     );
   }

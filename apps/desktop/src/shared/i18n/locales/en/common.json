@@ -63,7 +63,8 @@
     "opening": "Opening your notes\u2026",
     "errorTitle": "Local database unavailable",
     "errorBody": "Your notes could not be opened. Your data is safe. Retry, or restart the app if the problem continues.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "signOut": "Sign out"
   },
   "auth": {
     "email": "Email",

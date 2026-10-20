@@ -114,10 +114,17 @@ export function initializeAuth(): Promise<void> {
       listening = true;
       ports.auth.onAuthStateChange({
         onStateChange(session) {
+          const previous = useAuthStore.getState().session;
           useAuthStore.setState({
             session,
             status: session ? "authenticated" : "unauthenticated",
           });
+          // Every path to unauthenticated (401, revocation, expiry) must run
+          // the cleanup handlers, not only an explicit sign-out.
+          if (previous && !session) {
+            void runSignOutHandlers();
+            useAuthStore.setState({ error: null });
+          }
           openUserDatabase(session);
         },
       });

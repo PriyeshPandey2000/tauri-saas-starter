@@ -18,6 +18,17 @@ export const NoteInputSchema = z.object({
 
 export const NoteUpdateSchema = NoteInputSchema.partial();
 
+/** Default and maximum page size for `GET /notes`. */
+export const NOTE_PAGE_DEFAULT = 50;
+export const NOTE_PAGE_MAX = 200;
+
+/** One page of notes plus the cursor for the next (older) page. */
+export const NoteListSchema = z.object({
+  notes: z.array(NoteSchema),
+  nextCursor: z.string().nullable().default(null),
+});
+
 export type Note = z.infer<typeof NoteSchema>;
 export type NoteInput = z.infer<typeof NoteInputSchema>;
 export type NoteUpdate = z.infer<typeof NoteUpdateSchema>;
+export type NoteList = z.infer<typeof NoteListSchema>;

@@ -1,6 +1,11 @@
 import type { Hono } from "hono";
-import { and, desc, eq, isNull } from "drizzle-orm";
-import { NoteInputSchema, NoteUpdateSchema } from "@app/shared";
+import { and, desc, eq, isNull, lt, or, type SQL } from "drizzle-orm";
+import {
+  NOTE_PAGE_DEFAULT,
+  NOTE_PAGE_MAX,
+  NoteInputSchema,
+  NoteUpdateSchema,
+} from "@app/shared";
 
 import type { Database } from "../db/client";
 import { notes } from "../db/schema";
@@ -33,8 +38,39 @@ export function registerNotesRoutes(
   app: Hono<{ Variables: AuthVariables }>,
   db: Database,
 ): void {
-  const ownerId = (c: { get: (key: "claims") => { sub?: unknown } }): string =>
-    String(c.get("claims").sub ?? "");
+  /** The verified JWT subject, or `null` when the claim is missing. */
+  const ownerId = (c: {
+    get: (key: "claims") => { sub?: unknown };
+  }): string | null => {
+    const sub = c.get("claims").sub;
+    return typeof sub === "string" && sub.length > 0 ? sub : null;
+  };
+
+  const unauthorized = (c: {
+    json: (body: unknown, status: 401) => Response;
+  }) => c.json({ error: "unauthorized" }, 401);
+
+  /** `(updated_at, id)` cursor: newer pages first, ids break ties. */
+  const encodeCursor = (row: NoteRow): string =>
+    `${encodeURIComponent(row.updatedAt.toISOString())}|${row.id}`;
+
+  const decodeCursor = (
+    raw: string | undefined,
+  ): { at: Date; id: string } | "invalid" | null => {
+    if (!raw) {
+      return null;
+    }
+    const separator = raw.lastIndexOf("|");
+    if (separator <= 0) {
+      return "invalid";
+    }
+    const at = new Date(decodeURIComponent(raw.slice(0, separator)));
+    const id = raw.slice(separator + 1);
+    if (Number.isNaN(at.getTime()) || !id) {
+      return "invalid";
+    }
+    return { at, id };
+  };
 
   const findOwned = async (
     userId: string,
@@ -54,12 +90,41 @@ export function registerNotesRoutes(
   };
 
   app.get("/notes", async (c) => {
+    const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
+    const requested = Number(c.req.query("limit") ?? NOTE_PAGE_DEFAULT);
+    const limit = Number.isFinite(requested)
+      ? Math.min(Math.max(Math.trunc(requested), 1), NOTE_PAGE_MAX)
+      : NOTE_PAGE_DEFAULT;
+    const cursor = decodeCursor(c.req.query("before"));
+    if (cursor === "invalid") {
+      return c.json({ error: "invalid_cursor" }, 400);
+    }
+    const conditions: SQL[] = [
+      eq(notes.userId, userId),
+      isNull(notes.deletedAt),
+    ];
+    if (cursor) {
+      const older = or(
+        lt(notes.updatedAt, cursor.at),
+        and(eq(notes.updatedAt, cursor.at), lt(notes.id, cursor.id)),
+      );
+      if (older) {
+        conditions.push(older);
+      }
+    }
     const rows = await db
       .select()
       .from(notes)
-      .where(and(eq(notes.userId, ownerId(c)), isNull(notes.deletedAt)))
-      .orderBy(desc(notes.updatedAt));
-    return c.json({ notes: rows.map(toJson) });
+      .where(and(...conditions))
+      .orderBy(desc(notes.updatedAt), desc(notes.id))
+      .limit(limit + 1);
+    const page = rows.slice(0, limit);
+    const last = page[page.length - 1];
+    const nextCursor = rows.length > limit && last ? encodeCursor(last) : null;
+    return c.json({ notes: page.map(toJson), nextCursor });
   });
 
   app.post("/notes", async (c) => {
@@ -70,6 +135,9 @@ export function registerNotesRoutes(
       return c.json({ error: "invalid_note" }, 400);
     }
     const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
     const now = new Date();
     const [row] = await db
       .insert(notes)
@@ -89,7 +157,11 @@ export function registerNotesRoutes(
   });
 
   app.get("/notes/:id", async (c) => {
-    const row = await findOwned(ownerId(c), c.req.param("id"));
+    const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
+    const row = await findOwned(userId, c.req.param("id"));
     if (!row) {
       return c.json({ error: "not_found" }, 404);
     }
@@ -104,6 +176,9 @@ export function registerNotesRoutes(
       return c.json({ error: "invalid_note" }, 400);
     }
     const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
     const id = c.req.param("id");
     const existing = await findOwned(userId, id);
     if (!existing) {
@@ -126,6 +201,9 @@ export function registerNotesRoutes(
 
   app.delete("/notes/:id", async (c) => {
     const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
     const id = c.req.param("id");
     const existing = await findOwned(userId, id);
     if (!existing) {
@@ -140,6 +218,9 @@ export function registerNotesRoutes(
 
   app.post("/notes/:id/restore", async (c) => {
     const userId = ownerId(c);
+    if (!userId) {
+      return unauthorized(c);
+    }
     const id = c.req.param("id");
     const rows = await db
       .select()

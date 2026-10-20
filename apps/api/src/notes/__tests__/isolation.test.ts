@@ -148,7 +148,10 @@ describe("notes isolation (real Hono app + Postgres, webview Origin)", () => {
     });
 
     const otherList = await call("/notes", { token: other.token });
-    await expect(otherList.json()).resolves.toEqual({ notes: [] });
+    await expect(otherList.json()).resolves.toEqual({
+      notes: [],
+      nextCursor: null,
+    });
 
     const crossGet = await call(`/notes/${note.id}`, { token: other.token });
     expect(crossGet.status).toBe(404);
@@ -171,6 +174,58 @@ describe("notes isolation (real Hono app + Postgres, webview Origin)", () => {
     await expect(stillThere.json()).resolves.toMatchObject({
       note: { title: "Owner note" },
     });
+  });
+
+  it("pages notes with limit and a (updated_at, id) cursor", async () => {
+    const pager = await signUpAndMint(
+      baseUrl,
+      `pager-${Date.now()}@example.com`,
+    );
+    const created: string[] = [];
+    for (const title of ["one", "two", "three"]) {
+      const response = await call("/notes", {
+        method: "POST",
+        token: pager.token,
+        body: { title, body: "" },
+      });
+      expect(response.status).toBe(201);
+      const { note } = (await response.json()) as { note: { id: string } };
+      created.push(note.id);
+    }
+
+    const first = await call("/notes?limit=2", { token: pager.token });
+    expect(first.status).toBe(200);
+    const firstPage = (await first.json()) as {
+      notes: { id: string }[];
+      nextCursor: string | null;
+    };
+    expect(firstPage.notes).toHaveLength(2);
+    expect(firstPage.nextCursor).toBeTruthy();
+
+    const second = await call(
+      `/notes?limit=2&before=${encodeURIComponent(firstPage.nextCursor ?? "")}`,
+      { token: pager.token },
+    );
+    expect(second.status).toBe(200);
+    const secondPage = (await second.json()) as {
+      notes: { id: string }[];
+      nextCursor: string | null;
+    };
+    expect(secondPage.notes).toHaveLength(1);
+    expect(secondPage.nextCursor).toBeNull();
+
+    const ids = [...firstPage.notes, ...secondPage.notes].map(
+      (note) => note.id,
+    );
+    expect(new Set(ids).size).toBe(3);
+    expect(ids.sort()).toEqual([...created].sort());
+  });
+
+  it("rejects an invalid cursor", async () => {
+    const response = await call("/notes?before=nope", {
+      token: owner.token,
+    });
+    expect(response.status).toBe(400);
   });
 
   it("rejects a request without a bearer token", async () => {

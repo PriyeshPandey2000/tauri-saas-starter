@@ -2,11 +2,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AppProviders } from "@/app/providers";
-import { onSignOut } from "@/features/auth";
+import { onSignOut, useAuthStore } from "@/features/auth";
 import { ConfigErrorScreen } from "@/app/ConfigErrorScreen";
 import { createAppQueryClient } from "@/app/query-client";
 import {
   clearQueryCache,
+  clearQueryCacheOnUserChange,
   persistQueryCache,
   restoreQueryCache,
 } from "@/app/query-persistence";
@@ -80,6 +81,12 @@ async function bootstrap(): Promise<void> {
   await restoreQueryCache(queryClient);
   persistQueryCache(queryClient);
   onSignOut(() => queryClient.clear());
+  clearQueryCacheOnUserChange(queryClient, (listener) => {
+    listener(useAuthStore.getState().session?.user.id ?? null);
+    return useAuthStore.subscribe((state) => {
+      listener(state.session?.user.id ?? null);
+    });
+  });
   onSignOut(() => void clearQueryCache());
   onSignOut(() => {
     void ports.database.close();

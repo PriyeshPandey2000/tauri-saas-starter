@@ -1,21 +1,18 @@
 import { useMemo } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Note, NoteInput, NoteUpdate } from "@app/shared";
 
 import { ports } from "@/ports";
 import { useDatabaseStore } from "@/shared/lib/db-status";
+import { noteKeys } from "./keys";
+import {
+  applyOptimisticRemove,
+  applyOptimisticUpdate,
+  rollback,
+} from "./optimistic";
 import { createNotesRepository, type NotesRepository } from "./repository";
 
-export const noteKeys = {
-  all: ["notes"] as const,
-  list: () => [...noteKeys.all, "list"] as const,
-  detail: (id: string) => [...noteKeys.all, "detail", id] as const,
-};
+export { noteKeys } from "./keys";
 
 /** The repository for the current data source, rebuilt when the DB changes. */
 export function useNotesRepository(): NotesRepository {
@@ -27,87 +24,65 @@ export function useNotesRepository(): NotesRepository {
   }, [phase]);
 }
 
-export function useNotes() {
+export function useNotes(userId: string) {
   const repository = useNotesRepository();
   return useQuery({
-    queryKey: noteKeys.list(),
+    queryKey: noteKeys.list(userId),
     queryFn: () => repository.list(),
   });
 }
 
-export function useCreateNote() {
+export function useCreateNote(userId: string) {
   const repository = useNotesRepository();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: NoteInput) => repository.create(input),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: noteKeys.all(userId) }),
   });
 }
 
-export function useUpdateNote() {
+export function useUpdateNote(userId: string) {
   const repository = useNotesRepository();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: NoteUpdate }) =>
       repository.update(id, patch),
     onMutate: (variables) =>
-      applyOptimisticUpdate(queryClient, variables.id, variables.patch),
-    onError: (_error, _variables, context) => rollback(queryClient, context),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
+      applyOptimisticUpdate(queryClient, userId, variables.id, variables.patch),
+    onError: (_error, _variables, context) =>
+      rollback(queryClient, userId, context),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: noteKeys.all(userId) }),
   });
 }
 
-export function useRemoveNote() {
+export function useRemoveNote(userId: string) {
   const repository = useNotesRepository();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => repository.remove(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: noteKeys.list() });
-      const previous = queryClient.getQueryData<Note[]>(noteKeys.list());
-      queryClient.setQueryData<Note[]>(noteKeys.list(), (notes) =>
-        (notes ?? []).filter((note) => note.id !== id),
-      );
-      return { previous };
-    },
-    onError: (_error, _id, context) => rollback(queryClient, context),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
+    onMutate: (id) => applyOptimisticRemove(queryClient, userId, id),
+    onError: (_error, _id, context) => rollback(queryClient, userId, context),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: noteKeys.all(userId) }),
   });
 }
 
-export function useRestoreNote() {
+export function useRestoreNote(userId: string) {
   const repository = useNotesRepository();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => repository.restore(id),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: noteKeys.all(userId) }),
   });
 }
 
-interface RollbackContext {
-  previous?: Note[];
-}
-
-async function applyOptimisticUpdate(
-  queryClient: QueryClient,
-  id: string,
-  patch: NoteUpdate,
-): Promise<RollbackContext> {
-  await queryClient.cancelQueries({ queryKey: noteKeys.list() });
-  const previous = queryClient.getQueryData<Note[]>(noteKeys.list());
-  queryClient.setQueryData<Note[]>(noteKeys.list(), (notes) =>
-    (notes ?? []).map((note) =>
-      note.id === id ? { ...note, ...patch } : note,
-    ),
-  );
-  return { previous };
-}
-
-function rollback(
-  queryClient: QueryClient,
-  context: RollbackContext | undefined,
-): void {
-  if (context?.previous) {
-    queryClient.setQueryData(noteKeys.list(), context.previous);
-  }
-}
+export type { Note };
+export {
+  applyOptimisticRemove,
+  applyOptimisticUpdate,
+  rollback,
+  type RollbackContext,
+} from "./optimistic";
