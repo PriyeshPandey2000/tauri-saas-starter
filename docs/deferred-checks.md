@@ -407,3 +407,8 @@ or pasted output.
 - Who: agent, `tauri dev`.
 - Seen: the file log is created in the app log directory.
 - Status: Not run. Observed by agent in tauri dev, not independently confirmed.
+
+### M9-03 Built-app headless CI smoke
+
+1. In CI, launch the built app in a headless environment and assert it starts and
+   stays up for the check window; fail the job if it exits or panics.
