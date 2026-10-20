@@ -15,8 +15,9 @@ describe("secret patterns", () => {
       ["-----BEGIN", "PRIVATE KEY-----"].join(" "),
       `SENTRY_AUTH_TOKEN=${sample("sntrys", "abcdefghijklmnop")}`,
       `SENTRY_DSN=${"https://" + "key@o1.ingest.sentry.io/1"}`,
+      `TAURI_SIGNING_PRIVATE_KEY=${"dW50cnVzdGVk" + "LXNpZ25pbmcta2V5"}`,
     ]);
-    expect(hits.length).toBe(9);
+    expect(hits.length).toBe(10);
   });
 
   it("ignores placeholders and empty values", () => {
@@ -32,6 +33,7 @@ describe("secret patterns", () => {
       'BETTER_AUTH_SECRET: "x".repeat(32),',
       "SENTRY_DSN=",
       "SENTRY_AUTH_TOKEN=",
+      "TAURI_SIGNING_PRIVATE_KEY=",
     ]);
     expect(hits).toEqual([]);
   });

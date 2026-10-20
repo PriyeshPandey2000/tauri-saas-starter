@@ -22,6 +22,10 @@ export const secretPatterns = [
     regex: /\bsntry[a-z]?_[A-Za-z0-9]{16,}\b/,
   },
   {
+    name: "tauri updater private key",
+    regex: /TAURI_SIGNING_PRIVATE_KEY=[A-Za-z0-9+/]{16,}={0,2}/,
+  },
+  {
     name: "sentry dsn",
     regex: /SENTRY_DSN=https:\/\/[^\s"']*@[^\s"']*ingest[^\s"']*/,
   },

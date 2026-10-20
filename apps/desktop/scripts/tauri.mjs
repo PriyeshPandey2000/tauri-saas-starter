@@ -20,6 +20,7 @@ try {
     posthogKey: env.VITE_POSTHOG_KEY,
     posthogHost: env.VITE_POSTHOG_HOST,
     sentryDsn: env.VITE_SENTRY_DSN,
+    updaterEndpoint: env.VITE_UPDATER_ENDPOINT,
     isDev: command === "dev",
   });
 } catch {
@@ -27,7 +28,15 @@ try {
   process.exit(1);
 }
 
-const config = JSON.stringify({ app: { security: { csp } } });
+const merged = { app: { security: { csp } } };
+const updaterEndpoint = env.VITE_UPDATER_ENDPOINT;
+const updaterPublicKey = env.TAURI_UPDATER_PUBLIC_KEY;
+if (updaterEndpoint && updaterPublicKey) {
+  merged.plugins = {
+    updater: { endpoints: [updaterEndpoint], pubkey: updaterPublicKey },
+  };
+}
+const config = JSON.stringify(merged);
 const child = spawn(
   "tauri",
   [command, ...process.argv.slice(3), "--config", config],

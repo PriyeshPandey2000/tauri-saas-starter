@@ -37,6 +37,15 @@ describe("buildCsp", () => {
     expect(csp).toContain("https://o1.ingest.sentry.io");
   });
 
+  it("adds the updater endpoint origin when configured", () => {
+    const csp = buildCsp({
+      apiUrl: "https://api.example.com",
+      updaterEndpoint: "https://updates.example.com/latest.json",
+      isDev: false,
+    });
+    expect(csp).toContain("https://updates.example.com");
+  });
+
   it("adds the dev server origins only in dev", () => {
     const dev = buildCsp({ apiUrl: "https://api.example.com", isDev: true });
     const prod = buildCsp({ apiUrl: "https://api.example.com", isDev: false });
