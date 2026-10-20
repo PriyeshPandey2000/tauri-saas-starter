@@ -1,5 +1,6 @@
 mod commands;
 mod error;
+mod telemetry;
 
 use specta_typescript::Typescript;
 use tauri_specta::{Builder, collect_commands};
@@ -18,16 +19,35 @@ const TYPED_ERROR_IMPL: &str = r#"async function typedError<T, E>(result: Promis
     }
 }"#;
 
-pub fn builder() -> Builder<tauri::Wry> {
+fn base_builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .typ::<error::AppError>()
         .typed_error_impl(TYPED_ERROR_IMPL)
-        .commands(collect_commands![
-            commands::app_info::get_app_info,
-            commands::secure_storage::secure_set,
-            commands::secure_storage::secure_get,
-            commands::secure_storage::secure_delete
-        ])
+}
+
+#[cfg(debug_assertions)]
+pub fn builder() -> Builder<tauri::Wry> {
+    base_builder().commands(collect_commands![
+        commands::app_info::get_app_info,
+        commands::secure_storage::secure_set,
+        commands::secure_storage::secure_get,
+        commands::secure_storage::secure_delete,
+        commands::telemetry::set_telemetry_consent,
+        commands::telemetry::read_log_tail,
+        commands::telemetry::trigger_test_panic
+    ])
+}
+
+#[cfg(not(debug_assertions))]
+pub fn builder() -> Builder<tauri::Wry> {
+    base_builder().commands(collect_commands![
+        commands::app_info::get_app_info,
+        commands::secure_storage::secure_set,
+        commands::secure_storage::secure_get,
+        commands::secure_storage::secure_delete,
+        commands::telemetry::set_telemetry_consent,
+        commands::telemetry::read_log_tail
+    ])
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -63,7 +83,7 @@ pub fn run() {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 app.deep_link().register_all()?;
             }
-            let _ = app;
+            telemetry::init(app.handle());
             Ok(())
         })
         .run(tauri::generate_context!())

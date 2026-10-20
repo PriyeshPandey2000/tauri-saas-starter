@@ -8,6 +8,9 @@ export const commands = {
 	secureSet: (key: string, value: string) => typedError<null, AppError>(__TAURI_INVOKE("secure_set", { key, value })),
 	secureGet: (key: string) => typedError<string | null, AppError>(__TAURI_INVOKE("secure_get", { key })),
 	secureDelete: (key: string) => typedError<null, AppError>(__TAURI_INVOKE("secure_delete", { key })),
+	setTelemetryConsent: (granted: boolean) => __TAURI_INVOKE<void>("set_telemetry_consent", { granted }),
+	readLogTail: () => typedError<string, AppError>(__TAURI_INVOKE("read_log_tail")),
+	triggerTestPanic: () => __TAURI_INVOKE<void>("trigger_test_panic"),
 };
 
 /* Types */
