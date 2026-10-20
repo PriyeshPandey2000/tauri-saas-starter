@@ -27,4 +27,14 @@ permissions = [
   "sql:allow-execute",
   "sql:allow-select",
   "sql:allow-close",
+  # User-configurable global shortcut (register/unregister only).
+  "global-shortcut:default",
+  # Notifications after an explicit permission request.
+  "notification:default",
+  # Launch-at-login toggle (off by default).
+  "autostart:default",
+  # Signed auto-updates: check/download/install through the plugin.
+  "updater:default",
+  # Relaunch after an installed update.
+  "process:default",
 ]

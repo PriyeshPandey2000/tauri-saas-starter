@@ -1,5 +1,6 @@
 mod commands;
 mod error;
+mod native;
 mod telemetry;
 
 use specta_typescript::Typescript;
@@ -60,6 +61,18 @@ pub fn run() {
     }
 
     tauri::Builder::default()
+        // Must be the first plugin so a second process exits immediately.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            native::handle_second_instance(app, &argv);
+        }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
@@ -77,6 +90,7 @@ pub fn run() {
                 .build(),
         )
         .invoke_handler(builder.invoke_handler())
+        .on_window_event(native::on_window_event)
         .setup(|app| {
             #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
             {
@@ -84,6 +98,7 @@ pub fn run() {
                 app.deep_link().register_all()?;
             }
             telemetry::init(app.handle());
+            native::setup(app.handle())?;
             Ok(())
         })
         .run(tauri::generate_context!())
