@@ -112,6 +112,10 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Notes feature owns its repositories (M4 review)**: `repository-core.ts` and `local-notes-repository.ts` moved from `shared/lib` to `features/notes`; `package.json`-style feature deletion must not leave notes code in `shared`.
 - **Boundaries policy ignores the notes isolation test (M4.10)**: `apps/api/src/notes/__tests__/isolation.test.ts` imports the real desktop auth adapter, mirroring `contract.test.ts`. It is test-only and excluded from the API tsconfig build; production code keeps the boundaries.
 
+- **PostHog flags use the REST `/flags` endpoint, not `posthog-js` (M5.3)**: `posthog-js@1.438.12` is ~27 MB unpacked and ships capture, autocapture, replay and survey machinery the desktop app does not need yet. The adapter calls `POST {host}/flags?v=2` with `api_key` + `distinct_id` and parses `flags` with Zod. Exposures use `POST /i/v0/e/`. No new dependency was added. Revisit when M7 adds product analytics: then the SDK choice (probably `posthog-js` or server-side capture) is made with the real bundle budget.
+- **Flag overrides live in `settings.json` through the adapter (M5.4)**: the values are validated against the registry and stored under the `flagOverrides` key, but the adapter owns the read/write. Reason: `ports/adapters/*` may not import the settings feature, and `ports/index.ts` (composition root) may not import features. The dev panel talks to `FeatureFlagPort.setOverride`, and `VITE_APP_ENV=prod` disables it.
+- **Flag cache is per identity in one file (M5.5)**: `flags.json` is keyed by `user:<id>` or `anon:<installId>`; reset deletes the signed-out user's entry. The query cache allowlist no longer contains `flags`, so flag values never reach the query-cache file.
+
 ## Backlog (ideas out of current scope)
 
 - Two-way sync + conflict resolution

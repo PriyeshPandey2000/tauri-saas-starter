@@ -78,3 +78,11 @@ These need a built/running app (the Tauri plugin cannot run under Node).
 2. Sign in as two accounts on one machine and confirm separate `app-<sha256>.db` files and no shared notes.
 3. Force a migration failure (e.g. corrupt `0002_notes_created_at.sql` in a dev build) and confirm the notes error screen offers Retry and Sign out, and that Account/Settings stay reachable.
 4. Lose the session through a 401 (revoke it server-side) and confirm the next sign-in as another user shows none of the previous user's notes.
+
+## Feature flags (M5)
+
+1. Set a real `VITE_POSTHOG_KEY` (and host, if EU) in `apps/desktop/.env.development`, build/run the app, and confirm remote values replace defaults without a restart (within the 5-minute refresh, or on the next launch).
+2. Toggle a flag in the PostHog dashboard and confirm the app sees the change, including a variant switch.
+3. With the key present, disable the network: the app must start with cached values, then defaults on a fresh install.
+4. Grant telemetry consent in settings and confirm the person uses the auth user id; revoke it and confirm the next request uses the anonymous id and no further exposure events appear.
+5. Open `/settings/flags` in a dev build, set an override, restart, and confirm it persists; build with `VITE_APP_ENV=prod` and confirm the route redirects and overrides cannot be set.
