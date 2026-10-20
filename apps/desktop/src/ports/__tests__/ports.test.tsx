@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { DEFAULT_FLAGS } from "@app/shared";
 import { describe, expect, it } from "vitest";
 
 import { PortsProvider, createPorts, usePorts } from "../index";
@@ -21,7 +22,8 @@ describe("ports composition root", () => {
   it("wires no-op adapters with safe defaults", async () => {
     const ports = createPorts();
     await expect(ports.auth.getSession()).resolves.toBeNull();
-    await expect(ports.featureFlags.isEnabled("anything")).resolves.toBe(false);
+    expect(ports.featureFlags.get("newDashboard")).toBe(false);
+    expect(ports.featureFlags.getAll()).toEqual(DEFAULT_FLAGS);
     await expect(ports.billing.getEntitlements()).resolves.toEqual({
       planId: null,
       features: [],

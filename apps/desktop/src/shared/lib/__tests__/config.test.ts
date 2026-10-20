@@ -17,7 +17,6 @@ describe("parseConfig", () => {
       parseConfig({
         ...validEnv,
         VITE_POSTHOG_KEY: "ph-key",
-        VITE_POSTHOG_HOST: "https://us.i.posthog.com",
         VITE_SENTRY_DSN: "https://public@sentry.example.com/1",
       }),
     ).toMatchObject({ VITE_POSTHOG_KEY: "ph-key" });
