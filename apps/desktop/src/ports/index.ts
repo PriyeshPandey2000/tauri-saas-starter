@@ -7,6 +7,12 @@ import type { ErrorReporterPort } from "./ErrorReporterPort";
 import type { FeatureFlagPort } from "./FeatureFlagPort";
 import type { LoggerPort } from "./LoggerPort";
 import type { StoragePort } from "./StoragePort";
+import type { QueryCachePort } from "./QueryCachePort";
+import {
+  createDatabaseManager,
+  type DatabaseManager,
+} from "./adapters/sqlite/database-manager";
+import { storeQueryCache } from "./adapters/query-cache/store-query-cache";
 import { noopAnalytics } from "./adapters/noop/noop-analytics";
 import { noopAuth } from "./adapters/noop/noop-auth";
 import { noopBilling } from "./adapters/noop/noop-billing";
@@ -41,6 +47,9 @@ export type {
 } from "./ErrorReporterPort";
 export type { StoragePort } from "./StoragePort";
 export type { LogContext, LoggerPort } from "./LoggerPort";
+export type { DatabasePort, ExecuteResult, SqlParam } from "./DatabasePort";
+export type { QueryCachePort } from "./QueryCachePort";
+export type { DatabaseManager } from "./adapters/sqlite/database-manager";
 export { PortsProvider, usePorts } from "./ports-context";
 
 /** Everything the UI may reach; adapters stay behind these interfaces. */
@@ -52,6 +61,8 @@ export interface Ports {
   errorReporter: ErrorReporterPort;
   storage: StoragePort;
   logger: LoggerPort;
+  database: DatabaseManager;
+  queryCache: QueryCachePort;
 }
 
 /**
@@ -72,6 +83,8 @@ export function createPorts(): Ports {
     errorReporter: noopErrorReporter,
     storage: createMemoryStorage(),
     logger,
+    database: createDatabaseManager(),
+    queryCache: storeQueryCache,
   };
 }
 
