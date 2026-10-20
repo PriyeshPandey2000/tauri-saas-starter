@@ -46,6 +46,17 @@ describe("buildCsp", () => {
     expect(csp).toContain("https://updates.example.com");
   });
 
+  it("adds the beta updater origin when configured", () => {
+    const csp = buildCsp({
+      apiUrl: "https://api.example.com",
+      updaterEndpoint: "https://updates.example.com/stable.json",
+      updaterBetaEndpoint: "https://beta.example.com/latest.json",
+      isDev: false,
+    });
+    expect(csp).toContain("https://updates.example.com");
+    expect(csp).toContain("https://beta.example.com");
+  });
+
   it("adds the dev server origins only in dev", () => {
     const dev = buildCsp({ apiUrl: "https://api.example.com", isDev: true });
     const prod = buildCsp({ apiUrl: "https://api.example.com", isDev: false });

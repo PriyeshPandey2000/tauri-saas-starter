@@ -21,6 +21,7 @@ try {
     posthogHost: env.VITE_POSTHOG_HOST,
     sentryDsn: env.VITE_SENTRY_DSN,
     updaterEndpoint: env.VITE_UPDATER_ENDPOINT,
+    updaterBetaEndpoint: env.VITE_UPDATER_ENDPOINT_BETA,
     isDev: command === "dev",
   });
 } catch {
@@ -32,9 +33,16 @@ const merged = { app: { security: { csp } } };
 const updaterEndpoint = env.VITE_UPDATER_ENDPOINT;
 const updaterPublicKey = env.TAURI_UPDATER_PUBLIC_KEY;
 if (updaterEndpoint && updaterPublicKey) {
+  const endpoints = [updaterEndpoint];
+  if (env.VITE_UPDATER_ENDPOINT_BETA) {
+    endpoints.push(env.VITE_UPDATER_ENDPOINT_BETA);
+  }
   merged.plugins = {
-    updater: { endpoints: [updaterEndpoint], pubkey: updaterPublicKey },
+    updater: { endpoints, pubkey: updaterPublicKey },
   };
+  console.log(
+    `Updater config injected (${endpoints.length} feed${endpoints.length > 1 ? "s" : ""}, public key present)`,
+  );
 }
 const config = JSON.stringify(merged);
 const child = spawn(

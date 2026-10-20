@@ -1,10 +1,11 @@
+import { listen } from "@tauri-apps/api/event";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { check } from "@tauri-apps/plugin-updater";
 import { toast } from "sonner";
 
 import { useSettingsStore } from "@/features/settings";
-import i18n from "@/shared/i18n";
 import { ports } from "@/ports";
+import i18n from "@/shared/i18n";
+import { commands, type UpdateInfo } from "@/shared/ipc/bindings";
 
 const FIRST_DELAY_MS = 10_000;
 const INTERVAL_MS = 6 * 60 * 60 * 1_000;
@@ -18,77 +19,105 @@ export function resolveUpdateChannel(
 }
 
 export interface UpdateCheckDeps {
-  check?: typeof check;
+  isConfigured?: () => Promise<boolean>;
+  checkUpdate?: (channel: string) => Promise<UpdateInfo | null>;
   onError?: (error: unknown) => void;
+  onInfo?: (info: UpdateInfo) => void;
 }
 
 export async function checkForUpdates(
   deps: UpdateCheckDeps = {},
 ): Promise<void> {
-  const runCheck = deps.check ?? check;
+  const isConfigured = deps.isConfigured ?? commands.updaterConfigured;
+  // "Not configured" is a quiet no-op: no schedule, no report.
+  if (!(await isConfigured())) {
+    return;
+  }
   const channel = resolveUpdateChannel(
     ports.featureFlags.get("betaUpdates"),
     useSettingsStore.getState().updateChannel,
   );
-  try {
-    const update = await runCheck({
-      headers: { "x-update-channel": channel },
+  const checkUpdate =
+    deps.checkUpdate ??
+    (async (selected: string) => {
+      const result = await commands.checkUpdate(selected);
+      if (result.status === "error") {
+        throw new Error(result.error.message);
+      }
+      return result.data;
     });
-    if (!update) {
+  try {
+    const info = await checkUpdate(channel);
+    if (!info) {
       return;
     }
-    toast(i18n.t("native.updateAvailable", { version: update.version }), {
-      description: update.body ?? undefined,
-      duration: 15_000,
-      action: {
-        label: i18n.t("native.download"),
-        onClick: () => void download(update),
-      },
-    });
+    (deps.onInfo ?? showUpdateToast)(info);
   } catch (error) {
-    (
-      deps.onError ??
-      ((cause) => {
-        ports.errorReporter.captureException(cause, {
-          tags: { source: "updater" },
-        });
-      })
-    )(error);
+    (deps.onError ?? reportUpdaterError)(error);
   }
 }
 
-async function download(
-  update: NonNullable<Awaited<ReturnType<typeof check>>>,
-): Promise<void> {
-  const toastId = toast.loading(i18n.t("native.downloading"));
-  let downloaded = 0;
-  let total = 0;
-  try {
-    await update.downloadAndInstall((event) => {
-      if (event.event === "Started") {
-        total = event.data.contentLength ?? 0;
-      } else if (event.event === "Progress") {
-        downloaded += event.data.chunkLength;
-        const percent = total > 0 ? Math.round((downloaded / total) * 100) : 0;
-        toast.loading(i18n.t("native.downloadingProgress", { percent }), {
-          id: toastId,
-        });
-      }
-    });
-    toast.success(i18n.t("native.updateInstalled"), {
-      id: toastId,
-      duration: Infinity,
-      action: {
-        label: i18n.t("native.restart"),
-        onClick: () => void relaunch(),
-      },
-    });
-  } catch (error) {
-    toast.error(i18n.t("native.updateFailed"), { id: toastId });
-    ports.errorReporter.captureException(error, {
-      tags: { source: "updater-download" },
-    });
+function reportUpdaterError(error: unknown): void {
+  ports.errorReporter.captureException(error, { tags: { source: "updater" } });
+}
+
+function showUpdateToast(info: UpdateInfo): void {
+  toast(i18n.t("native.updateAvailable", { version: info.version }), {
+    description: info.body ?? undefined,
+    duration: 15_000,
+    action: {
+      label: i18n.t("native.download"),
+      onClick: () => void installUpdate(),
+    },
+  });
+}
+
+let progressListener: Promise<unknown> | null = null;
+
+function ensureProgressListener(): void {
+  progressListener ??= listen<{
+    event: "started" | "progress" | "finished";
+    data?: { contentLength?: number; chunkLength?: number };
+  }>("native://update-progress", (event) => {
+    const payload = event.payload;
+    if (payload.event === "progress" && activeToastId !== null) {
+      downloaded += payload.data?.chunkLength ?? 0;
+      const percent = total > 0 ? Math.round((downloaded / total) * 100) : 0;
+      toast.loading(i18n.t("native.downloadingProgress", { percent }), {
+        id: activeToastId,
+      });
+    }
+    if (payload.event === "started") {
+      total = payload.data?.contentLength ?? 0;
+    }
+  });
+}
+
+let activeToastId: string | number | null = null;
+let downloaded = 0;
+let total = 0;
+
+async function installUpdate(): Promise<void> {
+  ensureProgressListener();
+  downloaded = 0;
+  total = 0;
+  activeToastId = toast.loading(i18n.t("native.downloading"));
+  const result = await commands.installUpdate();
+  if (result.status === "error") {
+    toast.error(i18n.t("native.updateFailed"), { id: activeToastId });
+    activeToastId = null;
+    reportUpdaterError(new Error(result.error.message));
+    return;
   }
+  toast.success(i18n.t("native.updateInstalled"), {
+    id: activeToastId,
+    duration: Infinity,
+    action: {
+      label: i18n.t("native.restart"),
+      onClick: () => void relaunch(),
+    },
+  });
+  activeToastId = null;
 }
 
 export interface UpdateSchedulerDeps {

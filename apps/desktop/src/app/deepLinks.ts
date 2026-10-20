@@ -53,6 +53,11 @@ export async function routeDeepLink(raw: string): Promise<void> {
     return;
   }
   const now = Date.now();
+  for (const [key, at] of recent) {
+    if (now - at >= DEDUPE_MS) {
+      recent.delete(key);
+    }
+  }
   const last = recent.get(raw) ?? 0;
   if (now - last < DEDUPE_MS) {
     return;

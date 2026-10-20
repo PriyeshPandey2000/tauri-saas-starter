@@ -4,6 +4,7 @@ mod native;
 mod telemetry;
 
 use specta_typescript::Typescript;
+use tauri::Manager;
 use tauri_specta::{Builder, collect_commands};
 
 fn bindings_path() -> std::path::PathBuf {
@@ -35,6 +36,9 @@ pub fn builder() -> Builder<tauri::Wry> {
         commands::secure_storage::secure_delete,
         commands::telemetry::set_telemetry_consent,
         commands::telemetry::read_log_tail,
+        commands::updater::updater_configured,
+        commands::updater::check_update,
+        commands::updater::install_update,
         commands::telemetry::trigger_test_panic
     ])
 }
@@ -47,7 +51,10 @@ pub fn builder() -> Builder<tauri::Wry> {
         commands::secure_storage::secure_get,
         commands::secure_storage::secure_delete,
         commands::telemetry::set_telemetry_consent,
-        commands::telemetry::read_log_tail
+        commands::telemetry::read_log_tail,
+        commands::updater::updater_configured,
+        commands::updater::check_update,
+        commands::updater::install_update
     ])
 }
 
@@ -65,7 +72,6 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             native::handle_second_instance(app, &argv);
         }))
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
@@ -99,6 +105,13 @@ pub fn run() {
             }
             telemetry::init(app.handle());
             native::setup(app.handle())?;
+            // The updater plugin needs `plugins.updater`; without it the plugin
+            // panics at startup. Register it only when the build injected a feed.
+            if commands::updater::updater_configured(app.handle().clone()) {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.manage(commands::updater::PendingUpdate(std::sync::Mutex::new(None)));
+            }
             Ok(())
         })
         .run(tauri::generate_context!())

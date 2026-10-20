@@ -167,13 +167,13 @@ export function createPorts(): Ports {
   };
 }
 
-export const ports: Ports = createPorts();
-export const logger: LoggerPort = ports.logger;
-
 setDefaultSecureStore({
   get: getSecureValue,
   set: setSecureValue,
   remove: deleteSecureValue,
 });
+
+export const ports: Ports = createPorts();
+export const logger: LoggerPort = ports.logger;
 setAuthTokenProvider(() => getSecureValue(AUTH_KEYS.accessToken));
 setAuthRefreshHandler(() => ports.auth.refresh());

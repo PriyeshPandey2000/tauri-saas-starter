@@ -10,6 +10,13 @@ export const commands = {
 	secureDelete: (key: string) => typedError<null, AppError>(__TAURI_INVOKE("secure_delete", { key })),
 	setTelemetryConsent: (granted: boolean) => __TAURI_INVOKE<void>("set_telemetry_consent", { granted }),
 	readLogTail: () => typedError<string, AppError>(__TAURI_INVOKE("read_log_tail")),
+	updaterConfigured: () => __TAURI_INVOKE<boolean>("updater_configured"),
+	checkUpdate: (channel: string) => typedError<{
+	version: string,
+	current_version: string,
+	body: string | null,
+} | null, AppError>(__TAURI_INVOKE("check_update", { channel })),
+	installUpdate: () => typedError<null, AppError>(__TAURI_INVOKE("install_update")),
 	triggerTestPanic: () => __TAURI_INVOKE<void>("trigger_test_panic"),
 };
 
@@ -24,6 +31,12 @@ export type AppInfo = {
 	version: string,
 	os: string,
 	arch: string,
+};
+
+export type UpdateInfo = {
+	version: string,
+	current_version: string,
+	body: string | null,
 };
 
 /* Tauri Specta runtime */

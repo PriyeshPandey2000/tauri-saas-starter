@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+import { commands } from "@/shared/ipc/bindings";
 
 import { AppInfoFooter } from "./app-info-footer";
 import { ReportProblem } from "./report-problem";
@@ -29,6 +32,14 @@ export function SettingsPage() {
     (state) => state.setGlobalShortcut,
   );
   const setUpdateChannel = useSettingsStore((state) => state.setUpdateChannel);
+  const [updatesConfigured, setUpdatesConfigured] = useState(true);
+
+  useEffect(() => {
+    void commands
+      .updaterConfigured()
+      .then(setUpdatesConfigured)
+      .catch(() => setUpdatesConfigured(false));
+  }, []);
   const setTheme = useSettingsStore((state) => state.setTheme);
   const setLanguage = useSettingsStore((state) => state.setLanguage);
   const setSidebarCollapsed = useSettingsStore(
@@ -167,6 +178,11 @@ export function SettingsPage() {
               <option value="stable">{t("settings.channelStable")}</option>
               <option value="beta">{t("settings.channelBeta")}</option>
             </select>
+            {!updatesConfigured && (
+              <span className="text-xs text-muted-foreground">
+                {t("settings.updatesNotConfigured")}
+              </span>
+            )}
           </label>
         </div>
 

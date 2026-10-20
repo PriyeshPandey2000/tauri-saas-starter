@@ -10,6 +10,7 @@ export function buildCsp({
   posthogHost,
   sentryDsn,
   updaterEndpoint,
+  updaterBetaEndpoint,
   isDev,
 }) {
   const apiOrigin = new URL(apiUrl).origin;
@@ -23,6 +24,9 @@ export function buildCsp({
   }
   if (updaterEndpoint) {
     connectSrc.push(new URL(updaterEndpoint).origin);
+  }
+  if (updaterBetaEndpoint) {
+    connectSrc.push(new URL(updaterBetaEndpoint).origin);
   }
   if (isDev) {
     connectSrc.push("http://localhost:1420", "ws://localhost:1420");

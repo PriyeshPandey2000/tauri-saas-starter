@@ -44,7 +44,8 @@
     "shortcutHint": "Default: CommandOrControl+Shift+Space. Leave empty to disable.",
     "updateChannel": "Update channel",
     "channelStable": "Stable",
-    "channelBeta": "Beta (requires the betaUpdates flag)"
+    "channelBeta": "Beta (requires the betaUpdates flag)",
+    "updatesNotConfigured": "Updates are not configured in this build."
   },
   "commands": {
     "placeholder": "Type a command or search…",

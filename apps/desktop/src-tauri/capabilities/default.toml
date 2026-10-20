@@ -33,8 +33,6 @@ permissions = [
   "notification:default",
   # Launch-at-login toggle (off by default).
   "autostart:default",
-  # Signed auto-updates: check/download/install through the plugin.
-  "updater:default",
-  # Relaunch after an installed update.
-  "process:default",
+  # Relaunch after an installed update (restart only; exit stays denied).
+  "process:allow-restart",
 ]

@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const commands = vi.hoisted(() => ({
+  updaterConfigured: vi.fn(async () => true),
+  checkUpdate: vi.fn(),
+  installUpdate: vi.fn(),
+}));
+
+vi.mock("@/shared/ipc/bindings", () => ({ commands }));
 vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(), {
     loading: vi.fn(() => 1),
@@ -8,7 +15,6 @@ vi.mock("sonner", () => ({
   }),
 }));
 vi.mock("@tauri-apps/plugin-process", () => ({ relaunch: vi.fn() }));
-vi.mock("@tauri-apps/plugin-updater", () => ({ check: vi.fn() }));
 vi.mock("@/features/settings", () => ({
   useSettingsStore: {
     getState: () => ({ updateChannel: "stable" }),
@@ -26,6 +32,7 @@ const { resolveUpdateChannel, checkForUpdates, startUpdateChecks } =
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.clearAllMocks();
 });
 
 describe("updater", () => {
@@ -35,13 +42,26 @@ describe("updater", () => {
     expect(resolveUpdateChannel(true, "beta")).toBe("beta");
   });
 
-  it("never throws when the update check fails", async () => {
+  it("is a quiet no-op when the updater is not configured", async () => {
+    const onError = vi.fn();
+    const checkUpdate = vi.fn();
+    await checkForUpdates({
+      isConfigured: async () => false,
+      checkUpdate,
+      onError,
+    });
+    expect(checkUpdate).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("never throws when a real check fails", async () => {
     const onError = vi.fn();
     await expect(
       checkForUpdates({
-        check: vi.fn(async () => {
+        isConfigured: async () => true,
+        checkUpdate: async () => {
           throw new Error("offline");
-        }) as never,
+        },
         onError,
       }),
     ).resolves.toBeUndefined();
