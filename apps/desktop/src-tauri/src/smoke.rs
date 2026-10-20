@@ -23,11 +23,15 @@ pub fn smoke_requested() -> bool {
 
 #[tauri::command]
 #[specta::specta]
-pub fn smoke_report(errors: u32, shown: bool) {
+pub fn smoke_report(errors: u32, shown: bool, messages: Vec<String>) {
     if !ACTIVE.load(Ordering::SeqCst) {
         return;
     }
     println!("[smoke] report errors={errors} shown={shown}");
+    for message in messages.iter().take(5) {
+        let clipped: String = message.chars().take(300).collect();
+        println!("[smoke] webview error: {clipped}");
+    }
     ERRORS.store(errors as usize, Ordering::SeqCst);
     JS_SHOWN.store(shown, Ordering::SeqCst);
     REPORTED.store(true, Ordering::SeqCst);
@@ -47,6 +51,17 @@ fn rss_kb() -> u64 {
                 .unwrap_or(0);
         }
     }
+    #[cfg(windows)]
+    {
+        let script = format!("(Get-Process -Id {}).WorkingSet64 / 1024", std::process::id());
+        if let Ok(output) = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+            .output()
+        {
+            let text = String::from_utf8_lossy(&output.stdout);
+            return text.trim().parse::<f64>().map(|kb| kb as u64).unwrap_or(0);
+        }
+    }
     0
 }
 
@@ -60,7 +75,9 @@ pub fn init(app: &tauri::AppHandle) {
 
     let handle = app.clone();
     std::thread::spawn(move || {
-        let deadline = start + Duration::from_secs(5);
+        // Cold CI runners need several seconds to spawn the webview; the report
+        // arrives about 2.5 s after the page boots. Stay under the 15 s budget.
+        let deadline = start + Duration::from_secs(12);
         let mut shown_after: Option<u128> = None;
         while Instant::now() < deadline {
             let visible = handle

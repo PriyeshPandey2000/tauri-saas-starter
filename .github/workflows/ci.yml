@@ -174,7 +174,9 @@ jobs:
           VITE_API_URL: https://api.example.invalid
           VITE_APP_ENV: prod
         run: pnpm --filter desktop build
-      - run: cargo build --release --manifest-path apps/desktop/src-tauri/Cargo.toml
+      # Same feature the Tauri CLI adds: without `custom-protocol` the binary loads
+      # the dev server URL instead of the bundled frontend and the page never boots.
+      - run: cargo build --release --features tauri/custom-protocol --manifest-path apps/desktop/src-tauri/Cargo.toml
       - name: Smoke test
         shell: bash
         run: |

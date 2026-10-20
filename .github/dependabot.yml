@@ -26,6 +26,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # rust-ini is pinned to 0.21.1 in Cargo.lock: 0.21.3 breaks
+      # tauri-plugin-deep-link 2.6.2 on Linux (see docs/DECISIONS.md).
+      - dependency-name: "rust-ini"
     groups:
       tauri-crates:
         patterns:

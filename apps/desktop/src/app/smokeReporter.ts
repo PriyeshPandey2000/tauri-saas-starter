@@ -17,6 +17,7 @@ export function installSmokeReporter(): void {
         void commands.smokeReport(
           errors.length,
           document.visibilityState === "visible",
+          errors.slice(0, 5),
         );
       }, 2_500);
     })
