@@ -29,8 +29,13 @@ export async function checkForUpdates(
   deps: UpdateCheckDeps = {},
 ): Promise<void> {
   const isConfigured = deps.isConfigured ?? commands.updaterConfigured;
-  // "Not configured" is a quiet no-op: no schedule, no report.
-  if (!(await isConfigured())) {
+  // "Not configured" is a quiet no-op: no schedule, no report. A missing
+  // Tauri host (web/E2E) is treated the same way.
+  try {
+    if (!(await isConfigured())) {
+      return;
+    }
+  } catch {
     return;
   }
   const channel = resolveUpdateChannel(

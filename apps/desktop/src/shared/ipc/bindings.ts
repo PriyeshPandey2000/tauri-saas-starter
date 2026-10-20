@@ -18,6 +18,8 @@ export const commands = {
 } | null, AppError>(__TAURI_INVOKE("check_update", { channel })),
 	installUpdate: () => typedError<null, AppError>(__TAURI_INVOKE("install_update")),
 	triggerTestPanic: () => __TAURI_INVOKE<void>("trigger_test_panic"),
+	smokeReport: (errors: number, shown: boolean) => __TAURI_INVOKE<void>("smoke_report", { errors, shown }),
+	smokeRequested: () => __TAURI_INVOKE<boolean>("smoke_requested"),
 };
 
 /* Types */

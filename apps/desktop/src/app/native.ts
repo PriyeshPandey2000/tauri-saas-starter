@@ -1,3 +1,4 @@
+import { isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { disable, enable } from "@tauri-apps/plugin-autostart";
 import { register, unregisterAll } from "@tauri-apps/plugin-global-shortcut";
@@ -88,6 +89,9 @@ async function applyAutostart(enabled: boolean): Promise<void> {
 
 /** Wires tray/menu events, the global shortcut, autostart and notifications. */
 export function initializeNative(router: AppRouter): () => void {
+  if (!isTauri()) {
+    return () => undefined;
+  }
   const cleanups: (() => void)[] = [];
 
   let lastLaunchAtLogin = useSettingsStore.getState().launchAtLogin;

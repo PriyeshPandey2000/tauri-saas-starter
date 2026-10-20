@@ -14,6 +14,7 @@ import {
 } from "@/app/query-persistence";
 import { initializeBilling } from "@/app/billing-wiring";
 import { installDevConsoleBridge } from "@/app/devConsoleBridge";
+import { installSmokeReporter } from "@/app/smokeReporter";
 import { initializeDeepLinks, registerDeepLinkHandler } from "@/app/deepLinks";
 import { initializeNative } from "@/app/native";
 import { startUpdateChecks } from "@/app/updater";
@@ -60,6 +61,7 @@ async function bootstrap(): Promise<void> {
     throw new Error("Root element #root not found");
   }
 
+  installSmokeReporter();
   const root = createRoot(container);
   root.render(
     <StrictMode>

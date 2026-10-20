@@ -13,7 +13,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "gen:bindings": "cargo test --manifest-path src-tauri/Cargo.toml export_bindings",
-    "verify:bundle-secrets": "node ../../scripts/check-bundle-secrets.mjs"
+    "verify:bundle-secrets": "node ../../scripts/check-bundle-secrets.mjs",
+    "build:e2e": "VITE_E2E=true VITE_API_URL=http://e2e.local VITE_NOTES_SOURCE=remote VITE_APP_ENV=dev vite build",
+    "test:e2e": "playwright test",
+    "analyze": "ANALYZE=1 vite build",
+    "smoke:local": "cargo build --manifest-path src-tauri/Cargo.toml && src-tauri/target/debug/appsdesktop --smoke-test"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.0",
@@ -49,6 +53,7 @@
   },
   "devDependencies": {
     "@config/eslint-config": "workspace:*",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-cli": "^1.167.45",
     "@tanstack/router-plugin": "^1.168.47",

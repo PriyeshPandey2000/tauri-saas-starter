@@ -1,6 +1,7 @@
 mod commands;
 mod error;
 mod native;
+mod smoke;
 mod telemetry;
 
 use specta_typescript::Typescript;
@@ -39,7 +40,9 @@ pub fn builder() -> Builder<tauri::Wry> {
         commands::updater::updater_configured,
         commands::updater::check_update,
         commands::updater::install_update,
-        commands::telemetry::trigger_test_panic
+        commands::telemetry::trigger_test_panic,
+        smoke::smoke_report,
+        smoke::smoke_requested
     ])
 }
 
@@ -54,7 +57,9 @@ pub fn builder() -> Builder<tauri::Wry> {
         commands::telemetry::read_log_tail,
         commands::updater::updater_configured,
         commands::updater::check_update,
-        commands::updater::install_update
+        commands::updater::install_update,
+        smoke::smoke_report,
+        smoke::smoke_requested
     ])
 }
 
@@ -105,6 +110,7 @@ pub fn run() {
             }
             telemetry::init(app.handle());
             native::setup(app.handle())?;
+            smoke::init(app.handle());
             // The updater plugin needs `plugins.updater`; without it the plugin
             // panics at startup. Register it only when the build injected a feed.
             if commands::updater::updater_configured(app.handle().clone()) {
