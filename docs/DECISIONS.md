@@ -142,6 +142,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Updater endpoints are configured at runtime through Rust (M8.8 fix)**: the build injects stable (index 0) and optional beta (index 1) endpoints; the typed `check_update` command selects one with the updater builder's runtime endpoint API. A request header cannot choose a file on static hosting.
 - **Updater signing feed is user-gated (M8.8)**: no private key or real feed was created here. The flow is unit-tested with injected checks and documented as M8-16/M8-17 in `docs/deferred-checks.md`; a real N→N+1 run needs the user's feed and signing key.
 
+- **Capability audit is a script (M8 review round 2)**: `scripts/check-capabilities.mjs` maps frontend plugin/window calls to capability identifiers and fails the build check when one is missing. It is a static scan, not a runtime permission proof; the `tauri dev` console proof remains mandatory.
+- **Dev-only webview console bridge (M8 review round 2)**: in dev builds the frontend POSTs console errors/warnings/info to a Vite middleware so webview permission errors appear in the `tauri dev` log. It is compiled out of production and sends nothing externally.
+
 ## Backlog (ideas out of current scope)
 
 - Two-way sync + conflict resolution

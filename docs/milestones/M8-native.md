@@ -174,6 +174,73 @@ Updater config injected (2 feeds, public key present)
 Command failed with signal "SIGTERM"   (our 20-second kill)
 ```
 
+### Round 2 fix (2026-10-20)
+
+- Capabilities now include `core:window:allow-show`, `allow-hide`,
+  `allow-is-visible`, `allow-set-focus`, and the four explicit
+  `global-shortcut:allow-*` permissions (the plugin default grants none).
+  `process:allow-restart` remains.
+- All shortcut calls are wrapped: `unregisterAll`/`register` failures become a
+  logged report, and only real register conflicts show the toast. Notification
+  and deep-link listeners also catch failures, so no call becomes an unhandled
+  rejection.
+- `scripts/check-capabilities.mjs` scans the frontend for plugin/window API use
+  and fails if a required permission is missing (`verify:capabilities`).
+- Added a dev-only webview console bridge (Vite terminal) and a
+  `[window] shown {"visible":true}` log line.
+
+**Round 2 startup proof.** Both runs stayed up for 20 seconds and were killed by
+us with SIGTERM (the only error line shown). Webview console grep for
+`webview:(error|warn)|unhandledrejection|not allowed|Failed to` returned
+`(none)` in both runs. **Zero console errors and zero unhandled rejections;
+window visibility was true.**
+
+No updater env:
+
+```
+> desktop@0.1.0 tauri .../apps/desktop
+> node scripts/tauri.mjs dev
+
+     Running BeforeDevCommand (`pnpm dev`)
+> desktop@0.1.0 dev .../apps/desktop
+> vite
+
+  VITE v8.3.4  ready in 445 ms
+  ➜  Local:   http://localhost:1420/
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+        Info Watching .../src-tauri for changes...
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.73s
+     Running `target/debug/appsdesktop`
+[webview:info] theme.changed {"theme":"dark"}
+[webview:info] theme.changed {"theme":"dark"}
+[webview:info] [window] shown {"visible":true}
+Command failed with signal "SIGTERM"   (our 20-second kill)
+```
+
+With dummy stable + beta feeds and dummy public key:
+
+```
+> desktop@0.1.0 tauri .../apps/desktop
+> node scripts/tauri.mjs dev
+
+Updater config injected (2 feeds, public key present)
+     Running BeforeDevCommand (`pnpm dev`)
+> desktop@0.1.0 dev .../apps/desktop
+> vite
+
+  VITE v8.3.4  ready in 470 ms
+  ➜  Local:   http://localhost:1420/
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+        Info Watching .../src-tauri for changes...
+   Compiling appsdesktop v0.1.0 (.../src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.45s
+     Running `target/debug/appsdesktop`
+[webview:info] theme.changed {"theme":"dark"}
+[webview:info] theme.changed {"theme":"dark"}
+[webview:info] [window] shown {"visible":true}
+Command failed with signal "SIGTERM"   (our 20-second kill)
+```
+
 ### Not run (user-gated)
 
 - The built-app checks M8-01 to M8-19 in `docs/deferred-checks.md`: tray, close-to-tray,
@@ -197,8 +264,17 @@ Must fix: 2. **Channel gating does nothing with a static feed.** `check({ header
 
 Not verified: tray, close-to-tray, dock behavior, shortcut conflicts, notifications, login item, cold/warm deep links and a real N to N+1 update (rows M8-01 to M8-19 in the register).
 
+### Round 2 (2026-10-20): CHANGES REQUIRED (capabilities), found by running the app
+
+The fixes landed: the app now starts without updater env, `process:allow-restart` replaced `process:default`, the feed channels use runtime endpoints, and the secure-store ordering bug is gone. But the reviewer ran `tauri dev` again for 25 s with no updater env and the webview console (printed by Vite) shows permission errors that the agent's "no panic" check cannot see:
+
+- `Failed to show the main window: window.show not allowed. Permissions associated with this command: core:window:allow-show` (the window is created hidden and revealed by `show()`, so this can leave the app invisible; add `core:window:allow-show` with a comment).
+- `Unhandled rejection: global-shortcut.unregister_all not allowed. Permissions: global-shortcut:allow-unregister-all` (repeats on settings changes; the shortcut feature cannot reset). Add the needed global-shortcut permissions explicitly (register, unregister, unregister-all, is-registered) and wrap the calls so a denied call never becomes an unhandled rejection.
+  Process rule update (applies to every milestone from now on): the startup proof must include the WEBVIEW console output from the dev log, and the report must state "zero console errors and zero unhandled rejections in a 20 s run" or list them. A run with errors is not a passing proof. Fix every capability error found, then re-run and paste the clean output.
+  Also add a test that fails if a command the frontend calls is missing from the capability file where feasible (e.g. a script that scans `@tauri-apps/plugin-*` and `getCurrentWindow()` calls against the permissions list), or document why not.
+
 ## Verification summary
 
 - **Automated tests:** the report's lint, typecheck, test, build and cargo gates passed (deep-link parser/router, updater scheduler/channel/failure, native settings, CSP updater origin).
-- **Agent dev-run observations:** Rust compilation and unit tests for scrubbing/native modules; no built-app native run.
+- **Agent dev-run observations:** two 20-second `tauri dev` runs (with and without updater config) showed zero webview console errors/rejections and `[window] shown {"visible":true}`; capability audit script passes.
 - **Manual human checks still open:** [M8-01](../deferred-checks.md#m8-01-tray-icon-and-menu), [M8-02](../deferred-checks.md#m8-02-close-to-tray-off-quits), [M8-03](../deferred-checks.md#m8-03-close-to-tray-on-stays-resident), [M8-04](../deferred-checks.md#m8-04-macos-dock-behavior), [M8-05](../deferred-checks.md#m8-05-global-shortcut-default), [M8-06](../deferred-checks.md#m8-06-global-shortcut-changed), [M8-07](../deferred-checks.md#m8-07-shortcut-conflict-toast), [M8-08](../deferred-checks.md#m8-08-shortcut-disabled), [M8-09](../deferred-checks.md#m8-09-single-instance-focuses-the-window), [M8-10](../deferred-checks.md#m8-10-single-instance-forwards-a-deep-link), [M8-11](../deferred-checks.md#m8-11-cold-start-deep-link), [M8-12](../deferred-checks.md#m8-12-warm-start-deep-link), [M8-13](../deferred-checks.md#m8-13-unknown-deep-link-ignored), [M8-14](../deferred-checks.md#m8-14-notifications-permission), [M8-15](../deferred-checks.md#m8-15-launch-at-login), [M8-16](../deferred-checks.md#m8-16-signed-update-n-to-n1), [M8-17](../deferred-checks.md#m8-17-updater-failure-resilience), [M8-18](../deferred-checks.md#m8-18-beta-channel-flag-gate), [M8-19](../deferred-checks.md#m8-19-windows-native-parity), plus [M7-02](../deferred-checks.md#m7-02-release-panic-reaches-sentry) and [M7-05](../deferred-checks.md#m7-05-zero-network-before-consent).
