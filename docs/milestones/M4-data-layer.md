@@ -208,3 +208,9 @@ $ docker compose exec -T db psql -U app -d app -c "\d notes"
  "notes_user_id_updated_at_idx" btree (user_id, updated_at)
  "notes_user_id_user_id_fk" FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
 ```
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed, including the PGlite isolation tests.
+- **Agent dev-run observations:** none recorded for the notes/database paths.
+- **Manual human checks still open:** [M4-01](../deferred-checks.md#m4-01-per-user-database-isolation), [M4-02](../deferred-checks.md#m4-02-relaunch-does-not-re-run-migrations), [M4-03](../deferred-checks.md#m4-03-10-000-note-scrolling), [M4-04](../deferred-checks.md#m4-04-offline-notes-and-mutation-errors), [M4-05](../deferred-checks.md#m4-05-sign-out-closes-the-local-database), [M4-06](../deferred-checks.md#m4-06-migration-failure-error-screen), [M4-07](../deferred-checks.md#m4-07-lost-session-does-not-leak-notes), plus [M3-01](../deferred-checks.md#m3-01-google-oauth-round-trip) and [M3-04](../deferred-checks.md#m3-04-compose-postgres-port-clash) where they intersect.

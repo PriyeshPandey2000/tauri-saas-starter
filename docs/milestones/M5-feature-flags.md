@@ -148,3 +148,9 @@ Human checks (add to docs/deferred-checks.md): real `VITE_POSTHOG_KEY`; create `
 4. `docs/feature-flags.md` states that anonymous evaluation sends the install id and client IP to PostHog, and documents `VITE_FLAGS_REQUIRE_CONSENT` (default false).
 
 Verification: `turbo run lint typecheck build` 10/10; forced tests 27 files / 99 desktop, 9 / 28 API; `cargo test` 3 passed, 1 ignored.
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed (CSP, resolution, cache isolation, consent, overrides, re-render isolation).
+- **Agent dev-run observations:** none recorded for flags.
+- **Manual human checks still open:** [M5-01](../deferred-checks.md#m5-01-remote-flag-values-replace-defaults), [M5-02](../deferred-checks.md#m5-02-dashboard-toggle-and-variant), [M5-03](../deferred-checks.md#m5-03-offline-flag-cache-then-defaults), [M5-04](../deferred-checks.md#m5-04-consent-based-identify-revoke), [M5-05](../deferred-checks.md#m5-05-dev-overrides-and-production-block), [M5-06](../deferred-checks.md#m5-06-csp-allows-posthog-in-a-built-app), [M5-07](../deferred-checks.md#m5-07-dashboard-change-reaches-built-app).

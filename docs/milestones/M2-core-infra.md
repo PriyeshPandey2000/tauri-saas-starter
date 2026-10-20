@@ -187,3 +187,9 @@ Manual checks (user): keychain round-trip test above; with `VITE_LOG_TARGET=file
 Reviewer verified: forced `turbo run lint typecheck test build` 12/12 pass (desktop 47 tests, api 1); `cargo test` 3 pass + 1 ignored (`keychain_roundtrip`); file logger catches plugin rejections and falls back to console without re-logging; `VITE_LOG_TARGET` in schema, `.env.example` and tests; bindings path from `CARGO_MANIFEST_DIR` with a warning instead of a panic; non-JSON 2xx maps to `invalid_response`; secure storage wrapper tested.
 
 Gate before M3 (user): run `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml -- --ignored keychain_roundtrip`. M3 stores tokens in the keychain, so a failure here becomes the first fix of M3. Minor note: an assertion panic inside the test closure skips the cleanup line; the throwaway entry would remain. Harmless, tidy later.
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed.
+- **Agent dev-run observations:** [M1-04](../deferred-checks.md#m1-04-log-file-created) (log file created in `tauri dev`), not independently confirmed.
+- **Manual human checks still open:** [M1-05](../deferred-checks.md#m1-05-2-mb-log-rotation).

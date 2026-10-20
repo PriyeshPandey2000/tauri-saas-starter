@@ -155,3 +155,9 @@ Follow-ups (fix at the start of M1, one commit each):
 3. CSP `connect-src` includes `localhost:1420` and `ws://localhost:1420` in the production config. Move dev-only origins to a dev-only override (`devCsp`) in M2/M9; track in DECISIONS.md backlog.
 4. Not independently re-proven: `check-vendor-imports` rejecting a violation, and app/routes deep imports into `features/x/internal`. Add a unit test for the guard script and a boundaries test fixture in M9.11.
 5. Lint passes while pnpm warns that `eslint-plugin-import` has an eslint 10 peer mismatch. Accepted for now; revisit if it breaks.
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed.
+- **Agent dev-run observations:** none recorded in the register for M0.
+- **Manual human checks still open:** none for M0; later rows start at M1.

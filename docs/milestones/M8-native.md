@@ -15,7 +15,7 @@
 - [x] 8.8 Auto-update: `tauri-plugin-updater`. Generate signing keypair; public key in config, private key as CI secret (document, never commit). Endpoint: static `latest.json` on GitHub Releases or R2 (config). Flow: check on start (deferred ~10s after first paint) and every 6h; show non-blocking toast "Update available" -> download with progress -> "Restart to update". Skip/postpone supported. Update channel setting: stable|beta (beta gated by flag `betaUpdates`).
 - [x] 8.9 Update failure never blocks the app; errors logged + reported.
 - [x] 8.10 Capabilities updated with exactly the new permissions, each commented.
-- [x] 8.11 Tests where possible (deep-link router unit tests, shortcut config validation). Manual test checklist file `docs/manual-tests.md` listing steps for tray, shortcut, single instance, update on mac and Windows.
+- [x] 8.11 Tests where possible (deep-link router unit tests, shortcut config validation). Manual checks are rows M8-01 to M8-19 in `docs/deferred-checks.md`.
 
 ## Acceptance criteria
 
@@ -75,7 +75,7 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
   updater and process permissions, each commented.
 - **8.11 Tests/docs.** Deep-link parser/router tests, updater channel/scheduler/
   failure tests, native settings validation, CSP updater-origin test; manual
-  checklist in `docs/manual-tests.md`.
+  register rows M8-01 to M8-19 in `docs/deferred-checks.md`.
 
 ### Verification (real output)
 
@@ -97,7 +97,7 @@ test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
 
 ### Not run (user-gated)
 
-- The built-app manual checks in `docs/manual-tests.md`: tray, close-to-tray,
+- The built-app checks M8-01 to M8-19 in `docs/deferred-checks.md`: tray, close-to-tray,
   dock behavior, shortcut conflicts, notifications permission, launch at login.
 - A real signed update from N to N+1 with a local/remote feed: no updater
   private key or feed exists here by design. The updater logic is unit-tested
@@ -107,3 +107,9 @@ test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
 ## Review
 
 _(reviewer fills)_
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test, build and cargo gates passed (deep-link parser/router, updater scheduler/channel/failure, native settings, CSP updater origin).
+- **Agent dev-run observations:** Rust compilation and unit tests for scrubbing/native modules; no built-app native run.
+- **Manual human checks still open:** [M8-01](../deferred-checks.md#m8-01-tray-icon-and-menu), [M8-02](../deferred-checks.md#m8-02-close-to-tray-off-quits), [M8-03](../deferred-checks.md#m8-03-close-to-tray-on-stays-resident), [M8-04](../deferred-checks.md#m8-04-macos-dock-behavior), [M8-05](../deferred-checks.md#m8-05-global-shortcut-default), [M8-06](../deferred-checks.md#m8-06-global-shortcut-changed), [M8-07](../deferred-checks.md#m8-07-shortcut-conflict-toast), [M8-08](../deferred-checks.md#m8-08-shortcut-disabled), [M8-09](../deferred-checks.md#m8-09-single-instance-focuses-the-window), [M8-10](../deferred-checks.md#m8-10-single-instance-forwards-a-deep-link), [M8-11](../deferred-checks.md#m8-11-cold-start-deep-link), [M8-12](../deferred-checks.md#m8-12-warm-start-deep-link), [M8-13](../deferred-checks.md#m8-13-unknown-deep-link-ignored), [M8-14](../deferred-checks.md#m8-14-notifications-permission), [M8-15](../deferred-checks.md#m8-15-launch-at-login), [M8-16](../deferred-checks.md#m8-16-signed-update-n-to-n1), [M8-17](../deferred-checks.md#m8-17-updater-failure-resilience), [M8-18](../deferred-checks.md#m8-18-beta-channel-flag-gate), [M8-19](../deferred-checks.md#m8-19-windows-native-parity), plus [M7-02](../deferred-checks.md#m7-02-release-panic-reaches-sentry) and [M7-05](../deferred-checks.md#m7-05-zero-network-before-consent).

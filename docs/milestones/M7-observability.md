@@ -155,3 +155,9 @@ api:test:       Tests  51 passed (51)
 $ cd apps/desktop/src-tauri && cargo test
 test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
 ```
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test, build and cargo gates passed (consent gating, scrubbing, CSP, dedupe, analytics registry).
+- **Agent dev-run observations:** bundle inspected for lazy Sentry loading (main chunk 200.83 kB gzip); no real Sentry/PostHog delivery.
+- **Manual human checks still open:** [M7-01](../deferred-checks.md#m7-01-scrubbed-error-reaches-sentry), [M7-02](../deferred-checks.md#m7-02-release-panic-reaches-sentry), [M7-03](../deferred-checks.md#m7-03-source-map-symbolication), [M7-04](../deferred-checks.md#m7-04-posthog-events-after-consent), [M7-05](../deferred-checks.md#m7-05-zero-network-before-consent), [M7-06](../deferred-checks.md#m7-06-consent-ui-and-log-preview), plus [M5-06](../deferred-checks.md#m5-06-csp-allows-posthog-in-a-built-app) and [M5-07](../deferred-checks.md#m5-07-dashboard-change-reaches-built-app).

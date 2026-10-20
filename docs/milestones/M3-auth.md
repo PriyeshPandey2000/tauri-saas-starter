@@ -269,3 +269,9 @@ Small follow-ups (first commits of M4):
 
 1. Better Auth's own rate limiter logs "could not determine a client IP ... single shared per-path bucket" and by default trusts `x-forwarded-for`. Set `advanced.ipAddress.ipAddressHeaders` from `TRUSTED_PROXY_HEADER` when set. When no client IP can be determined, a shared per-path bucket lets any client exhaust `/sign-in` (10/min) for everyone; document this and the required proxy header in docs/auth-setup.md.
 2. Compose published port clashes with a native Postgres on 5432 (the agent had to use socat). Publish `${DB_PORT:-5433}:5432`, update `.env.example`, root `db:*` docs, and `docs/deferred-checks.md`.
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed, including the real-app contract tests.
+- **Agent dev-run observations:** none beyond the shared startup observations in M1.
+- **Manual human checks still open:** [M3-01](../deferred-checks.md#m3-01-google-oauth-round-trip), [M3-02](../deferred-checks.md#m3-02-windows-webview-origin), [M3-03](../deferred-checks.md#m3-03-real-keychain-round-trip), [M3-04](../deferred-checks.md#m3-04-compose-postgres-port-clash), [M1-05](../deferred-checks.md#m1-05-2-mb-log-rotation).

@@ -139,7 +139,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 
 - **Updater endpoint and public key are merged at build time (M8.8)**: `scripts/tauri.mjs` injects `plugins.updater` from `VITE_UPDATER_ENDPOINT` and `TAURI_UPDATER_PUBLIC_KEY`, so release builds must go through it. The private key (`TAURI_SIGNING_PRIVATE_KEY`) stays in CI only and is covered by the commit guard.
 - **Tray/menu labels live in Rust (M8.3/M8.5)**: native menus cannot import the JS i18n bundle; `native.rs` centralizes English labels and reads the stored language. Add languages there alongside the JS bundles when more ship.
-- **Updater signing feed is user-gated (M8.8)**: no private key or real feed was created here. The flow is unit-tested with injected checks and documented in `docs/manual-tests.md`; a real N→N+1 run needs the user's feed and signing key.
+- **Updater signing feed is user-gated (M8.8)**: no private key or real feed was created here. The flow is unit-tested with injected checks and documented as M8-16/M8-17 in `docs/deferred-checks.md`; a real N→N+1 run needs the user's feed and signing key.
 
 ## Backlog (ideas out of current scope)
 

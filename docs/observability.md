@@ -86,7 +86,7 @@ user id; reset clears it on sign-out or consent revocation.
 No MCP server, CLI login, browser session or saved credential is used for
 Sentry or PostHog. DSNs/tokens come only from env files the user fills in; the
 pre-commit guard rejects Sentry auth tokens and DSNs. See also
-`docs/deferred-checks.md`.
+the manual checks register (`docs/deferred-checks.md`).
 
 ## References
 

@@ -204,3 +204,9 @@ No billing secrets in the desktop bundle
 $ DB_PORT=5433 DATABASE_URL_DIRECT="postgres://app:app@127.0.0.1:5433/app" pnpm --filter api db:migrate
 [✓] migrations applied successfully!
 ```
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test, build and cargo gates passed, including locally signed webhooks and PGlite isolation.
+- **Agent dev-run observations:** local migrations applied against compose Postgres; no real checkout, portal or tunnel run.
+- **Manual human checks still open:** [M6-01](../deferred-checks.md#m6-01-test-mode-checkout-flips-the-plan), [M6-02](../deferred-checks.md#m6-02-webhook-tunnel-and-replay), [M6-03](../deferred-checks.md#m6-03-customer-portal), [M6-04](../deferred-checks.md#m6-04-cancellation-timing), [M6-05](../deferred-checks.md#m6-05-metadata-and-return-parameters), [M6-06](../deferred-checks.md#m6-06-past-due-banner-and-grace), [M6-07](../deferred-checks.md#m6-07-account-deletion-blocked).

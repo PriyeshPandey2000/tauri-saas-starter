@@ -242,3 +242,10 @@ Reviewer verified: forced `turbo run lint typecheck test build` 12/12 pass; `car
 
 Remaining manual checks (user, non-blocking, run when convenient): window size/position restore; route throw shows error UI; Cmd/Ctrl+K palette grouping and Escape; unknown route shows 404; settings autosave persists across relaunch; no white flash on relaunch with Dark selected on a light OS. Any failure becomes a fix item in M2's first commits.
 ```
+
+## Verification summary
+
+- **Automated tests:** the report's lint, typecheck, test and build gates passed.
+- **Agent dev-run observations:** [M1-03](../deferred-checks.md#m1-03-corrupt-settings-file-starts-with-defaults) (corrupt settings uses defaults) and [M1-04](../deferred-checks.md#m1-04-log-file-created) (log file created) — observed in `tauri dev`, not independently confirmed.
+- **Manual human checks still open:** [M1-01](../deferred-checks.md#m1-01-window-theme-native-menu), [M1-05](../deferred-checks.md#m1-05-2-mb-log-rotation), [M1-06](../deferred-checks.md#m1-06-screenshot-checks).
+- **Passed:** [M1-02](../deferred-checks.md#m1-02-title-bar-follows-app-theme) (user, macOS, tauri dev, 2026-10-19).
