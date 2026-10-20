@@ -38,7 +38,7 @@ describe("query cache isolation", () => {
     expect(isPersistableQueryKey(["notes", "user-a", "detail", "n"])).toBe(
       false,
     );
-    expect(isPersistableQueryKey(["flags", "public"])).toBe(true);
+    expect(isPersistableQueryKey(["preferences", "public"])).toBe(true);
   });
 
   it("drops notes written by an older build when restoring", async () => {
@@ -47,7 +47,7 @@ describe("query cache isolation", () => {
       notes: [note],
       nextCursor: null,
     });
-    source.setQueryData(["flags", "public"], { enabled: true });
+    source.setQueryData(["preferences", "public"], { enabled: true });
     vi.mocked(ports.queryCache.load).mockResolvedValue(
       JSON.stringify(dehydrate(source)),
     );
@@ -56,7 +56,7 @@ describe("query cache isolation", () => {
     await restoreQueryCache(target);
 
     expect(target.getQueryData(noteKeys.list("user-a"))).toBeUndefined();
-    expect(target.getQueryData(["flags", "public"])).toEqual({
+    expect(target.getQueryData(["preferences", "public"])).toEqual({
       enabled: true,
     });
   });

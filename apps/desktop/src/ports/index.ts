@@ -5,7 +5,7 @@ import type { AuthPort } from "./AuthPort";
 import type { BillingPort } from "./BillingPort";
 import type { ErrorReporterPort } from "./ErrorReporterPort";
 import type { FeatureFlagPort } from "./FeatureFlagPort";
-import type { LoggerPort } from "./LoggerPort";
+import type { LogContext, LoggerPort } from "./LoggerPort";
 import type { StoragePort } from "./StoragePort";
 import type { QueryCachePort } from "./QueryCachePort";
 import {
@@ -22,6 +22,12 @@ import {
   setDefaultSecureStore,
 } from "./adapters/better-auth/adapter";
 import { noopFeatureFlags } from "./adapters/noop/noop-feature-flags";
+import { createPluginFlagCache } from "./adapters/flags/flag-cache";
+import {
+  createLocalOverrideAdapter,
+  createPluginFlagOverrideStore,
+} from "./adapters/flags/local-override-adapter";
+import { createPostHogFlagAdapter } from "@/ports/adapters/flags/posthog-flag-adapter";
 import { createMemoryStorage } from "./adapters/noop/memory-storage";
 import { consoleLogger } from "./adapters/console-logger";
 import { fileLogger } from "./adapters/file-logger";
@@ -75,10 +81,48 @@ export function createPorts(): Ports {
   const auth = isTauri()
     ? createBetterAuthAdapter({ getApiUrl: () => getConfig().VITE_API_URL })
     : noopAuth;
+
+  // Read the flag env directly: a bad config must still render the config
+  // error screen instead of throwing during module evaluation.
+  const rawEnv = import.meta.env as Record<string, unknown>;
+  const flagsApiKey =
+    typeof rawEnv.VITE_POSTHOG_KEY === "string" &&
+    rawEnv.VITE_POSTHOG_KEY.length > 0
+      ? rawEnv.VITE_POSTHOG_KEY
+      : undefined;
+  const flagsHost =
+    typeof rawEnv.VITE_POSTHOG_HOST === "string"
+      ? rawEnv.VITE_POSTHOG_HOST
+      : undefined;
+  const allowOverrides = rawEnv.VITE_APP_ENV !== "prod";
+  if (!flagsApiKey) {
+    logger.warn(
+      "VITE_POSTHOG_KEY is not set; feature flags use registry defaults",
+    );
+  }
+  const baseFeatureFlags = flagsApiKey
+    ? createPostHogFlagAdapter({
+        apiKey: flagsApiKey,
+        host: flagsHost,
+        cache: createPluginFlagCache(),
+        onWarning: (message, context) =>
+          logger.warn(message, context as LogContext | undefined),
+      })
+    : noopFeatureFlags;
+  const featureFlags = createLocalOverrideAdapter(
+    baseFeatureFlags,
+    createPluginFlagOverrideStore(),
+    {
+      allowOverrides,
+      onWarning: (message, context) =>
+        logger.warn(message, context as LogContext | undefined),
+    },
+  );
+
   return {
     auth,
     billing: noopBilling,
-    featureFlags: noopFeatureFlags,
+    featureFlags,
     analytics: noopAnalytics,
     errorReporter: noopErrorReporter,
     storage: createMemoryStorage(),

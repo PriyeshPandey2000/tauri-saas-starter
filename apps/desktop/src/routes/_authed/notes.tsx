@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useAuthStore } from "@/features/auth";
+import { useFlag } from "@/features/flags";
 import { DatabaseGate, NotesPage } from "@/features/notes";
 
 export const Route = createFileRoute("/_authed/notes")({
@@ -10,12 +11,13 @@ export const Route = createFileRoute("/_authed/notes")({
 function NotesRoute() {
   const userId = useAuthStore((state) => state.session?.user.id ?? null);
   const signOut = useAuthStore((state) => state.signOut);
+  const syncDisabled = useFlag("killSwitchSync");
   if (!userId) {
     return null;
   }
   return (
     <DatabaseGate userId={userId} onSignOut={() => void signOut()}>
-      <NotesPage userId={userId} />
+      <NotesPage userId={userId} syncDisabled={syncDisabled} />
     </DatabaseGate>
   );
 }

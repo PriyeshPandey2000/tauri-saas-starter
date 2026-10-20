@@ -10,21 +10,25 @@ import {
   useRestoreNote,
   useUpdateNote,
 } from "../hooks";
+import { getConfig } from "@/shared/lib/config";
 import { NoteEditor } from "./note-editor";
 import { NoteList, NoteSkeleton } from "./note-list";
 
 interface NotesPageProps {
   /** Signed-in user; every query key and repository is scoped to it. */
   userId: string;
+  /** True when the remote sync kill switch is on (provided by the route). */
+  syncDisabled?: boolean;
 }
 
-export function NotesPage({ userId }: NotesPageProps) {
+export function NotesPage({ userId, syncDisabled = false }: NotesPageProps) {
   const { t } = useTranslation();
   const notes = useNotes(userId);
   const createNote = useCreateNote(userId);
   const updateNote = useUpdateNote(userId);
   const removeNote = useRemoveNote(userId);
   const restoreNote = useRestoreNote(userId);
+  const remote = getConfig().VITE_NOTES_SOURCE === "remote";
   const [editing, setEditing] = useState<Note | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -47,6 +51,15 @@ export function NotesPage({ userId }: NotesPageProps) {
           {t("notes.new")}
         </button>
       </header>
+
+      {remote && syncDisabled && (
+        <div
+          role="status"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+        >
+          {t("notes.syncDisabled")}
+        </div>
+      )}
 
       {notes.isPending ? (
         <NoteSkeleton />

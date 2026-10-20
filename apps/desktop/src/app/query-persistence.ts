@@ -12,7 +12,7 @@ import { ports } from "@/ports";
  * user data (notes) lives in the per-user SQLite file, and a denylist would
  * leak any new user-data query added later.
  */
-const PERSISTABLE_QUERY_ROOTS = new Set(["flags", "preferences"]);
+const PERSISTABLE_QUERY_ROOTS = new Set(["preferences"]);
 
 /** True when a query key may be persisted. Exported for tests. */
 export function isPersistableQueryKey(queryKey: readonly unknown[]): boolean {

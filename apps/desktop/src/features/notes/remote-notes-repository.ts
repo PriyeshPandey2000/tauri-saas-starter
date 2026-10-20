@@ -8,6 +8,7 @@ import {
   type NoteUpdate,
 } from "@app/shared";
 
+import { ports } from "@/ports";
 import { getApiClient } from "@/shared/lib/apiClient";
 import type { NotePageOptions, NotesRepository } from "./repository-core";
 
@@ -18,8 +19,16 @@ const OkResponse = z.object({ ok: z.literal(true) });
 export function createRemoteNotesRepository(): NotesRepository {
   const client = getApiClient();
 
+  /** Kill switch: skip every remote call while `killSwitchSync` is on. */
+  function assertSyncEnabled(): void {
+    if (ports.featureFlags.get("killSwitchSync")) {
+      throw new Error("Remote notes sync is temporarily disabled");
+    }
+  }
+
   return {
     async list(options: NotePageOptions = {}): Promise<NoteList> {
+      assertSyncEnabled();
       const params = new URLSearchParams();
       if (options.limit) {
         params.set("limit", String(options.limit));
@@ -34,6 +43,7 @@ export function createRemoteNotesRepository(): NotesRepository {
     },
 
     async get(id: string): Promise<Note | null> {
+      assertSyncEnabled();
       try {
         const { note } = await client.request(`/notes/${id}`, {
           schema: NoteResponse,
@@ -48,6 +58,7 @@ export function createRemoteNotesRepository(): NotesRepository {
     },
 
     async create(input: NoteInput): Promise<Note> {
+      assertSyncEnabled();
       const { note } = await client.request("/notes", {
         method: "POST",
         body: input,
@@ -57,6 +68,7 @@ export function createRemoteNotesRepository(): NotesRepository {
     },
 
     async update(id: string, patch: NoteUpdate): Promise<Note> {
+      assertSyncEnabled();
       const { note } = await client.request(`/notes/${id}`, {
         method: "PATCH",
         body: patch,
@@ -66,6 +78,7 @@ export function createRemoteNotesRepository(): NotesRepository {
     },
 
     async remove(id: string): Promise<void> {
+      assertSyncEnabled();
       await client.request(`/notes/${id}`, {
         method: "DELETE",
         schema: OkResponse,
@@ -73,6 +86,7 @@ export function createRemoteNotesRepository(): NotesRepository {
     },
 
     async restore(id: string): Promise<Note> {
+      assertSyncEnabled();
       const { note } = await client.request(`/notes/${id}/restore`, {
         method: "POST",
         schema: NoteResponse,
