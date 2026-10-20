@@ -19,7 +19,8 @@
     "format": "prettier --write .",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
-    "db:reset": "docker compose down -v && docker compose up -d db"
+    "db:reset": "docker compose down -v && docker compose up -d db",
+    "verify:capabilities": "node scripts/check-capabilities.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

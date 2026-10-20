@@ -8,7 +8,9 @@ export async function showMainWindow(): Promise<void> {
   }
   try {
     const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    await getCurrentWindow().show();
+    const window = getCurrentWindow();
+    await window.show();
+    console.info("[window] shown", { visible: await window.isVisible() });
   } catch (error) {
     console.warn("Failed to show the main window", error);
   }

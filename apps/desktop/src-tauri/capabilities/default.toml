@@ -14,6 +14,14 @@ permissions = [
   "window-state:default",
   # Set the native title bar theme; not part of core:window:default.
   "core:window:allow-set-theme",
+  # The window starts hidden; bootstrap and the shortcut reveal it.
+  "core:window:allow-show",
+  # The shortcut hides the window again.
+  "core:window:allow-hide",
+  # The shortcut checks whether the window is visible before toggling.
+  "core:window:allow-is-visible",
+  # Focus the window after showing it from the shortcut.
+  "core:window:allow-set-focus",
   # Frontend writes through the LoggerPort file adapter; reads stay denied.
   "log:allow-log",
   # Open the system browser for OAuth (https only via the default URL scope).
@@ -27,8 +35,12 @@ permissions = [
   "sql:allow-execute",
   "sql:allow-select",
   "sql:allow-close",
-  # User-configurable global shortcut (register/unregister only).
-  "global-shortcut:default",
+  # User-configurable global shortcut. The plugin default grants nothing, so
+  # list exactly the calls the settings wiring makes.
+  "global-shortcut:allow-register",
+  "global-shortcut:allow-unregister",
+  "global-shortcut:allow-unregister-all",
+  "global-shortcut:allow-is-registered",
   # Notifications after an explicit permission request.
   "notification:default",
   # Launch-at-login toggle (off by default).

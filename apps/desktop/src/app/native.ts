@@ -17,31 +17,47 @@ import type { AppRouter } from "./router";
 let registeredShortcut: string | null = null;
 
 export async function notify(title: string, body: string): Promise<void> {
-  let granted = await isPermissionGranted();
-  if (!granted) {
-    granted = (await requestPermission()) === "granted";
-  }
-  if (granted) {
-    sendNotification({ title, body });
+  try {
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      granted = (await requestPermission()) === "granted";
+    }
+    if (granted) {
+      sendNotification({ title, body });
+    }
+  } catch (error) {
+    console.warn("[notifications]", error);
   }
 }
 
+function reportShortcutError(error: unknown): void {
+  console.warn(
+    "[shortcut]",
+    error instanceof Error ? error.message : String(error),
+  );
+  ports.errorReporter.captureException(error, {
+    tags: { source: "global-shortcut" },
+  });
+}
+
 async function applyShortcut(accel: string): Promise<void> {
-  await unregisterAll();
-  registeredShortcut = null;
-  if (!accel.trim()) {
-    return;
-  }
   try {
+    await unregisterAll();
+    registeredShortcut = null;
+    if (!accel.trim()) {
+      return;
+    }
     await register(accel, () => {
-      void toggleWindow();
+      void toggleWindow().catch(reportShortcutError);
     });
     registeredShortcut = accel;
   } catch (error) {
-    toast.error(i18n.t("native.shortcutConflict", { shortcut: accel }));
-    ports.errorReporter.captureException(error, {
-      tags: { source: "global-shortcut" },
-    });
+    registeredShortcut = null;
+    const message = error instanceof Error ? error.message : String(error);
+    if (/already|conflict|in use|registered/i.test(message)) {
+      toast.error(i18n.t("native.shortcutConflict", { shortcut: accel }));
+    }
+    reportShortcutError(error);
   }
 }
 
@@ -108,11 +124,15 @@ export function initializeNative(router: AppRouter): () => void {
 
   void listen("native://open-settings", () => {
     void router.navigate({ to: "/settings" });
-  }).then((stop) => cleanups.push(stop));
+  })
+    .then((stop) => cleanups.push(stop))
+    .catch(reportShortcutError);
 
   void listen("native://check-updates", () => {
     void import("./updater").then(({ checkForUpdates }) => checkForUpdates());
-  }).then((stop) => cleanups.push(stop));
+  })
+    .then((stop) => cleanups.push(stop))
+    .catch(reportShortcutError);
 
   return () => {
     for (const cleanup of cleanups) {

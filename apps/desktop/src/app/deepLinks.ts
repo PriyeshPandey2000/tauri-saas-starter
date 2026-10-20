@@ -92,22 +92,30 @@ export function initializeDeepLinks(): () => void {
   void getCurrent()
     .then(dispatch)
     .catch(() => undefined);
-  void onOpenUrl(dispatch).then((stop) => {
-    if (cancelled) {
-      stop();
-    } else {
-      cleanups.push(stop);
-    }
-  });
+  void onOpenUrl(dispatch)
+    .then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        cleanups.push(stop);
+      }
+    })
+    .catch((error: unknown) => {
+      logger.warn("Could not listen for deep links", { error });
+    });
   void listen<string>("native://deep-link", (event) => {
     void routeDeepLink(event.payload);
-  }).then((stop) => {
-    if (cancelled) {
-      stop();
-    } else {
-      cleanups.push(stop);
-    }
-  });
+  })
+    .then((stop) => {
+      if (cancelled) {
+        stop();
+      } else {
+        cleanups.push(stop);
+      }
+    })
+    .catch((error: unknown) => {
+      logger.warn("Could not listen for native deep links", { error });
+    });
 
   return () => {
     cancelled = true;
