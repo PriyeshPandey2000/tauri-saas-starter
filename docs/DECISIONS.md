@@ -15,6 +15,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @radix-ui/react-slot             | 1.5.0             | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-query            | 5.104.4           | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-router           | 1.170.45          | 2026-10-19 | latest stable                                                                  |
+| @tanstack/react-virtual          | 3.14.21           | 2026-10-20 | latest stable; notes list virtualization                                       |
 | @tanstack/router-cli             | 1.167.45          | 2026-10-19 | latest stable; `tsr generate` route tree                                       |
 | @tanstack/router-plugin          | 1.168.47          | 2026-10-19 | latest stable; Vite file-based route generation                                |
 | @tailwindcss/vite                | 4.3.3             | 2026-10-19 | latest stable                                                                  |
@@ -25,6 +26,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @tauri-apps/plugin-deep-link     | 2.6.2             | 2026-10-19 | latest stable; OAuth callback deep links                                       |
 | @tauri-apps/plugin-log           | 2.10.1            | 2026-10-19 | latest stable; file logger adapter                                             |
 | @tauri-apps/plugin-opener        | 2.7.2             | 2026-10-19 | latest stable; opens the system browser                                        |
+| @tauri-apps/plugin-sql           | 2.6.0             | 2026-10-20 | latest stable; local SQLite (npm client for tauri-plugin-sql)                  |
 | @tauri-apps/plugin-store         | 2.5.0             | 2026-10-19 | latest stable; settings persistence                                            |
 | @tauri-apps/plugin-window-state  | 2.5.0             | 2026-10-19 | latest stable; window size/position                                            |
 | @types/node                      | 26.6.5            | 2026-10-19 | latest stable                                                                  |
@@ -66,6 +68,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | tauri-plugin-deep-link           | 2.6.2             | 2026-10-19 | latest stable; scheme registration                                             |
 | tauri-plugin-log                 | 2.10.1            | 2026-10-19 | latest stable; rotating log file (5 x 2MB)                                     |
 | tauri-plugin-opener              | 2.7.2             | 2026-10-19 | latest stable; system browser                                                  |
+| tauri-plugin-sql                 | 2.6.0             | 2026-10-20 | latest stable; local SQLite (crate; `sqlite` feature)                          |
 | tauri-plugin-store               | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); settings file in app data dir                    |
 | tauri-plugin-window-state        | 2.5.0             | 2026-10-19 | latest stable (rustc 1.99.1); window size/position                             |
 | tauri-specta                     | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
@@ -98,6 +101,14 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 
 - **Rate limiting is per API instance (M3.2)**: Better Auth's limiter uses memory storage; `storage: "database"` would add a `rateLimit` table and is deferred until the API scales beyond one instance. The desktop routes use a small in-memory limiter for the same reason.
 - **Desktop PKCE challenges live in `verification` (M3 review item 7)**: rows are keyed by `desktop-pkce:<sha256(ott)>` and deleted on use; they expire with the OTT (3 minutes).
+
+- **SQL port is `DatabasePort`, not `StoragePort` (M4.4, answers M4 Q1)**: `ports/StoragePort` is already the key/value port used by settings, so M4 adds `ports/DatabasePort.ts` (`query`, `execute`, `transaction`) with a `SqliteDatabase` adapter and leaves the KV port untouched. Reason: one interface, one responsibility.
+- **Local migrations run from TypeScript (M4.3)**: numbered SQL stays in `src-tauri/migrations/*.sql`, but the app applies it through `@tauri-apps/plugin-sql` (`ports/adapters/sqlite/migrations.ts`), each file in one transaction and tracked in `_migrations`. Reason: `tauri-plugin-sql`'s Rust `Migrations` registry binds to a single fixed URL, while notes need a per-user file (`app-<userId>.db`); the JS `Database` API is the plugin's own client, so no second SQLite stack is added. The files are bundled with Vite `?raw`.
+- **`DatabasePort.transaction` serializes through an in-process mutex (M4.4)**: `@tauri-apps/plugin-sql` exposes no transaction API and pools connections, so `BEGIN IMMEDIATE`/`COMMIT`/`ROLLBACK` run inside a per-database queue. Reason: SQLite is a single writer; the queue prevents interleaving the BEGIN/COMMIT window across concurrent calls.
+- **Local notes repository lives in `shared/lib` (M4.5)**: `createLocalNotesRepository` takes a structural `Queryable` (`query`/`execute`) instead of importing `DatabasePort`. Reason: `shared -> port` is disallowed by the boundaries policy, and keeping the repository in `shared` lets the adapter test exercise it on real SQLite without a `feature -> adapter` violation.
+- **`tauri-plugin-sql` 2.x, not 3.0.0-alpha (M4.1)**: `cargo search` lists `3.0.0-alpha.3` (Tauri 3 alpha line); M4 uses the stable Tauri 2 line, `2.6.0`. Reason: rule 14 is latest _stable_. Logged here in case the alpha line looks newer.
+- **Query cache is persisted through `plugin-store`, and the notes feature owns the DB gate (M4.8)**: the cache lives in `query-cache.json` via a `QueryCachePort` adapter, auth-sensitive keys (`auth`, `me`, `session`, `token`) are excluded, and it is cleared on sign-out. Reason: `plugin-store` was already a dependency (rule 16). The `DatabaseGate` sits in `features/notes` because `routes -> app` is disallowed; auth opens the database, and sign-out closes it through the existing registry.
+- **Boundaries policy ignores the notes isolation test (M4.10)**: `apps/api/src/notes/__tests__/isolation.test.ts` imports the real desktop auth adapter, mirroring `contract.test.ts`. It is test-only and excluded from the API tsconfig build; production code keeps the boundaries.
 
 ## Backlog (ideas out of current scope)
 

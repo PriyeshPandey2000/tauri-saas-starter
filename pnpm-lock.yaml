@@ -105,6 +105,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.170.45
         version: 1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tanstack/react-virtual':
+        specifier: ^3.14.21
+        version: 3.14.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tauri-apps/api':
         specifier: ^2.12.4
         version: 2.12.4
@@ -117,6 +120,9 @@ importers:
       '@tauri-apps/plugin-opener':
         specifier: ^2.7.2
         version: 2.7.2
+      '@tauri-apps/plugin-sql':
+        specifier: ^2.6.0
+        version: 2.6.0
       '@tauri-apps/plugin-store':
         specifier: ^2.5.0
         version: 2.5.0
@@ -1593,6 +1599,12 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  '@tanstack/react-virtual@3.14.21':
+    resolution: {integrity: sha512-wWE/ZJDNNDp18JHWy7n5PQooqerHePVkEEu6Op0twKQ2InF9DPhYMQptQY0syDEviMd3/r8D0OUvKJibDGm9HQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   '@tanstack/router-cli@1.167.45':
     resolution: {integrity: sha512-FTAtzs45swhFfEvz8FHjTGpUTp/D9PT3VZipv56VJH+m6rAHIGli+h3aZ2U3T+GIfCveX1KpbnRub/vZkwxkfA==}
     engines: {node: '>=20.19'}
@@ -1633,6 +1645,9 @@ packages:
 
   '@tanstack/store@0.11.2':
     resolution: {integrity: sha512-sJ4mjol8uQsHV0gOJzzjwXfh2Fwm+Sz0+8deqiTm4jGbMdjzNSW+xZCFm0kUa870uhd8yi+DpKnZb5Kc4apa0Q==}
+
+  '@tanstack/virtual-core@3.19.6':
+    resolution: {integrity: sha512-CsTW892z23gy7IyxYTTorVu1uZWB+0N349rSMgKz4rFLPpLza7F7TpcCKeI5iUAwYQCt8QUlOU67J+KXCxtpGw==}
 
   '@tanstack/virtual-file-routes@1.162.0':
     resolution: {integrity: sha512-uhOeFyxLcU41HzvrxsGpiWdcMbScY1EDgbZ5K7DVRMYInbLYWAC0EA/kx9wXAoSM8q82bUG2hRl8+EAjE6XAbA==}
@@ -1720,6 +1735,9 @@ packages:
 
   '@tauri-apps/plugin-opener@2.7.2':
     resolution: {integrity: sha512-LyybP1VSzTMQiaFYcsbAse47KpivlyXdLZMQzGLEnkgQacGESnpjAfFoQ6h5sqWgAdZDH9szYjPzHMpv0Sz+TQ==}
+
+  '@tauri-apps/plugin-sql@2.6.0':
+    resolution: {integrity: sha512-UfP4p3Zwh6N7ODRMgnMgXSN6rfUxFo7YXHnRjX8L3Vx7i+IV0bh+r8puwv2OnGq04SLDZFY+LvotxN+pJdZ1Zg==}
 
   '@tauri-apps/plugin-store@2.5.0':
     resolution: {integrity: sha512-+ykjiQwMJCSk/U2enHA8peKBWgDKgrP7JfZnGwQpqzwA0nVtKTc0LCyxWr2whOrcQoQqtUdr9NVdDZpfKpT1Xw==}
@@ -4924,6 +4942,12 @@ snapshots:
       react-dom: 19.3.1(react@19.3.1)
       use-sync-external-store: 1.7.0(react@19.3.1)
 
+  '@tanstack/react-virtual@3.14.21(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@tanstack/virtual-core': 3.19.6
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+
   '@tanstack/router-cli@1.167.45':
     dependencies:
       '@tanstack/router-generator': 1.167.45
@@ -4991,6 +5015,8 @@ snapshots:
 
   '@tanstack/store@0.11.2': {}
 
+  '@tanstack/virtual-core@3.19.6': {}
+
   '@tanstack/virtual-file-routes@1.162.0': {}
 
   '@tauri-apps/api@2.12.4': {}
@@ -5051,6 +5077,10 @@ snapshots:
       '@tauri-apps/api': 2.12.4
 
   '@tauri-apps/plugin-opener@2.7.2':
+    dependencies:
+      '@tauri-apps/api': 2.12.4
+
+  '@tauri-apps/plugin-sql@2.6.0':
     dependencies:
       '@tauri-apps/api': 2.12.4
 
