@@ -20,4 +20,11 @@ permissions = [
   "opener:default",
   # Receive the OAuth callback on tauri-saas-starter://auth/callback.
   "deep-link:default",
+  # Local SQLite (per-user file). Load/open and the query/execute calls the
+  # DatabasePort needs; the migration runner and repositories use these.
+  "sql:default",
+  "sql:allow-load",
+  "sql:allow-execute",
+  "sql:allow-select",
+  "sql:allow-close",
 ]
