@@ -4,6 +4,7 @@
 **Prereqs:** M9 PASS.
 
 ## Tasks
+
 - [ ] 10.1 `scripts/init-project.ts` (interactive, run via `pnpm init:project`): asks app name, slug, bundle identifier, deep-link scheme, org/author, API URL. Replaces placeholders everywhere (package names, `tauri.conf.json`, `Cargo.toml`, keychain service name, deep-link scheme, window title, i18n strings). Idempotent; refuses to run on a dirty git tree unless `--force`.
 - [ ] 10.2 Feature removal helper `pnpm feature:remove <name>` for `notes`, `billing`, `flags`: deletes feature folder, routes, nav/command registrations, port wiring, API routes, migrations entry, and flag/analytics event entries. Must leave the project compiling (script runs typecheck at end and reports).
 - [ ] 10.3 `pnpm feature:new <name>` generator: scaffolds `features/<name>/{components,hooks,api,store}/index.ts`, a route file, nav registration, and a test stub.
@@ -13,16 +14,21 @@
 - [ ] 10.7 `docs/new-idea-checklist.md`: ordered steps to launch a new product from the template (init, remove unused features, brand, pricing plans, flags, legal pages, release).
 - [ ] 10.8 Final audit: remove dead code, unused deps (`knip` or `depcheck`), confirm every doc command works from scratch on a clean clone. Record result in report.
 
+- [ ] 10.9 **Defaults and optional features (decide once all features exist).** Review every optional piece and decide, with the product owner, what is ON by default and what is opt-in: CI tiers (fast required core vs slow or scheduled jobs such as smoke tests on macOS/Windows, Playwright E2E, audits, perf budgets), Linux support and its Rust test job, billing, feature flags, crash reporting/analytics, tray/auto-update/global shortcut, and the notes example. Write `docs/optional-features.md` (a table: feature, default, how to turn it off or remove it, what breaks if you do) and make each switch real (env flag, workflow path filter or schedule, or `feature:remove`). Make sure each CI job can be deleted without breaking the others, and document which jobs are required for merging and which are advisory. Flaky jobs must be advisory until stable.
+
 ## Acceptance criteria
+
 - Clone fresh, run `init:project` with a sample name, `feature:remove notes`, build + tests pass.
 - `feature:new todos` yields a working empty feature visible in nav.
 - Docs commands verified on a clean clone (agent lists each command run).
 - Zero leftover references to the template placeholder name (grep proves).
 
 ## Out of scope
+
 Publishing template as a GitHub template repo (user does manually).
 
 ## Verification commands
+
 ```
 pnpm init:project -- --dry-run
 pnpm feature:remove notes && pnpm typecheck && pnpm test
@@ -31,12 +37,15 @@ npx knip
 ```
 
 ## Review checklist
+
 - [ ] Init script is safe and reversible via git.
 - [ ] Removal leaves no dangling imports/routes/migrations.
 - [ ] Docs match reality.
 
 ## Agent report
+
 _(agent fills)_
 
 ## Review
+
 _(reviewer fills)_

@@ -147,6 +147,8 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 
 - **Accepted RustSec advisories in the updater dependency tree (M9)**: `tauri-plugin-updater@2.14.0` pulls `zip@4.6.1`, which has RUSTSEC-2026-0367/0368/0369 (high/critical) with no compatible fixed release, plus `rsa@0.9.10` (RUSTSEC-2023-0071, medium, not reachable from our code). CI blocks other high advisories and ignores exactly these four with this note. Revisit when the updater bumps `zip`.
 - **pnpm audit blocks high only (M9)**: `pnpm audit --prod --audit-level=high`; the remaining moderate advisory (esbuild dev chain) is reported but does not fail CI.
+- **rust-ini pinned to 0.21.1 (2026-10-20)**: `tauri-plugin-deep-link@2.6.2` (latest stable, requires `rust-ini ^0.21` on Linux) does not compile against `rust-ini` 0.21.3 (E0063, new fields in `ParseOption`), which broke the CI `rust` job on Ubuntu. Pinned in `Cargo.lock` (`cargo update -p rust-ini --precise 0.21.1`) and ignored in Dependabot. Revisit when a deep-link plugin release fixes it.
+- **Smoke test builds with `tauri/custom-protocol` (2026-10-20)**: a plain `cargo build --release` produces a binary that loads `devUrl` instead of the bundled frontend, so the page never booted and the smoke report never arrived on CI. CI now builds with `--features tauri/custom-protocol`, the same feature the Tauri CLI adds. Windows idle-memory probe uses PowerShell (`WorkingSet64`); not yet verified on a Windows runner.
 
 ## Backlog (ideas out of current scope)
 
