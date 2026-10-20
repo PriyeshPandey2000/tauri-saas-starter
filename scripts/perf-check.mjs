@@ -45,30 +45,32 @@ if (existsSync(smokeLog)) {
     Number(log.match(/\[smoke\] rss_kb=(\d+)/)?.[1] ?? 0) / 1024;
 }
 
+// Sizes are machine independent, so they are compared with the committed
+// baseline. Startup time and memory depend on the hardware (a warm laptop vs a
+// cold CI runner), so they are only held to the absolute budgets.
 const rows = [
   ["main JS gzip", mainJsGzipKb, "kB", budgets.mainJsGzipKb, baseline.mainJsGzipKb],
   ["installer", installerMb, "MB", budgets.installerMb, baseline.installerMb],
-  [
-    "window shown",
-    timeToWindowShownMs,
-    "ms",
-    budgets.timeToWindowShownMs,
-    baseline.timeToWindowShownMs,
-  ],
-  ["idle memory", idleMemoryMb, "MB", budgets.idleMemoryMb, baseline.idleMemoryMb],
+  ["window shown", timeToWindowShownMs, "ms", budgets.timeToWindowShownMs, 0],
+  ["idle memory", idleMemoryMb, "MB", budgets.idleMemoryMb, 0],
 ];
+const allowedGrowth = 1 + (budgets.regressionPercent ?? 10) / 100;
 
 let failed = false;
 console.log("| Metric | Measured | Budget | Status |");
 console.log("| --- | --- | --- | --- |");
 for (const [name, measured, unit, budget, base] of rows) {
   let status = "ok";
-  if (measured > 0 && measured > budget) {
+  if (measured <= 0) {
+    // Nothing to measure in this job (e.g. no installer is built for the smoke run).
+    console.log(`| ${name} | not measured | ${budget} ${unit} | skipped |`);
+    continue;
+  }
+  if (measured > budget) {
     status = "BUDGET BREACH";
     failed = true;
-  }
-  if (measured > 0 && base > 0 && measured > base * 1.1) {
-    status = "REGRESSION >10%";
+  } else if (base > 0 && measured > base * allowedGrowth) {
+    status = `REGRESSION >${budgets.regressionPercent ?? 10}%`;
     failed = true;
   }
   console.log(
