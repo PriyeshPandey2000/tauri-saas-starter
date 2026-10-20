@@ -8,21 +8,21 @@ Provide two connection strings:
 - `DATABASE_URL_DIRECT` - unpooled URL used by drizzle-kit migrations.
 
 Any Postgres host works; the code contains no host-specific APIs. For local
-development a plain `postgres://user:password@localhost:5432/app` is enough for both.
+development a plain `postgres://user:password@localhost:5433/app` is enough for both.
 
 ## 2. Local database (Docker)
 
 ```bash
-pnpm db:up      # postgres:17 with a named volume on :5432
+pnpm db:up      # postgres:17 with a named volume on :5433
 pnpm db:down    # stop, keep data
 pnpm db:reset   # drop the volume and recreate
 ```
 
-Defaults are `app` / `app` / `app` on `localhost:5432`:
+Defaults are `app` / `app` / `app` on `localhost:5433`:
 
 ```env
-DATABASE_URL=postgres://app:app@localhost:5432/app
-DATABASE_URL_DIRECT=postgres://app:app@localhost:5432/app
+DATABASE_URL=postgres://app:app@localhost:5433/app
+DATABASE_URL_DIRECT=postgres://app:app@localhost:5433/app
 ```
 
 Start Docker Desktop (or OrbStack) first; `docker info` must succeed.
