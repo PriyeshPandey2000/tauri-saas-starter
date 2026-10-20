@@ -37,7 +37,7 @@ before the next starts.
 | M4  | Per-user SQLite, migrations, notes example, API        | Done    |
 | M5  | Feature flags (PostHog)                                | Done    |
 | M6  | Billing and licensing                                  | Done    |
-| M7  | Crash reporting and analytics with consent             | Planned |
+| M7  | Crash reporting and analytics with consent             | Done    |
 | M8  | Tray, shortcuts, single instance, auto-update          | Planned |
 | M9  | CI, end-to-end tests, signed releases                  | Planned |
 | M10 | Rename script, feature generator, setup docs           | Planned |

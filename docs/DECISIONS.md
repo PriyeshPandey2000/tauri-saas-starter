@@ -15,6 +15,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | @radix-ui/react-slot             | 1.5.0             | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-query            | 5.104.4           | 2026-10-19 | latest stable                                                                  |
 | @tanstack/react-router           | 1.170.45          | 2026-10-19 | latest stable                                                                  |
+| @sentry/react                    | 11.8.0            | 2026-10-20 | latest stable; JS crash reporting (adapter only)                               |
 | @tanstack/react-virtual          | 3.14.21           | 2026-10-20 | latest stable; notes list virtualization                                       |
 | @tanstack/router-cli             | 1.167.45          | 2026-10-19 | latest stable; `tsr generate` route tree                                       |
 | @tanstack/router-plugin          | 1.168.47          | 2026-10-19 | latest stable; Vite file-based route generation                                |
@@ -120,6 +121,10 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Billing uses the Dodo REST API, not the SDK (M6)**: the API calls `/checkouts`, `/customers/{id}/customer-portal/session`, and verifies webhooks with `standardwebhooks@1.1.1`. No `dodopayments` SDK was added; the REST surface is small and keeps the vendor call sites in one adapter. Test mode is the default and live mode fails closed.
 - **Entitlement snapshots use ECDSA P-256 with IEEE P1363 signatures (M6.8)**: Node signs with `dsaEncoding: "ieee-p1363"` so WebCrypto verifies the raw signature. The canonical payload has a fixed field order; `kid` selects among embedded public keys (`VITE_ENTITLEMENT_PUBLIC_KEYS`). Cache reads enforce a clock-rollback guard.
 - **Checkout returns through an API bounce page (M6.6)**: `return_url` is `${API_PUBLIC_URL}/billing/return`, which redirects to a parameterless `tauri-saas-starter://billing/success`. Provider query parameters are never forwarded; the deep link only triggers a refetch.
+
+- **Analytics is PostHog REST, not `posthog-js` (M7.3)**: same decision as flags. Only explicit typed events are sent; autocapture is not part of the transport. Revisit in M9 if a richer SDK is justified by the bundle budget.
+- **Sentry is initialized lazily on consent (M7.4)**: the JS adapter calls `Sentry.init` only after `telemetryConsent === "granted"` and `Sentry.close()` on revoke; the Rust client starts with `auto_session_tracking(false)` and a `before_send` gate. This guarantees no events or sessions before consent.
+- **Rust source maps/symbols and CI uploads are deferred to M9 (M7.1)**: `docs/observability.md` documents the CI steps and secret names; nothing is uploaded from the agent's machine.
 
 ## Backlog (ideas out of current scope)
 
