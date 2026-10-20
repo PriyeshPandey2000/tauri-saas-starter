@@ -8,8 +8,18 @@ const validEnv = {
 };
 
 describe("parseConfig", () => {
-  it("accepts a valid environment", () => {
-    expect(parseConfig(validEnv)).toEqual(validEnv);
+  it("accepts a valid environment and defaults flag consent to required", () => {
+    expect(parseConfig(validEnv)).toEqual({
+      ...validEnv,
+      VITE_FLAGS_REQUIRE_CONSENT: true,
+    });
+  });
+
+  it("allows flag evaluation to be opted out of consent", () => {
+    expect(
+      parseConfig({ ...validEnv, VITE_FLAGS_REQUIRE_CONSENT: "false" })
+        .VITE_FLAGS_REQUIRE_CONSENT,
+    ).toBe(false);
   });
 
   it("accepts optional vendor keys", () => {

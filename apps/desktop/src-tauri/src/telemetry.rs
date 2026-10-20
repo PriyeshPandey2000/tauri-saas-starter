@@ -97,6 +97,33 @@ fn scrub_map(map: &Map<String, Value>) -> Map<String, Value> {
     clean
 }
 
+fn scrub_path(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    if let Some(index) = normalized.find("/src/") {
+        return normalized[(index + 1)..].to_string();
+    }
+    normalized
+        .rsplit('/')
+        .next()
+        .filter(|name| !name.is_empty())
+        .unwrap_or("[path]")
+        .to_string()
+}
+
+fn scrub_stacktrace(stacktrace: Option<&mut sentry::protocol::Stacktrace>) {
+    let Some(stacktrace) = stacktrace else {
+        return;
+    };
+    for frame in &mut stacktrace.frames {
+        if let Some(filename) = frame.filename.take() {
+            frame.filename = Some(scrub_path(&filename));
+        }
+        if frame.abs_path.is_some() {
+            frame.abs_path = frame.filename.clone();
+        }
+    }
+}
+
 fn scrub_user(event: &mut sentry::protocol::Event<'static>) {
     if let Some(user) = event.user.take() {
         event.user = Some(sentry::protocol::User {
@@ -135,6 +162,12 @@ pub fn scrub_event(
         if let Some(message) = exception.value.take() {
             exception.value = Some(scrub_text(&message));
         }
+        scrub_stacktrace(exception.stacktrace.as_mut());
+    }
+    scrub_stacktrace(event.stacktrace.as_mut());
+    for thread in &mut event.threads {
+        scrub_stacktrace(thread.stacktrace.as_mut());
+        scrub_stacktrace(thread.raw_stacktrace.as_mut());
     }
 
     for breadcrumb in &mut event.breadcrumbs {
@@ -311,6 +344,52 @@ mod tests {
             .clone()
             .unwrap_or_default()
             .contains("abc123"));
+    }
+
+    #[test]
+    fn stack_frames_lose_absolute_paths() {
+        use sentry::protocol::{Frame, Stacktrace};
+
+        let mut event = Event::default();
+        event.exception = vec![Exception {
+            stacktrace: Some(Stacktrace {
+                frames: vec![Frame {
+                    filename: Some("/Users/ada/project/src/main.rs".into()),
+                    abs_path: Some("/Users/ada/project/src/main.rs".into()),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }),
+            ..Default::default()
+        }]
+        .into();
+        event.threads.values.push(sentry::protocol::Thread {
+            stacktrace: Some(Stacktrace {
+                frames: vec![Frame {
+                    filename: Some("/home/ada/.cargo/registry/lib.rs".into()),
+                    abs_path: Some("/home/ada/.cargo/registry/lib.rs".into()),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }),
+            ..Default::default()
+        });
+
+        let clean = scrub_event(event);
+        let frame = &clean.exception[0]
+            .stacktrace
+            .as_ref()
+            .expect("stacktrace")
+            .frames[0];
+        assert_eq!(frame.filename.as_deref(), Some("src/main.rs"));
+        assert_eq!(frame.abs_path.as_deref(), Some("src/main.rs"));
+        let thread_frame = &clean.threads[0]
+            .stacktrace
+            .as_ref()
+            .expect("thread stacktrace")
+            .frames[0];
+        assert_eq!(thread_frame.filename.as_deref(), Some("lib.rs"));
+        assert!(!format!("{clean:?}").contains("/Users/ada"));
     }
 
     #[test]

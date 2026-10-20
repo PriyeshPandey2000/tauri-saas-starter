@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/react";
-
 import type {
   ErrorReportContext,
   ErrorReporterPort,
@@ -13,6 +11,8 @@ export interface SentryErrorReporterOptions {
   onWarning?: (message: string, context?: unknown) => void;
 }
 
+type SentrySdk = typeof import("@sentry/react");
+
 const DEDUPE_WINDOW_MS = 60_000;
 const PER_ERROR_LIMIT = 3;
 const GLOBAL_LIMIT = 20;
@@ -24,7 +24,8 @@ export function createSentryErrorReporter(
     options.onWarning ??
     ((message: string, context?: unknown) => console.warn(message, context));
   let consent = false;
-  let initialized = false;
+  let sdk: SentrySdk | null = null;
+  let initPromise: Promise<void> | null = null;
   let userId: string | null = null;
   let globalWindow = 0;
   let globalCount = 0;
@@ -54,8 +55,8 @@ export function createSentryErrorReporter(
     return true;
   }
 
-  function init(): void {
-    if (initialized || !consent) {
+  async function init(): Promise<void> {
+    if (sdk || !consent) {
       return;
     }
     if (!options.dsn) {
@@ -65,38 +66,48 @@ export function createSentryErrorReporter(
       }
       return;
     }
-    Sentry.init({
-      dsn: options.dsn,
-      environment: options.environment,
-      release: options.release,
-      integrations: [],
-      tracesSampleRate: 0,
-      dataCollection: { userInfo: false },
-      beforeSend(event) {
-        return scrubSentryEvent(
-          event as unknown as Record<string, unknown>,
-        ) as unknown as typeof event;
-      },
-      beforeBreadcrumb(breadcrumb) {
-        return {
-          ...breadcrumb,
-          message:
-            typeof breadcrumb.message === "string"
-              ? scrubText(breadcrumb.message)
-              : breadcrumb.message,
-          data: breadcrumb.data
-            ? (scrubSentryEvent({ extra: breadcrumb.data }).extra as Record<
-                string,
-                unknown
-              >)
-            : breadcrumb.data,
-        };
-      },
+    initPromise ??= (async () => {
+      // Loaded only after consent so users who decline ship no Sentry code.
+      const Sentry = await import("@sentry/react");
+      if (!consent) {
+        return;
+      }
+      Sentry.init({
+        dsn: options.dsn,
+        environment: options.environment,
+        release: options.release,
+        integrations: [],
+        tracesSampleRate: 0,
+        dataCollection: { userInfo: false },
+        beforeSend(event) {
+          return scrubSentryEvent(
+            event as unknown as Record<string, unknown>,
+          ) as unknown as typeof event;
+        },
+        beforeBreadcrumb(breadcrumb) {
+          return {
+            ...breadcrumb,
+            message:
+              typeof breadcrumb.message === "string"
+                ? scrubText(breadcrumb.message)
+                : breadcrumb.message,
+            data: breadcrumb.data
+              ? (scrubSentryEvent({ extra: breadcrumb.data }).extra as Record<
+                  string,
+                  unknown
+                >)
+              : breadcrumb.data,
+          };
+        },
+      });
+      sdk = Sentry;
+      if (userId) {
+        Sentry.setUser({ id: userId });
+      }
+    })().finally(() => {
+      initPromise = null;
     });
-    initialized = true;
-    if (userId) {
-      Sentry.setUser({ id: userId });
-    }
+    await initPromise;
   }
 
   return {
@@ -104,15 +115,15 @@ export function createSentryErrorReporter(
       if (!consent) {
         return;
       }
-      init();
-      if (!initialized) {
+      await init();
+      if (!sdk) {
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
       if (!withinLimits(message)) {
         return;
       }
-      Sentry.captureException(error, {
+      sdk.captureException(error, {
         tags: context?.tags,
         extra: context?.extra,
       });
@@ -122,11 +133,11 @@ export function createSentryErrorReporter(
       if (!consent) {
         return;
       }
-      init();
-      if (!initialized || !withinLimits(message)) {
+      await init();
+      if (!sdk || !withinLimits(message)) {
         return;
       }
-      Sentry.captureMessage(message, {
+      sdk.captureMessage(message, {
         level: "error",
         tags: context?.tags,
         extra: context?.extra,
@@ -134,29 +145,30 @@ export function createSentryErrorReporter(
     },
 
     addBreadcrumb(message, data) {
-      if (!consent || !initialized) {
+      if (!consent || !sdk) {
         return;
       }
-      Sentry.addBreadcrumb({ message: scrubText(message), data });
+      sdk.addBreadcrumb({ message: scrubText(message), data });
     },
 
     setUser(nextUserId) {
       userId = nextUserId;
-      if (initialized) {
-        Sentry.setUser(nextUserId ? { id: nextUserId } : null);
+      if (sdk) {
+        sdk.setUser(nextUserId ? { id: nextUserId } : null);
       }
     },
 
     setConsent(granted) {
       consent = granted;
       if (granted) {
-        init();
+        void init();
         return;
       }
-      if (initialized) {
-        initialized = false;
-        Sentry.setUser(null);
-        void Sentry.close();
+      if (sdk) {
+        const closing = sdk;
+        sdk = null;
+        closing.setUser(null);
+        void closing.close();
       }
     },
   };

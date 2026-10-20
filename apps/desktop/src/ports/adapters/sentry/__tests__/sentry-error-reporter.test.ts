@@ -35,6 +35,7 @@ describe("Sentry error reporter", () => {
   it("initializes after consent with environment and release", async () => {
     const reporter = setup();
     reporter.setConsent(true);
+    await reporter.captureException(new Error("boom"));
     expect(sentry.init).toHaveBeenCalledWith(
       expect.objectContaining({
         environment: "dev",
@@ -42,16 +43,17 @@ describe("Sentry error reporter", () => {
         tracesSampleRate: 0,
       }),
     );
-    await reporter.captureException(new Error("boom"));
     expect(sentry.captureException).toHaveBeenCalled();
   });
 
   it("stops sending and clears the user on revoke", async () => {
     const reporter = setup();
     reporter.setConsent(true);
+    await reporter.captureException(new Error("first"));
     reporter.setUser("user-a");
     expect(sentry.setUser).toHaveBeenCalledWith({ id: "user-a" });
 
+    sentry.captureException.mockClear();
     reporter.setConsent(false);
     expect(sentry.setUser).toHaveBeenCalledWith(null);
     expect(sentry.close).toHaveBeenCalled();

@@ -13,8 +13,8 @@ export const ConfigSchema = z.object({
   /** "true" skips all PostHog requests until telemetry consent is granted. */
   VITE_FLAGS_REQUIRE_CONSENT: z
     .enum(["true", "false"])
-    .transform((value) => value === "true")
-    .optional(),
+    .default("true")
+    .transform((value) => value === "true"),
   VITE_SENTRY_DSN: z.string().url().optional(),
   VITE_APP_VERSION: z.string().min(1).optional(),
   VITE_SUPPORT_EMAIL: z.string().email().optional(),
