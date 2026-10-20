@@ -71,3 +71,10 @@ These need a built/running app (the Tauri plugin cannot run under Node).
    clear error rather than a silent failure.
 5. Sign out and back in: the local database closes and reopens; the persisted query
    cache is cleared on sign-out.
+
+## M4 review checks (M4)
+
+1. Scroll 10,000 notes and confirm it stays smooth (automated DOM-node count is the proxy; feel needs a real app).
+2. Sign in as two accounts on one machine and confirm separate `app-<sha256>.db` files and no shared notes.
+3. Force a migration failure (e.g. corrupt `0002_notes_created_at.sql` in a dev build) and confirm the notes error screen offers Retry and Sign out, and that Account/Settings stay reachable.
+4. Lose the session through a 401 (revoke it server-side) and confirm the next sign-in as another user shows none of the previous user's notes.
