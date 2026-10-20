@@ -65,6 +65,7 @@ export default [
         '**/notes/__tests__/isolation.test.ts',
         '**/ports/adapters/sqlite/__tests__/local-notes-repository.test.ts',
         '**/app/__tests__/query-isolation.test.ts',
+        '**/__tests__/secret-patterns.test.ts',
       ],
       'boundaries/files': [{ pattern: '**/ports/index.ts', category: 'composition-root' }],
       'boundaries/elements': [

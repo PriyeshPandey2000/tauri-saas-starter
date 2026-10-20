@@ -141,6 +141,7 @@
       "past_due": "Past due",
       "canceled": "Canceled",
       "none": "Free"
-    }
+    },
+    "entitlementKeysMissing": "Dev: VITE_ENTITLEMENT_PUBLIC_KEYS is empty, so offline entitlement grace is disabled."
   }
 }

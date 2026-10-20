@@ -121,7 +121,11 @@ export function registerBillingRoutes(
     }
     const current = await loadCurrentSubscription(db, userId);
     const access = resolveAccess(current);
-    if (access.status === "active" || access.status === "trialing") {
+    if (
+      access.status === "active" ||
+      access.status === "trialing" ||
+      access.status === "past_due"
+    ) {
       return c.json({ error: "already_subscribed", hint: "open_portal" }, 409);
     }
     const [account] = await db

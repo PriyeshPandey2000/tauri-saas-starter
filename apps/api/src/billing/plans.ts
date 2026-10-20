@@ -42,3 +42,19 @@ export function planSummaries(
 export function isPlanKey(value: string): value is BillingPlanKey {
   return value === "free" || value === "pro";
 }
+
+/** The only product-id -> plan mapping. Unknown products return `null`. */
+export function planForProductId(
+  env: Pick<ApiEnv, "DODO_PAYMENTS_PRODUCT_PRO">,
+  productId: string | undefined,
+): BillingPlanKey | null {
+  if (!productId) {
+    return null;
+  }
+  for (const [key, plan] of Object.entries(getPlans(env))) {
+    if (plan.productId === productId && isPlanKey(key)) {
+      return key;
+    }
+  }
+  return null;
+}

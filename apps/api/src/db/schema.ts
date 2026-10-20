@@ -105,13 +105,21 @@ export const notes = pgTable(
   ],
 );
 
-export const customers = pgTable("customers", {
-  userId: text("user_id")
-    .primaryKey()
-    .references(() => user.id, { onDelete: "cascade" }),
-  providerCustomerId: text("provider_customer_id").notNull(),
-  ...timestamps,
-});
+export const customers = pgTable(
+  "customers",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    providerCustomerId: text("provider_customer_id").notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("customers_provider_customer_id_unique").on(
+      table.providerCustomerId,
+    ),
+  ],
+);
 
 export const subscriptions = pgTable(
   "subscriptions",

@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 
-const patterns = [
-  { name: "posthog key", regex: /\bphc_[A-Za-z0-9]{20,}\b/ },
-  { name: "dodo key", regex: /\b(?:dodo|sk_live|sk_test)_[A-Za-z0-9]{16,}\b/ },
-  { name: "webhook secret", regex: /\bwhsec_[A-Za-z0-9+/=]{16,}\b/ },
-  { name: "private key", regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
-  { name: "assigned secret", regex: /(?:API_KEY|WEBHOOK_KEY|CLIENT_SECRET)=[A-Za-z0-9]{16,}/ },
-];
+import { findSecretHits } from "./secret-patterns.mjs";
 
 const diff = execFileSync(
   "git",
@@ -20,14 +14,7 @@ const added = diff
   .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
   .map((line) => line.slice(1));
 
-const hits = [];
-for (const line of added) {
-  for (const { name, regex } of patterns) {
-    if (regex.test(line)) {
-      hits.push(`${name}: ${line.trim().slice(0, 120)}`);
-    }
-  }
-}
+const hits = findSecretHits(added);
 
 if (hits.length > 0) {
   console.error("Refusing to commit key-shaped values:");

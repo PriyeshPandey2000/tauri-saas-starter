@@ -46,11 +46,21 @@ export function resolveAccess(
   const pro = getPlans({ DODO_PAYMENTS_PRODUCT_PRO: "configured" }).pro;
 
   if (status === "active" || status === "trialing") {
+    const end = row.currentPeriodEnd;
+    const stalePeriodEnd =
+      end !== null &&
+      now.getTime() > end.getTime() + PERIOD_MARGIN_DAYS * DAY_MS;
+    const missingPeriodEndTooOld =
+      end === null &&
+      now.getTime() > row.providerEventAt.getTime() + 35 * DAY_MS;
+    if (stalePeriodEnd || missingPeriodEndTooOld) {
+      return { plan: "free", status: "none", features: [], activeUntil: end };
+    }
     return {
       plan: "pro",
       status,
       features: pro.features,
-      activeUntil: row.currentPeriodEnd,
+      activeUntil: end,
     };
   }
   if (status === "past_due") {

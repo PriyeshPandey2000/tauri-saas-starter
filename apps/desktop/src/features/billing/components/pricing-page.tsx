@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { BillingPlan, PlanSummary } from "@app/shared";
 
 import { ports } from "@/ports";
+import { getConfig } from "@/shared/lib/config";
 import { useEntitlementStore } from "../entitlement-store";
 
 export function PricingPage() {
@@ -13,6 +14,9 @@ export function PricingPage() {
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const missingKeys =
+    import.meta.env.VITE_APP_ENV !== "prod" &&
+    !getConfig().VITE_ENTITLEMENT_PUBLIC_KEYS;
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +73,11 @@ export function PricingPage() {
 
       {offline && (
         <p className="text-xs text-muted-foreground">{t("billing.offline")}</p>
+      )}
+      {missingKeys && (
+        <p className="text-xs text-amber-600">
+          {t("billing.entitlementKeysMissing")}
+        </p>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 

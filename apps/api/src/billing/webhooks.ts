@@ -4,6 +4,7 @@ import { Webhook } from "standardwebhooks";
 
 import type { Database } from "../db/client";
 import type { ApiEnv } from "../env";
+import { planForProductId } from "./plans";
 import {
   checkoutSessions,
   customers,
@@ -22,7 +23,12 @@ const DodoEventSchema = z
 
 export interface WebhookDeps {
   db: Database;
-  env: Pick<ApiEnv, "DODO_PAYMENTS_WEBHOOK_KEY" | "ENTITLEMENT_SIGNING_KID">;
+  env: Pick<
+    ApiEnv,
+    | "DODO_PAYMENTS_WEBHOOK_KEY"
+    | "DODO_PAYMENTS_PRODUCT_PRO"
+    | "ENTITLEMENT_SIGNING_KID"
+  >;
   now?: () => Date;
   onWarning?: (message: string, context?: unknown) => void;
 }
@@ -61,6 +67,7 @@ const STATUS_BY_EVENT: Record<string, Status | "ignore"> = {
   "subscription.unpaused": "active",
   "subscription.cancelled": "canceled",
   "subscription.expired": "none",
+  "subscription.plan_changed": "active",
   "subscription.failed": "ignore",
 };
 
@@ -111,145 +118,168 @@ export async function handleDodoWebhook(
   const providerCustomerId = stringValue(data, "customer_id");
   const metadata = metadataOf(data);
   const metadataUser = stringValue(metadata, "user_id");
-  const metadataPlan = stringValue(metadata, "plan_key");
+  const productId = stringValue(data, "product_id");
   const checkoutSessionId =
     stringValue(data, "checkout_session_id") ?? stringValue(data, "session_id");
 
-  const outcome = await deps.db.transaction(async (tx) => {
-    const inserted = await tx
-      .insert(webhookEvents)
-      .values({ id: webhookId, type: event.type, receivedAt: now })
-      .onConflictDoNothing()
-      .returning();
-    if (inserted.length === 0) {
-      return "duplicate" as const;
-    }
+  let outcome:
+    "duplicate" | "ignored" | "unknown_user" | "stale" | "applied" | "conflict";
+  try {
+    outcome = await deps.db.transaction(async (tx) => {
+      const inserted = await tx
+        .insert(webhookEvents)
+        .values({ id: webhookId, type: event.type, receivedAt: now })
+        .onConflictDoNothing()
+        .returning();
+      if (inserted.length === 0) {
+        return "duplicate" as const;
+      }
 
-    // Log-only events (refunds, disputes, unknown types) are acknowledged.
-    const nextStatus = STATUS_BY_EVENT[event.type];
-    if (nextStatus === undefined) {
-      return "ignored" as const;
-    }
+      // Log-only events (refunds, disputes, unknown types) are acknowledged.
+      const nextStatus = STATUS_BY_EVENT[event.type];
+      if (nextStatus === undefined) {
+        return "ignored" as const;
+      }
 
-    const byProvider = providerSubscriptionId
-      ? (
-          await tx
-            .select()
-            .from(subscriptions)
-            .where(
-              eq(subscriptions.providerSubscriptionId, providerSubscriptionId),
-            )
-            .limit(1)
-        )[0]
-      : undefined;
+      // Plans come from the event's product id only; metadata cannot grant one.
+      const mappedPlan = planForProductId(deps.env, productId);
+      if (!mappedPlan) {
+        return "ignored" as const;
+      }
 
-    let userId = byProvider?.userId;
-    let planKey = byProvider?.planKey ?? metadataPlan ?? "pro";
+      const byProvider = providerSubscriptionId
+        ? (
+            await tx
+              .select()
+              .from(subscriptions)
+              .where(
+                eq(
+                  subscriptions.providerSubscriptionId,
+                  providerSubscriptionId,
+                ),
+              )
+              .limit(1)
+          )[0]
+        : undefined;
 
-    if (!userId && checkoutSessionId) {
-      const [session] = await tx
-        .select()
-        .from(checkoutSessions)
-        .where(eq(checkoutSessions.sessionId, checkoutSessionId))
+      if (byProvider && metadataUser && metadataUser !== byProvider.userId) {
+        return "ignored" as const;
+      }
+      let userId = byProvider?.userId;
+      const planKey = mappedPlan;
+
+      if (!userId && checkoutSessionId) {
+        const [session] = await tx
+          .select()
+          .from(checkoutSessions)
+          .where(eq(checkoutSessions.sessionId, checkoutSessionId))
+          .limit(1);
+        userId = session?.userId;
+      }
+      if (!userId && providerCustomerId) {
+        const [customer] = await tx
+          .select()
+          .from(customers)
+          .where(eq(customers.providerCustomerId, providerCustomerId))
+          .limit(1);
+        userId = customer?.userId;
+      }
+      if (!userId && metadataUser) {
+        userId = metadataUser;
+      }
+      if (!userId) {
+        return "unknown_user" as const;
+      }
+
+      const [knownUser] = await tx
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.id, userId))
         .limit(1);
-      userId = session?.userId;
-      planKey = session?.planKey ?? planKey;
-    }
-    if (!userId && providerCustomerId) {
-      const [customer] = await tx
+      if (!knownUser) {
+        return "unknown_user" as const;
+      }
+
+      if (providerCustomerId) {
+        await tx
+          .insert(customers)
+          .values({
+            userId,
+            providerCustomerId,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: customers.userId,
+            set: { providerCustomerId, updatedAt: now },
+          });
+      }
+
+      if (nextStatus === "ignore" || !providerSubscriptionId) {
+        return "ignored" as const;
+      }
+
+      // A subscription id already owned by another user is never reassigned.
+      const owner = providerSubscriptionId
+        ? (
+            await tx
+              .select({ userId: subscriptions.userId })
+              .from(subscriptions)
+              .where(
+                eq(
+                  subscriptions.providerSubscriptionId,
+                  providerSubscriptionId,
+                ),
+              )
+              .limit(1)
+          )[0]
+        : undefined;
+      if (owner && owner.userId !== userId) {
+        return "ignored" as const;
+      }
+
+      // The row that matters is the user's current subscription, regardless of
+      // which subscription id this event names.
+      const [current] = await tx
         .select()
-        .from(customers)
-        .where(eq(customers.providerCustomerId, providerCustomerId))
+        .from(subscriptions)
+        .where(eq(subscriptions.userId, userId))
         .limit(1);
-      userId = customer?.userId;
-    }
-    if (!userId && metadataUser) {
-      userId = metadataUser;
-    }
-    if (!userId) {
-      return "unknown_user" as const;
-    }
 
-    const [knownUser] = await tx
-      .select({ id: user.id })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-    if (!knownUser) {
-      return "unknown_user" as const;
-    }
+      const isDifferentSubscription =
+        current && current.providerSubscriptionId !== providerSubscriptionId;
+      if (
+        isDifferentSubscription &&
+        event.type !== "subscription.active" &&
+        event.type !== "subscription.renewed"
+      ) {
+        return "ignored" as const;
+      }
+      if (
+        isDifferentSubscription &&
+        eventAt.getTime() <= current.providerEventAt.getTime()
+      ) {
+        return "stale" as const;
+      }
+      if (
+        current &&
+        !isDifferentSubscription &&
+        eventAt.getTime() < current.providerEventAt.getTime()
+      ) {
+        return "stale" as const;
+      }
 
-    if (providerCustomerId) {
+      const periodEnd =
+        dateValue(data.current_period_end) ?? dateValue(data.next_billing_date);
+      const pastDueEnds = dateValue(data.past_due_ends_at);
+      const scheduledCancel =
+        data.cancel_at_next_billing_date === true ||
+        data.cancel_at_period_end === true;
+
       await tx
-        .insert(customers)
-        .values({ userId, providerCustomerId, createdAt: now, updatedAt: now })
-        .onConflictDoUpdate({
-          target: customers.userId,
-          set: { providerCustomerId, updatedAt: now },
-        });
-    }
-
-    if (nextStatus === "ignore" || !providerSubscriptionId) {
-      return "ignored" as const;
-    }
-
-    // The row that matters is the user's current subscription, regardless of
-    // which subscription id this event names.
-    const [current] = await tx
-      .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.userId, userId))
-      .limit(1);
-
-    const isDifferentSubscription =
-      current && current.providerSubscriptionId !== providerSubscriptionId;
-    if (
-      isDifferentSubscription &&
-      event.type !== "subscription.active" &&
-      event.type !== "subscription.renewed"
-    ) {
-      return "ignored" as const;
-    }
-    if (
-      isDifferentSubscription &&
-      eventAt.getTime() <= current.providerEventAt.getTime()
-    ) {
-      return "stale" as const;
-    }
-    if (
-      current &&
-      !isDifferentSubscription &&
-      eventAt.getTime() < current.providerEventAt.getTime()
-    ) {
-      return "stale" as const;
-    }
-
-    const periodEnd =
-      dateValue(data.current_period_end) ?? dateValue(data.next_billing_date);
-    const pastDueEnds = dateValue(data.past_due_ends_at);
-    const scheduledCancel =
-      data.cancel_at_next_billing_date === true ||
-      data.cancel_at_period_end === true;
-
-    await tx
-      .insert(subscriptions)
-      .values({
-        userId,
-        planKey,
-        providerSubscriptionId,
-        providerCustomerId:
-          providerCustomerId ?? current?.providerCustomerId ?? null,
-        status: nextStatus,
-        currentPeriodEnd: periodEnd ?? current?.currentPeriodEnd ?? null,
-        pastDueEndsAt: pastDueEnds ?? current?.pastDueEndsAt ?? null,
-        cancelAtPeriodEnd: scheduledCancel,
-        providerEventAt: eventAt,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: subscriptions.userId,
-        set: {
+        .insert(subscriptions)
+        .values({
+          userId,
           planKey,
           providerSubscriptionId,
           providerCustomerId:
@@ -258,16 +288,45 @@ export async function handleDodoWebhook(
           currentPeriodEnd: periodEnd ?? current?.currentPeriodEnd ?? null,
           pastDueEndsAt: pastDueEnds ?? current?.pastDueEndsAt ?? null,
           cancelAtPeriodEnd: scheduledCancel,
-          providerEventAt:
-            eventAt.getTime() > (current?.providerEventAt.getTime() ?? 0)
-              ? eventAt
-              : (current?.providerEventAt ?? eventAt),
+          providerEventAt: eventAt,
+          createdAt: now,
           updatedAt: now,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: subscriptions.userId,
+          set: {
+            planKey,
+            providerSubscriptionId,
+            providerCustomerId:
+              providerCustomerId ?? current?.providerCustomerId ?? null,
+            status: nextStatus,
+            currentPeriodEnd: periodEnd ?? current?.currentPeriodEnd ?? null,
+            pastDueEndsAt: pastDueEnds ?? current?.pastDueEndsAt ?? null,
+            cancelAtPeriodEnd: scheduledCancel,
+            providerEventAt:
+              eventAt.getTime() > (current?.providerEventAt.getTime() ?? 0)
+                ? eventAt
+                : (current?.providerEventAt ?? eventAt),
+            updatedAt: now,
+          },
+        });
 
-    return "applied" as const;
-  });
+      return "applied" as const;
+    });
+  } catch (error) {
+    // A concurrent delivery that loses the unique race is acknowledged, not a
+    // retry loop. Postgres reports 23505; PGlite uses the same code.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: unknown }).code === "23505"
+    ) {
+      outcome = "conflict";
+    } else {
+      throw error;
+    }
+  }
 
   deps.onWarning?.("Dodo webhook handled", {
     type: event.type,

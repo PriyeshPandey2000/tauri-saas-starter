@@ -1,10 +1,19 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   canonicalEntitlement,
   type Entitlement,
   type EntitlementPayload,
 } from "@app/shared";
+
+const secure = vi.hoisted(() => ({ value: null as string | null }));
+
+vi.mock("@/shared/lib/secureStorage", () => ({
+  getSecureValue: async () => secure.value,
+  setSecureValue: async (_key: string, value: string) => {
+    secure.value = value;
+  },
+}));
 
 import {
   clearEntitlementCache,
@@ -66,6 +75,7 @@ async function signPayload(payload: EntitlementPayload): Promise<Entitlement> {
 
 describe("entitlement cache", () => {
   beforeEach(async () => {
+    secure.value = null;
     await clearEntitlementCache();
   });
 
@@ -103,6 +113,23 @@ describe("entitlement cache", () => {
     await saveEntitlement("user-a", entitlement, keys);
     const rolledBack = new Date(Date.now() - 3_600_000);
     expect(await loadCachedEntitlement("user-a", keys, rolledBack)).toBeNull();
+  });
+
+  it("rejects a snapshot issued in the future", async () => {
+    const future = await signPayload(
+      makePayload({
+        issuedAt: new Date(Date.now() + 600_000).toISOString(),
+      }),
+    );
+    expect(await saveEntitlement("user-a", future, keys)).toBe(false);
+    expect(await loadCachedEntitlement("user-a", keys)).toBeNull();
+  });
+
+  it("rejects the cache when the keychain high-water mark is ahead", async () => {
+    const entitlement = await signPayload(makePayload());
+    await saveEntitlement("user-a", entitlement, keys);
+    secure.value = String(Date.now() + 3_600_000);
+    expect(await loadCachedEntitlement("user-a", keys)).toBeNull();
   });
 
   it("never shows one user's snapshot to another", async () => {

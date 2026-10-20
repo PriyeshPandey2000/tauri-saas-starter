@@ -52,6 +52,7 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
   });
   const desktopLimiter = createRateLimiter({ max: 30, windowMs: 60_000 });
   const billingLimiter = createRateLimiter({ max: 60, windowMs: 60_000 });
+  const webhookLimiter = createRateLimiter({ max: 120, windowMs: 60_000 });
   const app = new Hono<{ Variables: AuthVariables }>();
 
   app.use(
@@ -122,6 +123,22 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
     registerBillingRoutes(app, { db, env });
 
     app.post("/webhooks/dodo", async (c) => {
+      const key = resolveClientKey({
+        headers: c.req.raw.headers,
+        trustedProxyHeader: env.TRUSTED_PROXY_HEADER,
+        socketAddress: socketAddress(c),
+      });
+      if (!webhookLimiter.check(key)) {
+        return c.json({ error: "rate_limited" }, 429);
+      }
+      const declared = Number(c.req.header("content-length") ?? "0");
+      if (Number.isFinite(declared) && declared > 1_048_576) {
+        return c.json({ error: "payload_too_large" }, 413);
+      }
+      const rawBody = await c.req.text();
+      if (new TextEncoder().encode(rawBody).byteLength > 1_048_576) {
+        return c.json({ error: "payload_too_large" }, 413);
+      }
       const result = await handleDodoWebhook({ db, env }, await c.req.text(), {
         "webhook-id": c.req.header("webhook-id"),
         "webhook-timestamp": c.req.header("webhook-timestamp"),

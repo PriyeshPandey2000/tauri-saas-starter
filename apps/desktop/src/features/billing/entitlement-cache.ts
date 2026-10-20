@@ -1,5 +1,6 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { z } from "zod";
+import { getSecureValue, setSecureValue } from "@/shared/lib/secureStorage";
 import {
   canonicalEntitlement,
   EntitlementSchema,
@@ -10,6 +11,7 @@ import {
 const CACHE_FILE = "billing.json";
 const CACHE_KEY = "billing";
 const CLOCK_SKEW_MS = 60_000;
+const HIGH_WATER_KEY = "billing.clockHighWater";
 
 const PublicKeySchema = z.object({
   kid: z.string().min(1),
@@ -93,6 +95,24 @@ export async function verifyEntitlementSignature(
   }
 }
 
+async function readHighWater(): Promise<number> {
+  try {
+    const raw = await getSecureValue(HIGH_WATER_KEY);
+    const parsed = raw ? Number(raw) : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function writeHighWater(timestamp: number): Promise<void> {
+  try {
+    await setSecureValue(HIGH_WATER_KEY, String(timestamp));
+  } catch {
+    // A keychain failure only weakens the clock guard; never block billing.
+  }
+}
+
 async function loadFile(): Promise<CacheFile> {
   if (!isTauri()) {
     const parsed = CacheFileSchema.safeParse(memory.get(CACHE_KEY));
@@ -136,6 +156,20 @@ export async function loadCachedEntitlement(
   if (Number.isNaN(highest.getTime())) {
     return null;
   }
+  const issuedAt = new Date(entry.entitlement.issuedAt);
+  if (
+    Number.isNaN(issuedAt.getTime()) ||
+    now.getTime() + CLOCK_SKEW_MS < issuedAt.getTime()
+  ) {
+    return null;
+  }
+  const highWater = await readHighWater();
+  if (now.getTime() + CLOCK_SKEW_MS < highWater) {
+    return null;
+  }
+  if (now.getTime() > highWater) {
+    await writeHighWater(now.getTime());
+  }
   if (now.getTime() + CLOCK_SKEW_MS < highest.getTime()) {
     return null;
   }
@@ -162,6 +196,17 @@ export async function saveEntitlement(
     !(await verifyEntitlementSignature(entitlement, keys))
   ) {
     return false;
+  }
+  const now = Date.now();
+  if (now + CLOCK_SKEW_MS < new Date(entitlement.issuedAt).getTime()) {
+    return false;
+  }
+  const highWater = await readHighWater();
+  if (now + CLOCK_SKEW_MS < highWater) {
+    return false;
+  }
+  if (now > highWater) {
+    await writeHighWater(now);
   }
   const file = await loadFile();
   const previous = file.entries[userId]?.highestIssuedAt;

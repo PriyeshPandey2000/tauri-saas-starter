@@ -10,6 +10,8 @@ import {
   saveEntitlement,
 } from "./entitlement-cache";
 
+let warnedMissingKeys = false;
+
 const POLL_INTERVAL_MS = 3_000;
 const POLL_DEADLINE_MS = 2 * 60_000;
 
@@ -29,7 +31,14 @@ let pollTimer: ReturnType<typeof setTimeout> | null = null;
 let pollDeadline = 0;
 
 function keys() {
-  return parsePublicKeys(getConfig().VITE_ENTITLEMENT_PUBLIC_KEYS);
+  const parsed = parsePublicKeys(getConfig().VITE_ENTITLEMENT_PUBLIC_KEYS);
+  if (parsed.length === 0 && !warnedMissingKeys) {
+    warnedMissingKeys = true;
+    console.warn(
+      "VITE_ENTITLEMENT_PUBLIC_KEYS is empty; offline entitlement grace is disabled",
+    );
+  }
+  return parsed;
 }
 
 function stopPolling(): void {
@@ -73,7 +82,17 @@ export const useEntitlementStore = create<EntitlementState>((set, get) => ({
     try {
       const entitlement = await ports.billing.getEntitlement();
       if (!entitlement) {
-        set({ entitlement: null, loading: false, error: null, offline: false });
+        // Billing disabled (503) must not downgrade a paying user mid-outage.
+        set(
+          get().entitlement
+            ? { loading: false, error: null, offline: true }
+            : {
+                entitlement: null,
+                loading: false,
+                error: null,
+                offline: false,
+              },
+        );
         return;
       }
       if (entitlement.userId !== userId) {

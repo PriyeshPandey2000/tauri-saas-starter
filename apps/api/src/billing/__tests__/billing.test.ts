@@ -19,6 +19,7 @@ import {
   type SubscriptionRow,
 } from "../entitlement";
 import { createRequireFeature } from "../require-feature";
+import { registerBillingRoutes } from "../routes";
 
 const WEBHOOK_SECRET = `whsec_${Buffer.from("local-test-secret").toString("base64")}`;
 const { privateKey, publicKey } = generateKeyPairSync("ec", {
@@ -179,6 +180,30 @@ describe("entitlements", () => {
     expect(access.features).toContain("export");
   });
 
+  it("downgrades an active subscription whose period ended over 3 days ago", () => {
+    const access = resolveAccess(
+      row({
+        status: "active",
+        currentPeriodEnd: new Date("2026-10-01T00:00:00.000Z"),
+      }),
+      new Date("2026-10-20T00:00:00.000Z"),
+    );
+    expect(access.plan).toBe("free");
+    expect(access.features).toEqual([]);
+  });
+
+  it("downgrades an active subscription with no period end and an old event", () => {
+    const access = resolveAccess(
+      row({
+        status: "active",
+        currentPeriodEnd: null,
+        providerEventAt: new Date("2026-08-01T00:00:00.000Z"),
+      }),
+      new Date("2026-10-20T00:00:00.000Z"),
+    );
+    expect(access.plan).toBe("free");
+  });
+
   it("downgrades after the grace deadline", () => {
     const access = resolveAccess(
       row({
@@ -245,6 +270,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
   it("rejects tampered bodies, wrong secret, stale timestamps and missing headers", async () => {
     const payload = event("subscription.active", {
       subscription_id: "sub_1",
+      product_id: "prod_test",
       customer_id: "cus_1",
       metadata: { user_id: "user-a", plan_key: "pro" },
     });
@@ -301,6 +327,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
   it("applies a subscription once and is idempotent", async () => {
     const payload = event("subscription.active", {
       subscription_id: "sub_1",
+      product_id: "prod_test",
       customer_id: "cus_1",
       next_billing_date: "2026-11-20T00:00:00.000Z",
       metadata: { user_id: "user-a", plan_key: "pro" },
@@ -327,6 +354,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
       "evt_1",
       event("subscription.active", {
         subscription_id: "sub_1",
+        product_id: "prod_test",
         next_billing_date: "2026-11-01T00:00:00.000Z",
         metadata: { user_id: "user-a", plan_key: "pro" },
       }),
@@ -338,6 +366,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
         "subscription.cancelled",
         {
           subscription_id: "sub_1",
+          product_id: "prod_test",
           customer_id: "cus_1",
           metadata: { user_id: "user-a", plan_key: "pro" },
         },
@@ -351,6 +380,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
         "subscription.active",
         {
           subscription_id: "sub_1",
+          product_id: "prod_test",
           metadata: { user_id: "user-a", plan_key: "pro" },
         },
         new Date(Date.now() - 60_000).toISOString(),
@@ -366,6 +396,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
         "subscription.active",
         {
           subscription_id: "sub_2",
+          product_id: "prod_test",
           next_billing_date: "2026-12-01T00:00:00.000Z",
           metadata: { user_id: "user-a", plan_key: "pro" },
         },
@@ -378,7 +409,11 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
       "evt_5",
       event(
         "subscription.expired",
-        { subscription_id: "sub_1", metadata: { user_id: "user-a" } },
+        {
+          subscription_id: "sub_1",
+          product_id: "prod_test",
+          metadata: { user_id: "user-a" },
+        },
         new Date(Date.now() + 3000).toISOString(),
       ),
     );
@@ -393,6 +428,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
       "evt_ghost",
       event("subscription.active", {
         subscription_id: "sub_x",
+        product_id: "prod_test",
         metadata: { user_id: "no-such-user" },
       }),
     );
@@ -406,6 +442,7 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
       "evt_other",
       event("refund.succeeded", {
         subscription_id: "sub_1",
+        product_id: "prod_test",
         metadata: { user_id: "user-a" },
       }),
     );
@@ -439,6 +476,135 @@ describe("webhooks and paid routes (real app + PGlite)", () => {
       /Cancel your subscription/,
     );
     await expect(assertAccountDeletable(db, "user-a")).resolves.toBeUndefined();
+  });
+
+  it("derives the plan from the product id and ignores unknown products", async () => {
+    const unknown = await postWebhook(
+      app,
+      "evt_unknown_product",
+      event("subscription.active", {
+        subscription_id: "sub_unknown",
+        product_id: "prod_other_app",
+        metadata: { user_id: "user-a", plan_key: "pro" },
+      }),
+    );
+    expect(unknown.status).toBe(200);
+    await expect(unknown.json()).resolves.toMatchObject({ outcome: "ignored" });
+    expect(await db.select().from(schema.subscriptions)).toHaveLength(0);
+
+    const spoofed = await postWebhook(
+      app,
+      "evt_spoofed_plan",
+      event("subscription.active", {
+        subscription_id: "sub_spoof",
+        product_id: "prod_test",
+        metadata: { user_id: "user-a", plan_key: "free" },
+      }),
+    );
+    expect(spoofed.status).toBe(200);
+    const [row] = await db.select().from(schema.subscriptions);
+    expect(row?.planKey).toBe("pro");
+  });
+
+  it("updates the plan on plan_changed by product id", async () => {
+    await postWebhook(
+      app,
+      "evt_plan_1",
+      event("subscription.active", {
+        subscription_id: "sub_plan",
+        product_id: "prod_test",
+        metadata: { user_id: "user-a" },
+      }),
+    );
+    await postWebhook(
+      app,
+      "evt_plan_2",
+      event(
+        "subscription.plan_changed",
+        {
+          subscription_id: "sub_plan",
+          product_id: "prod_test",
+          metadata: { user_id: "user-a" },
+        },
+        new Date(Date.now() + 1000).toISOString(),
+      ),
+    );
+    const [row] = await db.select().from(schema.subscriptions);
+    expect(row?.planKey).toBe("pro");
+  });
+
+  it("ignores a subscription id that already belongs to another user", async () => {
+    await postWebhook(
+      app,
+      "evt_owner",
+      event("subscription.active", {
+        subscription_id: "sub_owned",
+        product_id: "prod_test",
+        metadata: { user_id: "user-b" },
+      }),
+    );
+    const collision = await postWebhook(
+      app,
+      "evt_collision",
+      event(
+        "subscription.active",
+        {
+          subscription_id: "sub_owned",
+          product_id: "prod_test",
+          metadata: { user_id: "user-a" },
+        },
+        new Date(Date.now() + 1000).toISOString(),
+      ),
+    );
+    await expect(collision.json()).resolves.toMatchObject({
+      outcome: "ignored",
+    });
+    const rows = await db.select().from(schema.subscriptions);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.userId).toBe("user-b");
+  });
+
+  it("rejects bodies over 1 MB before verification", async () => {
+    const response = await app.request("/webhooks/dodo", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: "tauri://localhost",
+      },
+      body: "x".repeat(1_048_577),
+    });
+    expect(response.status).toBe(413);
+  });
+
+  it("returns 409 for a past_due user starting checkout", async () => {
+    await db.insert(schema.subscriptions).values({
+      userId: "user-a",
+      planKey: "pro",
+      providerSubscriptionId: "sub_past",
+      providerCustomerId: null,
+      status: "past_due",
+      currentPeriodEnd: new Date(Date.now() + 86_400_000),
+      pastDueEndsAt: new Date(Date.now() + 86_400_000),
+      cancelAtPeriodEnd: false,
+      providerEventAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const gate = new Hono<{ Variables: AuthVariables }>();
+    gate.use("*", async (c, next) => {
+      c.set("claims", { sub: "user-a" });
+      await next();
+    });
+    registerBillingRoutes(gate, { db, env: baseEnv, now: () => new Date() });
+    const response = await gate.request("/billing/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ planKey: "pro" }),
+    });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      hint: "open_portal",
+    });
   });
 
   it("enforces requireFeature server-side", async () => {
