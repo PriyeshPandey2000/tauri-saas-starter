@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 function webviewConsoleBridge() {
   return {
@@ -43,6 +44,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     webviewConsoleBridge(),
+    ...(process.env.ANALYZE === "1"
+      ? [visualizer({ filename: "dist/stats.html", gzipSize: true })]
+      : []),
   ],
   resolve: {
     alias: {

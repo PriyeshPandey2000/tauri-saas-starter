@@ -1,0 +1,8 @@
+[
+  { "name": "tauri-specta", "version": "2.0.0-rc.25" },
+  { "name": "specta", "version": "2.0.0-rc.25" },
+  { "name": "specta-macros", "version": "2.0.0-rc.25" },
+  { "name": "tauri-specta-macros", "version": "2.0.0-rc.25" },
+  { "name": "gensync", "version": "1.0.0-beta.2" },
+  { "name": "resolve", "version": "2.0.0-next.7" }
+]

@@ -9,3 +9,7 @@ build
 .env*
 !.env.example
 !.env.development
+test-results
+playwright-report
+perf-smoke.log
+release-notes.md

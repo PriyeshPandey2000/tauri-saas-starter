@@ -1,0 +1,7 @@
+{
+  "mainJsGzipKb": 300,
+  "installerMb": 15,
+  "timeToWindowShownMs": 1500,
+  "idleMemoryMb": 150,
+  "regressionPercent": 10
+}
