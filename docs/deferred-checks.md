@@ -457,3 +457,18 @@ or pasted output.
 ### M9-10 Dependabot review
 
 1. Check the weekly Dependabot PRs and CI results.
+
+### M9-11 Environment release with reviewers
+
+1. Settings → Environments → New environment named `release`.
+2. Add at least one required reviewer; limit deployment branches to tags `v*`.
+3. Move the signing secrets listed in `docs/release.md` into environment
+   secrets; confirm a tag run waits for approval before receiving them.
+
+### M9-12 Tag ruleset for v* tags
+
+1. Settings → Rules → New ruleset targeting tags `v*`.
+2. Allow creations/deletions only for maintainers; block force pushes and
+   deletions.
+3. Confirm a tag pushed by an allowed actor on a commit that is not on `main`
+   fails the release workflow before building.

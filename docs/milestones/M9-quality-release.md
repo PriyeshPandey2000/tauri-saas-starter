@@ -137,20 +137,88 @@ Guard demonstrations (temporary files, reverted): a cross-feature import failed
 
 ### Not run (needs GitHub or real signing material)
 
-- CI/release workflows on GitHub (no push, no tag, no repo settings changed).
 - Signed/notarized macOS and signed Windows artifacts.
 - The CI smoke jobs on macOS/Windows runners and the manual register rows
-  M9-01..M9-10 (repo variables/secrets, branch protection, signing,
-  updater key pair, draft release/publish, real N→N+1 update, Dependabot).
+  M9-01..M9-12 (repo variables/secrets, branch protection, release
+  environment, tag ruleset, signing, updater key pair, draft release/publish,
+  real N→N+1 update, Dependabot).
 - Installer measured locally from an unsigned DMG; CI installer measurement is
   skipped when no bundle exists.
 
+### Hardening round (2026-10-20, reviewer items 1-9)
+
+One fix commit addressed all nine findings:
+
+1. `release.yml` now verifies (before any build) that the tagged commit is an
+   ancestor of `origin/main` (`git merge-base --is-ancestor`) and that the tag
+   equals `v` + the desktop package version; the job runs in
+   `environment: release`; a wait loop requires the CI workflow run for the
+   tagged SHA to conclude `success` (via `gh api`, read-only).
+2. Signing secrets are split into two `tauri-action` steps gated by
+   `if: runner.os`; each OS only receives its own secrets. Shared updater
+   signing envs remain on both.
+3. `rustsec/audit-check` replaced by `taiki-e/install-action` (cargo-audit,
+   pinned SHA) + `pnpm audit:rust` — same ignore list as local runs.
+4. The inline secret regexes in `ci.yml` were replaced by
+   `scripts/check-tracked-secrets.mjs`, which uses `scripts/secret-patterns.mjs`
+   and exits 1 explicitly on hits (no `!` negation).
+5. Release notes output now uses a random `openssl rand -hex` delimiter.
+6. `timeout-minutes` added to every job in both workflows.
+7. Dependabot: npm grouped minor/patch only; `typescript` majors and minors and
+   `tauri-specta`/`specta` ignored; `tauri*` cargo crates grouped.
+8. See 1: green CI for the tagged SHA is required before building.
+9. Product name is a single workflow-level `PRODUCT_NAME` env used in
+   `releaseName`.
+
+`docs/release.md` gained Tag rulesets and Environment `release` manual
+sections; both are register rows M9-11/M9-12 in `docs/deferred-checks.md`.
+
+Local verification of the hardening round:
+
+```
+$ actionlint (from an empty dir, both workflow files)
+(no findings, exit 0)
+
+$ node scripts/check-tracked-secrets.mjs
+Secret scan clean (356 tracked files).
+
+$ pnpm turbo run lint typecheck build
+ Tasks:    10 successful, 10 total
+
+$ pnpm turbo run test --force
+desktop:test:  Test Files  37 passed (37)
+desktop:test:       Tests  137 passed (137)
+api:test:  Test Files  11 passed (11)
+api:test:       Tests  51 passed (51)
+
+$ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+test result: ok. 8 passed; 0 failed; 1 ignored
+
+$ pnpm version:check / verify:prerelease / lint:arch / check-vendor-imports /
+  check:cycles / verify:feature-boundaries / verify:guards / verify:capabilities
+all ok
+```
+
 ## Review
 
-_(reviewer fills)_
+**Verdict: PASS after one hardening round** (2026-10-20). Forced `turbo run lint typecheck test build` 12/12 (desktop 137 tests, api 51), `cargo test` 8 passed + 1 ignored; capability audit, feature-boundary, guard, pre-release, version and madge cycle checks all pass. All nine pinned action SHAs were verified against their version tags with `git ls-remote` (match). Workflows use `pull_request` (never `_target`), top-level and per-job least-privilege `permissions`, concurrency groups, `--frozen-lockfile`, draft-only releases, the repo wrapper via `tauriScript` (so the generated CSP applies), and optional signing. Not run: the workflows on GitHub (first push will be the first real run).
+
+Fix in ONE commit (then push; see the prompt for the CI follow-up):
+
+1. **Release trigger is too open.** Any collaborator can push a `v*` tag on any commit and get a run with signing secrets. Before building, verify the tagged commit is an ancestor of `origin/main` and that the tag equals `v` plus the package version; run the job in a protected GitHub Environment named `release` (secrets scoped to it, required reviewer), and document tag rulesets in docs/release.md.
+2. **Least-privilege secrets.** Every secret is in one step env on both OSes (Windows runners receive Apple secrets and macOS runners receive Windows ones). Split into per-OS steps with `if: runner.os == ...`.
+3. **`rustsec/audit-check` needs `checks: write`** to publish results; the job only has `contents: read`, so it will likely fail. Run the same `pnpm audit:rust` script used locally (one source for the ignore list) instead of a third-party action, or grant the extra permission.
+4. **Secret scan duplicated in YAML.** The regexes live inline and in `scripts/secret-patterns.mjs`; use the script (with an explicit `if ...; then exit 1; fi`, not a `!` negation) so they cannot drift.
+5. **Release notes output uses a constant `EOF` delimiter.** A commit message containing a line `EOF` can inject outputs. Use a random delimiter.
+6. Add `timeout-minutes` to every job (e.g. 20 to 45).
+7. **Dependabot:** the npm group `patterns: ["*"]` bundles majors together and would fight the pinned TypeScript range (`typescript-eslint` peer `<6.1.0`) and the pinned RC crates. Group minor/patch only, add `ignore` entries for `typescript` majors/minors and `tauri-specta`/`specta`, and group the `tauri*` crates and plugins together.
+8. Release job should require green CI for the tagged commit (query the check runs for that SHA with read-only API calls, or call CI as a reusable workflow).
+9. Cosmetic: release name says "Desktop SaaS Starter", the product is "Tauri SaaS Starter"; use one name from a single variable.
+
+Human items remain in the register (M9-01 to M9-10): repo rulesets and required checks, Environment `release` with reviewers and secrets, Apple and Windows signing material, updater key pair, first draft release, real N to N+1 update.
 
 ## Verification summary
 
 - **Automated tests:** CI configs, E2E (10), unit (37 files / 137 + API 11 / 51), Rust (8 passed / 1 ignored), actionlint, perf budgets, capability/feature/guard/prerelease/version audits all pass locally.
 - **Agent dev-run observations:** release build smoke exited 0 with zero webview errors and 39 ms to window shown; local perf numbers in the table above.
-- **Manual human checks still open:** [M9-01](../deferred-checks.md#m9-01-repository-variables-and-secrets), [M9-02](../deferred-checks.md#m9-02-branch-protection-checks), [M9-03](../deferred-checks.md#m9-03-built-app-headless-ci-smoke), [M9-04](../deferred-checks.md#m9-04-apple-signing-and-notarization), [M9-05](../deferred-checks.md#m9-05-windows-signing), [M9-06](../deferred-checks.md#m9-06-updater-key-pair), [M9-07](../deferred-checks.md#m9-07-draft-release-assets), [M9-08](../deferred-checks.md#m9-08-publish-the-release), [M9-09](../deferred-checks.md#m9-09-real-update-from-draft-build), [M9-10](../deferred-checks.md#m9-10-dependabot-review).
+- **Manual human checks still open:** [M9-01](../deferred-checks.md#m9-01-repository-variables-and-secrets), [M9-02](../deferred-checks.md#m9-02-branch-protection-checks), [M9-03](../deferred-checks.md#m9-03-built-app-headless-ci-smoke), [M9-04](../deferred-checks.md#m9-04-apple-signing-and-notarization), [M9-05](../deferred-checks.md#m9-05-windows-signing), [M9-06](../deferred-checks.md#m9-06-updater-key-pair), [M9-07](../deferred-checks.md#m9-07-draft-release-assets), [M9-08](../deferred-checks.md#m9-08-publish-the-release), [M9-09](../deferred-checks.md#m9-09-real-update-from-draft-build), [M9-10](../deferred-checks.md#m9-10-dependabot-review), [M9-11](../deferred-checks.md#m9-11-environment-release-with-reviewers), [M9-12](../deferred-checks.md#m9-12-tag-ruleset-for-v-tags).

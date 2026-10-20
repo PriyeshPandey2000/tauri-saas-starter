@@ -53,7 +53,9 @@ Then commit, tag `v0.2.0`, and push the tag. Release notes come from
 
 For Azure Trusted Signing, create the account/certificate in Azure and provide
 the values Tauri expects; the placeholder names above are enough for a
-certificate-based flow. Never put any of these in the repo.
+certificate-based flow. Store them as **environment secrets** of the `release`
+environment (see below), never in the repo. Each OS step only receives its own
+OS's secrets.
 
 The build passes unsigned when the signing secrets are absent. macOS signing and
 notarization are performed by `tauri-action` when the Apple secrets exist;
@@ -82,7 +84,7 @@ selects index 0 for stable and index 1 for beta; beta is only offered when the
 
 ### Branch protection (required checks)
 
-Protect `main` and require these CI jobs:
+Protect `main` and require these CI jobs (manual step M9-02):
 
 - `architecture`
 - `security`
@@ -95,6 +97,32 @@ Protect `main` and require these CI jobs:
 
 Also require a review and up-to-date branches. CI uses least-privilege
 permissions, no `pull_request_target`, and fork PRs receive no secrets.
+
+### Tag rulesets (manual step M9-12)
+
+Settings → Rules → Rulesets → New ruleset, targeting tags `v*`:
+
+- Restrict creations and deletions to maintainers (or the release manager).
+- Block force pushes and deletions of existing tags.
+- The release workflow additionally verifies that the tagged commit is an
+  ancestor of `origin/main` and that the tag equals `v` plus the package
+  version, so a tag on any other commit fails before building.
+
+### Environment `release` (manual step M9-11)
+
+Settings → Environments → New environment, name it `release`:
+
+- Add required reviewers (at least one human).
+- Limit deployment branches to tags `v*`.
+- Put the release-scoped secrets there instead of repository secrets:
+  `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`,
+  `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`,
+  `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `WINDOWS_CERTIFICATE`,
+  `WINDOWS_CERTIFICATE_PASSWORD`. The workflow runs with
+  `environment: release`, so those secrets are only available to tag builds
+  that pass the tag checks and wait for reviewer approval.
+- The `VITE_*` and `TAURI_UPDATER_PUBLIC_KEY` values can stay repository
+  variables; they are not secret.
 
 ## First release checklist
 
@@ -111,4 +139,4 @@ permissions, no `pull_request_target`, and fork PRs receive no secrets.
    next version.
 8. Publish the draft manually.
 
-Manual register rows: M9-01 to M9-10 in `docs/deferred-checks.md`.
+Manual register rows: M9-01 to M9-12 in `docs/deferred-checks.md`.
