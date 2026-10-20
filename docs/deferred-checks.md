@@ -412,3 +412,48 @@ or pasted output.
 
 1. In CI, launch the built app in a headless environment and assert it starts and
    stays up for the check window; fail the job if it exits or panics.
+
+### M9-01 Repository variables and secrets
+
+1. Set the variables and secrets in `docs/release.md` (Settings → Actions).
+2. Confirm no real values are in the repo.
+
+### M9-02 Branch protection checks
+
+1. Protect `main` and require the CI jobs listed in `docs/release.md`.
+2. Confirm a failing check blocks merge.
+
+### M9-04 Apple signing and notarization
+
+1. Create a Developer ID Application certificate and notarization credentials.
+2. Add `APPLE_*` secrets and run a tag build.
+3. Confirm the draft `.dmg`/`.app` is signed and notarized.
+
+### M9-05 Windows signing
+
+1. Create Azure Trusted Signing or a code-signing certificate.
+2. Add the Windows secrets and confirm the draft installer is signed.
+
+### M9-06 Updater key pair
+
+1. Generate the key locally (never commit it).
+2. Put the private key in Actions and the public key in the repository variable.
+
+### M9-07 Draft release assets
+
+1. Push a `v*` tag; wait for the draft.
+2. Check macOS universal and Windows assets, `.sig` files and `latest.json`.
+
+### M9-08 Publish the release
+
+1. Install the draft assets and smoke them.
+2. A human publishes the draft; nothing auto-publishes.
+
+### M9-09 Real update from draft build
+
+1. Install version N, publish N+1, wait for the deferred check.
+2. Confirm download, restart and the new version.
+
+### M9-10 Dependabot review
+
+1. Check the weekly Dependabot PRs and CI results.

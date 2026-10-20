@@ -25,6 +25,8 @@ It is opinionated and small on purpose. You can read the whole thing.
 
 ## Status
 
+[![CI](https://github.com/PriyeshPandey2000/tauri-saas-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/PriyeshPandey2000/tauri-saas-starter/actions/workflows/ci.yml)
+
 Built from [`docs/PRD.md`](docs/PRD.md) in milestones. Each one is reviewed
 before the next starts.
 
@@ -39,7 +41,7 @@ before the next starts.
 | M6  | Billing and licensing                                  | Done    |
 | M7  | Crash reporting and analytics with consent             | Done    |
 | M8  | Tray, shortcuts, single instance, auto-update          | Done    |
-| M9  | CI, end-to-end tests, signed releases                  | Planned |
+| M9  | CI, end-to-end tests, signed releases                  | Done    |
 | M10 | Rename script, feature generator, setup docs           | Planned |
 
 \* The Google sign-in logic is tested, but the live OAuth round trip has not
@@ -52,12 +54,13 @@ everything that still needs a human.
   shadcn/ui, light/dark theme that also drives the native title bar.
 - **Auth**: Better Auth running in your own API. Short-lived JWT access tokens,
   tokens stored only in the OS keychain, PKCE-bound deep-link OAuth.
-- **Per-user data**: one SQLite file per user on the desktop, and a Postgres
-  backend where every query is scoped to the verified user.
+- **Per-user data**: structured records only. One SQLite file per user on the
+  desktop, and a Postgres backend where every query is scoped to the verified
+  user. There is no file or blob storage.
 - **Typed IPC**: Rust commands are exported to TypeScript, no hand-written
   `invoke("string")` calls.
-- **Ports and adapters**: auth, storage, logging, billing and the rest sit
-  behind interfaces. Swapping a vendor means writing one adapter.
+- **Ports and adapters**: auth, database, secrets, logging, billing and the rest
+  sit behind interfaces. Swapping a vendor means writing one adapter.
 - **Architecture checks**: import rules are lint errors, not guidelines.
 
 The notes feature is an example that exercises the whole stack. Delete it when

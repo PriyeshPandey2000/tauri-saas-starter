@@ -145,6 +145,9 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **Capability audit is a script (M8 review round 2)**: `scripts/check-capabilities.mjs` maps frontend plugin/window calls to capability identifiers and fails the build check when one is missing. It is a static scan, not a runtime permission proof; the `tauri dev` console proof remains mandatory.
 - **Dev-only webview console bridge (M8 review round 2)**: in dev builds the frontend POSTs console errors/warnings/info to a Vite middleware so webview permission errors appear in the `tauri dev` log. It is compiled out of production and sends nothing externally.
 
+- **Accepted RustSec advisories in the updater dependency tree (M9)**: `tauri-plugin-updater@2.14.0` pulls `zip@4.6.1`, which has RUSTSEC-2026-0367/0368/0369 (high/critical) with no compatible fixed release, plus `rsa@0.9.10` (RUSTSEC-2023-0071, medium, not reachable from our code). CI blocks other high advisories and ignores exactly these four with this note. Revisit when the updater bumps `zip`.
+- **pnpm audit blocks high only (M9)**: `pnpm audit --prod --audit-level=high`; the remaining moderate advisory (esbuild dev chain) is reported but does not fail CI.
+
 ## Backlog (ideas out of current scope)
 
 - Two-way sync + conflict resolution
