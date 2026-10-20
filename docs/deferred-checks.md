@@ -105,8 +105,8 @@ These need a built/running app (the Tauri plugin cannot run under Node).
 ## Observability (M7)
 
 1. With a real `VITE_SENTRY_DSN`, accept consent, trigger a test error, and confirm it appears scrubbed in Sentry (release/environment tags present).
-2. Build with `SENTRY_DSN`, accept consent, run the debug-only forced panic command, and confirm the panic reaches Sentry (test mode only; no account tooling).
+2. Build with `SENTRY_DSN`, accept consent, and confirm a forced panic in a **release** build reaches Sentry (the debug-only command is for dev; add a temporary release trigger or test build when doing this). Test mode only; no account tooling.
 3. Confirm source-map symbolication works in a CI-built artifact (M9 upload step).
 4. With a real PostHog key, accept consent and confirm the M7 events and `$pageview` arrive; then revoke and confirm they stop.
-5. In a built app with devtools, confirm zero network requests to Sentry/PostHog before consent and no breadcrumbs sent.
+5. In a built app with devtools, confirm zero network requests to Sentry/PostHog before consent and no breadcrumbs sent. Confirm flag requests are also absent with the default `VITE_FLAGS_REQUIRE_CONSENT=true`.
 6. Confirm the first-run consent card does not block sign-in, and that the settings toggle + "Report a problem" preview shows the redacted log before confirmation.

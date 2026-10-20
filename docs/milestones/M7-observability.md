@@ -105,4 +105,53 @@ No billing secrets in the desktop bundle
 
 ## Review
 
-_(reviewer fills)_
+**Verdict: PASS after one small round** (2026-10-20). Forced `turbo run lint typecheck test build` 12/12 (desktop 124 tests, api 51), `cargo test` 6 passed + 1 ignored. Consent is the single gate and defaults to off: the Rust `before_send` drops everything unless the `AtomicBool` is true (read from `settings.json` at startup so boot-time panics respect it, updated through a typed command), Sentry JS is initialised lazily only after consent and closed on revoke, analytics sends nothing without consent and resets the anonymous id on revoke, the forced-panic command is debug-only, analytics events are validated against the typed registry, page tracking sends the pathname only, report-a-problem previews the scrubbed log before the explicit confirm, and scrubbing exists on both sides with tests.
+
+Fix in ONE commit (tests included):
+
+1. **"No network calls before consent" is not true by default.** Anonymous flag evaluation (M5) contacts PostHog before consent unless `VITE_FLAGS_REQUIRE_CONSENT=true`, and the default is `false`. That contradicts this milestone's acceptance criterion. Make the default `true` (privacy first), update `.env.example`, config, docs/feature-flags.md and docs/observability.md, and state the trade-off plainly (kill switches reach only users who consented, or when the env is set to false). Tests for both settings.
+2. **Load Sentry lazily.** `@sentry/react` is imported statically, adding about 36 KB gzip to the main chunk (224 KB gzip now, 75% of the 300 KB budget) for every user, including those who never consent. Import it dynamically inside `init()` after consent. Check the chunk size after the change and record it.
+3. **Rust stack frames are not scrubbed.** `scrub_event` handles messages, breadcrumbs, extras, tags and user, but not exception stack frames or threads: `filename`/`abs_path` from panics can contain build-machine or user paths. Reduce frames to the file name or a path relative to the workspace, and scrub threads, with a test.
+4. **Panics with `panic = "abort"` may be lost.** The release profile aborts on panic; the Sentry transport is a background thread and the guard is intentionally leaked, so the event may never flush. Check the `sentry-panic` source or docs; if the integration does not flush, wrap the panic hook to flush (about 2 s) before abort. Add a human check to docs/deferred-checks.md: a forced panic in a RELEASE build reaches Sentry.
+5. docs/observability.md: tell the operator to enable Sentry's "Prevent Storing of IP Addresses" and server-side data scrubbing in the project settings, and that the Rust DSN is a build-time env value.
+
+Not verified by the reviewer: the consent card and settings toggle UI by eye, the CSP builder in a built app, and real Sentry/PostHog delivery (user-gated, listed in docs/deferred-checks.md).
+
+### Review fix round (2026-10-20)
+
+1. `VITE_FLAGS_REQUIRE_CONSENT` now defaults to **true**; config, `.env.example`,
+   `docs/feature-flags.md` and `docs/observability.md` state the trade-off
+   (kill switches reach only consenting users unless the env is set to `false`).
+   Tests cover the default and both explicit values.
+2. `@sentry/react` is imported dynamically inside `init()` after consent. The
+   main chunk is now **200.83 kB gzip** (was ~224 kB; 67% of the 300 kB budget);
+   the Sentry SDK lives in a separate lazy chunk and the main chunk has no Sentry
+   references.
+3. Rust `scrub_event` now reduces exception and thread stack frames to
+   workspace-relative paths (`src/...`) or file names and clears absolute paths;
+   a test covers both exception and thread frames.
+4. Checked `sentry-panic@0.49.3` source: `panic_handler` captures the event and
+   calls `client.flush(None)` before forwarding to the previous hook, so the
+   release `panic = "abort"` path still attempts delivery during the panic hook.
+   No extra wrapper is needed; `docs/observability.md` records the finding and a
+   release-build panic remains a human check.
+5. `docs/observability.md` now tells operators to enable Sentry "Prevent Storing
+   of IP Addresses" and server-side data scrubbing, and that the Rust DSN is a
+   build-time env value.
+
+Verification (real output):
+
+```
+$ pnpm turbo run lint typecheck build
+ Tasks:    10 successful, 10 total
+
+$ pnpm turbo run test --force
+desktop:test:  Test Files  34 passed (34)
+desktop:test:       Tests  125 passed (125)
+api:test:  Test Files  11 passed (11)
+api:test:       Tests  51 passed (51)
+ Tasks:    2 successful, 2 total
+
+$ cd apps/desktop/src-tauri && cargo test
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
+```

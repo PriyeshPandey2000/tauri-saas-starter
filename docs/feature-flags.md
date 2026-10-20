@@ -24,9 +24,11 @@ client IP. It sends no person properties (PostHog autocapture is not used at
 all — the app talks to the REST endpoint, not the JS SDK), never the auth user
 id, and no `$feature_flag_called` exposure events.
 
-Set `VITE_FLAGS_REQUIRE_CONSENT=true` to skip **all** PostHog requests until
-consent is granted (default `false`). Flags then resolve from the per-install
-cache or registry defaults.
+`VITE_FLAGS_REQUIRE_CONSENT` defaults to **`true`**: all PostHog requests are
+skipped until consent is granted, and flags resolve from the per-install cache or
+registry defaults. Set it to `false` only when kill switches must reach users who
+have not consented (anonymous evaluation then contacts PostHog with the install
+id).
 
 After consent is granted, the adapter identifies with the auth user id and
 sends one exposure event per flag per session. Revoking consent stops

@@ -7,6 +7,10 @@ clients immediately.
 
 ## What is sent
 
+By default, even anonymous flag evaluation does **not** contact PostHog:
+`VITE_FLAGS_REQUIRE_CONSENT` defaults to `true`. Kill switches therefore reach
+only users who consented (or builds that explicitly set the env to `false`).
+
 After consent:
 
 - Sentry: exceptions and React error boundaries, with release (`VITE_APP_VERSION`),
@@ -24,6 +28,13 @@ The first-run card is deliberately non-blocking: the user can sign in and keep
 using the app. Settings has a consent toggle and a "Report a problem" flow that
 shows the exact redacted log preview before an explicit confirmation.
 
+## Sentry project settings
+
+In the Sentry project settings, enable **Prevent Storing of IP Addresses** and
+configure server-side data scrubbing in addition to the client `beforeSend`
+scrubber. The Rust DSN is a build-time environment value (`SENTRY_DSN` via
+`option_env!`), not a runtime setting and never committed.
+
 ## Environment
 
 Desktop (build-time Vite values):
@@ -39,6 +50,11 @@ Rust (build-time `option_env!`):
 - `SENTRY_DSN` — set it when building, e.g.
   `SENTRY_DSN=... SENTRY_ENVIRONMENT=dev pnpm tauri build`.
 - `SENTRY_ENVIRONMENT` — optional environment tag.
+
+`sentry-panic` captures the event and calls `client.flush(None)` inside its panic
+handler before forwarding to the previous hook, so a release build with
+`panic = "abort"` still attempts delivery during the panic hook. Confirm this
+with a release-build forced panic (see deferred checks).
 
 The Rust client reads `settings.json` at startup so a boot panic respects the
 stored consent. Consent changes reach Rust through the typed
