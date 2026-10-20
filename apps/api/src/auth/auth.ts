@@ -5,6 +5,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { getSessionCookie } from "better-auth/cookies";
 import { bearer, jwt, oneTimeToken } from "better-auth/plugins";
 
+import { assertAccountDeletable } from "../billing/guard";
 import type { Database } from "../db/client";
 import * as schema from "../db/schema";
 import type { ApiEnv } from "../env";
@@ -101,6 +102,26 @@ export function createAuth({ db, database, env, mailer }: AuthDeps) {
     session: {
       expiresIn: SEVEN_DAYS_SECONDS,
       updateAge: ONE_DAY_SECONDS,
+    },
+    user: {
+      deleteUser: {
+        enabled: true,
+        async beforeDelete(deleting) {
+          if (!db) {
+            return;
+          }
+          try {
+            await assertAccountDeletable(db, deleting.id);
+          } catch (error) {
+            throw new APIError("FORBIDDEN", {
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Cancel your subscription first",
+            });
+          }
+        },
+      },
     },
     rateLimit: {
       enabled: true,

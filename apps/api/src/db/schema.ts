@@ -104,3 +104,52 @@ export const notes = pgTable(
     index("notes_user_id_updated_at_idx").on(table.userId, table.updatedAt),
   ],
 );
+
+export const customers = pgTable("customers", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  providerCustomerId: text("provider_customer_id").notNull(),
+  ...timestamps,
+});
+
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    planKey: text("plan_key").notNull(),
+    providerSubscriptionId: text("provider_subscription_id").notNull(),
+    providerCustomerId: text("provider_customer_id"),
+    status: text("status").notNull(),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    pastDueEndsAt: timestamp("past_due_ends_at", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    providerEventAt: timestamp("provider_event_at", {
+      withTimezone: true,
+    }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("subscriptions_provider_id_unique").on(
+      table.providerSubscriptionId,
+    ),
+    index("subscriptions_provider_customer_idx").on(table.providerCustomerId),
+  ],
+);
+
+export const checkoutSessions = pgTable("checkout_sessions", {
+  sessionId: text("session_id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  planKey: text("plan_key").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+});
+
+export const webhookEvents = pgTable("webhook_events", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+});

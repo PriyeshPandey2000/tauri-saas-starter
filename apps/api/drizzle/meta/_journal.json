@@ -15,6 +15,13 @@
       "when": 1792468345615,
       "tag": "0001_outstanding_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792474724489,
+      "tag": "0002_sharp_prism",
+      "breakpoints": true
     }
   ]
 }

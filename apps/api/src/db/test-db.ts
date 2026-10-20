@@ -12,6 +12,10 @@ const MIGRATIONS_DIR = fileURLToPath(
 
 const TABLES = [
   "notes",
+  "checkout_sessions",
+  "webhook_events",
+  "subscriptions",
+  "customers",
   "session",
   "account",
   "verification",

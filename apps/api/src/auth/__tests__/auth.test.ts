@@ -23,6 +23,8 @@ const env: ApiEnv = {
   GOOGLE_CLIENT_SECRET: "google-secret",
   APP_DEEP_LINK_SCHEME: "tauri-saas-starter",
   AUTH_REQUIRE_EMAIL_VERIFICATION: false,
+  DODO_PAYMENTS_ENVIRONMENT: "test_mode",
+  ENTITLEMENT_SIGNING_KID: "k1",
 };
 
 const shared = await createTestDb();

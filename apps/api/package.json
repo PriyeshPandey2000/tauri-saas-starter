@@ -14,14 +14,15 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@app/shared": "workspace:*",
     "@hono/node-server": "^2.1.5",
     "better-auth": "^1.7.11",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "jose": "^6.2.12",
     "postgres": "^3.4.9",
-    "zod": "^4.6.7",
-    "@app/shared": "workspace:*"
+    "standardwebhooks": "1.1.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@config/eslint-config": "workspace:*",

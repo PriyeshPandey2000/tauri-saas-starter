@@ -10,6 +10,11 @@ import { desktopAuthRoutes } from "./auth/desktop-routes";
 import { createRateLimiter, resolveClientKey } from "./auth/rate-limit";
 import { resolveTrustedOrigins } from "./auth/origins";
 import { createRequireAuth, type AuthVariables } from "./auth/require-auth";
+import {
+  registerBillingReturnRoute,
+  registerBillingRoutes,
+} from "./billing/routes";
+import { handleDodoWebhook } from "./billing/webhooks";
 import { registerNotesRoutes } from "./notes/routes";
 import type { ApiEnv } from "./env";
 export {
@@ -46,6 +51,7 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
     audience: env.BETTER_AUTH_URL,
   });
   const desktopLimiter = createRateLimiter({ max: 30, windowMs: 60_000 });
+  const billingLimiter = createRateLimiter({ max: 60, windowMs: 60_000 });
   const app = new Hono<{ Variables: AuthVariables }>();
 
   app.use(
@@ -97,7 +103,33 @@ export function createApp({ auth, env, db, challenges: injected }: AppDeps) {
     return c.json({ userId: claims.sub ?? null });
   });
 
+  app.use("/billing/*", async (c, next) => {
+    const key = resolveClientKey({
+      headers: c.req.raw.headers,
+      trustedProxyHeader: env.TRUSTED_PROXY_HEADER,
+      socketAddress: socketAddress(c),
+    });
+    if (!billingLimiter.check(key)) {
+      return c.json({ error: "rate_limited" }, 429);
+    }
+    await next();
+    return;
+  });
+  registerBillingReturnRoute(app, env);
+
   if (db) {
+    app.use("/billing/*", requireAuth);
+    registerBillingRoutes(app, { db, env });
+
+    app.post("/webhooks/dodo", async (c) => {
+      const result = await handleDodoWebhook({ db, env }, await c.req.text(), {
+        "webhook-id": c.req.header("webhook-id"),
+        "webhook-timestamp": c.req.header("webhook-timestamp"),
+        "webhook-signature": c.req.header("webhook-signature"),
+      });
+      return c.json(result.body, result.status);
+    });
+
     app.use("/notes", requireAuth);
     app.use("/notes/*", requireAuth);
     registerNotesRoutes(app, db);
