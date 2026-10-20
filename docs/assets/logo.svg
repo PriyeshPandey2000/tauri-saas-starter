@@ -7,7 +7,7 @@
   <circle cx="41" cy="28.5" r="3.2" fill="#0a0a0a"/>
   <circle cx="51" cy="28.5" r="3.2" fill="#0a0a0a"/>
 
-  <rect x="128" y="41" width="4" height="99" fill="#0a0a0a"/>
+  <rect x="127" y="41" width="6" height="99" fill="#0a0a0a"/>
 
   <g fill="none" stroke="#0a0a0a" stroke-width="7.5" stroke-linejoin="miter" stroke-miterlimit="10">
     <path d="M258 94 L297 71 L336 94"/>
