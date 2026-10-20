@@ -1,8 +1,6 @@
-<p align="center">
-  <img src="docs/assets/logo.svg" alt="Tauri SaaS Starter" width="96" height="96">
-</p>
-
-<h1 align="center">Tauri SaaS Starter</h1>
+<h1 align="center">
+  <img src="docs/assets/logo.svg" alt="Tauri SaaS Starter" width="450" height="120">
+</h1>
 
 <p align="center">
   A Tauri 2 starter for desktop SaaS apps. Sign-in, secure token storage,
