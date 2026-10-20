@@ -64,6 +64,7 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 | specta                           | 2.0.0-rc.25       | 2026-10-19 | pre-release, exact pin (`=`) approved for Tauri 2 (see Deviations)             |
 | specta-typescript                | 0.0.12            | 2026-10-19 | latest stable; used by the pre-release IPC stack (see Deviations)              |
 | tailwind-merge                   | 3.7.0             | 2026-10-19 | latest stable                                                                  |
+| standardwebhooks                 | 1.1.1             | 2026-10-20 | latest stable; Dodo webhook signature verification (API only)                  |
 | tailwindcss                      | 4.3.3             | 2026-10-19 | latest stable                                                                  |
 | tauri-plugin-deep-link           | 2.6.2             | 2026-10-19 | latest stable; scheme registration                                             |
 | tauri-plugin-log                 | 2.10.1            | 2026-10-19 | latest stable; rotating log file (5 x 2MB)                                     |
@@ -115,6 +116,10 @@ Agent: record any deviation from PRD.md here with date, what, why. Do not edit p
 - **PostHog flags use the REST `/flags` endpoint, not `posthog-js` (M5.3)**: `posthog-js@1.438.12` is ~27 MB unpacked and ships capture, autocapture, replay and survey machinery the desktop app does not need yet. The adapter calls `POST {host}/flags?v=2` with `api_key` + `distinct_id` and parses `flags` with Zod. Exposures use `POST /i/v0/e/`. No new dependency was added. Revisit when M7 adds product analytics: then the SDK choice (probably `posthog-js` or server-side capture) is made with the real bundle budget.
 - **Flag overrides live in `settings.json` through the adapter (M5.4)**: the values are validated against the registry and stored under the `flagOverrides` key, but the adapter owns the read/write. Reason: `ports/adapters/*` may not import the settings feature, and `ports/index.ts` (composition root) may not import features. The dev panel talks to `FeatureFlagPort.setOverride`, and `VITE_APP_ENV=prod` disables it.
 - **Flag cache is per identity in one file (M5.5)**: `flags.json` is keyed by `user:<id>` or `anon:<installId>`; reset deletes the signed-out user's entry. The query cache allowlist no longer contains `flags`, so flag values never reach the query-cache file.
+
+- **Billing uses the Dodo REST API, not the SDK (M6)**: the API calls `/checkouts`, `/customers/{id}/customer-portal/session`, and verifies webhooks with `standardwebhooks@1.1.1`. No `dodopayments` SDK was added; the REST surface is small and keeps the vendor call sites in one adapter. Test mode is the default and live mode fails closed.
+- **Entitlement snapshots use ECDSA P-256 with IEEE P1363 signatures (M6.8)**: Node signs with `dsaEncoding: "ieee-p1363"` so WebCrypto verifies the raw signature. The canonical payload has a fixed field order; `kid` selects among embedded public keys (`VITE_ENTITLEMENT_PUBLIC_KEYS`). Cache reads enforce a clock-rollback guard.
+- **Checkout returns through an API bounce page (M6.6)**: `return_url` is `${API_PUBLIC_URL}/billing/return`, which redirects to a parameterless `tauri-saas-starter://billing/success`. Provider query parameters are never forwarded; the deep link only triggers a refetch.
 
 ## Backlog (ideas out of current scope)
 

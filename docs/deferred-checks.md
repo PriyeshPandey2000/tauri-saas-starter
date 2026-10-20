@@ -91,3 +91,13 @@ These need a built/running app (the Tauri plugin cannot run under Node).
    violation in the webview console) with a real `VITE_POSTHOG_KEY`.
 7. Create `betaExport` in PostHog and confirm a dashboard rule change reaches a
    built app within the 5-minute refresh interval.
+
+## Billing (M6)
+
+1. With test keys in `apps/api/.env`, run a test-mode checkout end to end and confirm the app flips to Pro within about 30 seconds without a restart. Confirm the report says `test_mode`.
+2. Deliver a real webhook through a tunnel the user sets up; confirm signature verification and idempotency on a replayed event.
+3. Open the customer portal from the pricing page and confirm it loads for the test customer.
+4. Verify when `subscription.cancelled` fires (immediate vs period end) and whether the payload carries a scheduled-cancel field.
+5. Confirm whether subscription webhooks echo `metadata` and on which object, and whether `return_url` receives `payment_id`/`status`/`email`.
+6. Force a `past_due` event and confirm the banner and the grace deadline behavior.
+7. Blocked account deletion: with an active subscription, deleting the account must show the server's "cancel first" error.

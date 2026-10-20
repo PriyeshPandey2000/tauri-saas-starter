@@ -5,8 +5,9 @@
 <h1 align="center">Tauri SaaS Starter</h1>
 
 <p align="center">
-  A Tauri 2 starter for desktop SaaS apps. Auth, local data and the dull
-  infrastructure are wired and tested, so you start on the product.
+  A Tauri 2 starter for desktop SaaS apps. Sign-in, secure token storage,
+  per-user local data and a backend are already built and tested, so you can
+  start on your product.
 </p>
 
 <p align="center">
@@ -181,8 +182,11 @@ and delete `features/notes`, its route, its migrations and `apps/api/src/notes`.
 
 ## Contributing
 
-Open an issue first for anything large. Run `pnpm lint && pnpm typecheck &&
-pnpm test` before a pull request and write commits in Conventional Commits
+Found a bug or have an idea? [Open an issue](../../issues). Pull requests are
+welcome.
+
+Before you open one, run `pnpm lint && pnpm typecheck && pnpm test`, and write
+commit messages in [Conventional Commits](https://www.conventionalcommits.org/)
 format.
 
 ## License
