@@ -55,3 +55,19 @@ published port, so `localhost:5432` reaches the wrong server.
 
 1. Free 5432, or change the host side of the port mapping in `docker-compose.yml`
    to `"5433:5432"` and use `postgres://app:app@localhost:5433/app`.
+
+## Local database and notes UX (M4)
+
+These need a built/running app (the Tauri plugin cannot run under Node).
+
+1. Sign in as two different users and confirm each gets its own
+   `app-<userId>.db` under the app data dir (`~/Library/Application Support/<id>/`
+   on macOS) and never sees the other user's notes.
+2. Relaunch: migrations must not re-run (check `_migrations`) and the last notes
+   are visible immediately from the persisted query cache.
+3. Create ~10,000 notes and scroll: virtualization keeps the DOM node count under
+   100 and scrolling stays smooth.
+4. Stop the API (or disconnect): cached notes still render, and a mutation shows a
+   clear error rather than a silent failure.
+5. Sign out and back in: the local database closes and reopens; the persisted query
+   cache is cleared on sign-out.
