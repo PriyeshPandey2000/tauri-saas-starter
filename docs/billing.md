@@ -16,6 +16,31 @@ component that talks to Dodo; the desktop calls our `/billing/*` routes.
   Real test-account runs start only when the reviewer says the test keys are in
   `apps/api/.env`; local webhooks need a tunnel the user sets up.
 
+## Key generation
+
+1. Generate an ECDSA P-256 keypair (PKCS#8 private key, base64):
+
+   ```bash
+   openssl ecparam -name prime256v1 -genkey -noout |
+     openssl pkcs8 -topk8 -nocrypt -outform DER |
+     base64
+   ```
+
+2. Put that value in `ENTITLEMENT_SIGNING_KEY` (server env only) and set
+   `ENTITLEMENT_SIGNING_KID`.
+3. Print the public JWK for the desktop:
+
+   ```bash
+   node scripts/print-entitlement-public-key.mjs "$ENTITLEMENT_SIGNING_KEY" k1
+   ```
+
+4. Put the printed JSON array in `VITE_ENTITLEMENT_PUBLIC_KEYS` at build time.
+   Without it, online entitlement works but offline grace is disabled (the dev
+   pricing page warns).
+
+The high-water clock mark is stored in the OS keychain. It deters casual clock
+changes only; a determined local attacker controls the machine.
+
 ## Plans
 
 `apps/api/src/billing/plans.ts` is the only place that maps a plan key to a

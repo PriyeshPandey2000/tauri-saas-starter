@@ -38,7 +38,7 @@ before the next starts.
 | M3  | Auth: email + Google, JWT, deep-link OAuth             | Done*   |
 | M4  | Per-user SQLite, migrations, notes example, API        | Done    |
 | M5  | Feature flags (PostHog)                                | Done    |
-| M6  | Billing and licensing                                  | Planned |
+| M6  | Billing and licensing                                  | Done    |
 | M7  | Crash reporting and analytics with consent             | Planned |
 | M8  | Tray, shortcuts, single instance, auto-update          | Planned |
 | M9  | CI, end-to-end tests, signed releases                  | Planned |
